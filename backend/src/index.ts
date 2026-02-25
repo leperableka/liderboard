@@ -4,7 +4,6 @@ import cors from '@fastify/cors';
 import multipart from '@fastify/multipart';
 import rateLimit from '@fastify/rate-limit';
 import { Bot } from 'grammy';
-import type { ScheduledTask } from 'node-cron';
 
 import pool from './db/pool.js';
 import { createRedisClient } from './services/cache.js';
@@ -93,7 +92,7 @@ async function bootstrap(): Promise<void> {
   const redis = createRedisClient(redisUrl);
 
   // ── Grammy bot + cron ──────────────────────────────────────────────────────
-  let cronTask: ScheduledTask | null = null;
+  let cronTask: { stop: () => void } | null = null;
 
   if (!isDev) {
     const botToken = requireEnv('BOT_TOKEN');

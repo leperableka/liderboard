@@ -9,109 +9,142 @@ interface PendingUser {
 }
 
 /**
- * Sends deposit reminders to all users who have not submitted a deposit update
- * for "today" (UTC date at the time the cron fires).
- *
- * Business rules:
- *  - crypto: runs every day (Mon–Sun)
- *  - moex / forex: runs Mon–Fri only
- *  - A user is excluded if they already have a deposit_updates row for today
+ * Queries users who have NOT submitted a deposit update for today (UTC date).
+ * - crypto: every day
+ * - moex / forex: Mon–Fri only
  */
-async function sendDepositReminders(bot: Bot, miniAppUrl: string): Promise<void> {
+async function getPendingUsers(): Promise<PendingUser[]> {
   const today = new Date();
   const todayStr = today.toISOString().slice(0, 10);
-  const dayOfWeek = today.getUTCDay(); // 0=Sun, 1=Mon … 6=Sat
+  const dayOfWeek = today.getUTCDay(); // 0=Sun … 6=Sat
   const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 5;
 
-  console.log(`[notifications] Running deposit reminders for ${todayStr}, isWeekday=${isWeekday}`);
+  const result = await pool.query<PendingUser>(
+    `SELECT u.telegram_id, u.display_name, u.market
+     FROM users u
+     WHERE
+       (u.market = 'crypto' OR $1 = TRUE)
+       AND NOT EXISTS (
+         SELECT 1 FROM deposit_updates du
+         WHERE du.user_id = u.id AND du.deposit_date = $2
+       )`,
+    [isWeekday, todayStr],
+  );
+
+  return result.rows.filter(
+    (u) => u.market === 'crypto' || isWeekday,
+  );
+}
+
+/**
+ * Sends messages to a list of users.
+ * Respects Telegram's ~30 msg/s limit via 50 ms delay between sends.
+ */
+async function sendBatch(
+  bot: Bot,
+  users: PendingUser[],
+  getText: (u: PendingUser) => string,
+  keyboard: InlineKeyboard,
+): Promise<void> {
+  for (const user of users) {
+    try {
+      await bot.api.sendMessage(user.telegram_id, getText(user), {
+        reply_markup: keyboard,
+      });
+    } catch (err) {
+      console.error(`[notifications] Failed to send to ${user.telegram_id}:`, err);
+    }
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * 1st reminder — 15:55 UTC (18:55 МСК), ~5 min before market close
+ * ───────────────────────────────────────────────────────────────────────────*/
+async function sendPreCloseReminders(bot: Bot, miniAppUrl: string): Promise<void> {
+  const todayStr = new Date().toISOString().slice(0, 10);
+  console.log(`[notifications] Pre-close reminder — ${todayStr}`);
 
   try {
-    /*
-     * Select users who:
-     *  1. Are in the correct market for today's schedule.
-     *  2. Do NOT have a deposit record for today.
-     */
-    const result = await pool.query<PendingUser>(
-      `SELECT u.telegram_id, u.display_name, u.market
-       FROM users u
-       WHERE
-         -- crypto users always included; moex/forex only on weekdays
-         (u.market = 'crypto' OR $1 = TRUE)
-         -- exclude those who already submitted today
-         AND NOT EXISTS (
-           SELECT 1
-           FROM deposit_updates du
-           WHERE du.user_id = u.id
-             AND du.deposit_date = $2
-         )`,
-      [isWeekday, todayStr],
-    );
-
-    const users = result.rows;
-    console.log(`[notifications] ${users.length} users to notify`);
-
+    const users = await getPendingUsers();
+    console.log(`[notifications] Pre-close: ${users.length} users to notify`);
     if (users.length === 0) return;
 
     const keyboard = new InlineKeyboard().webApp('Внести данные', miniAppUrl);
 
-    // Send messages sequentially to avoid hitting Telegram rate limits (30 msg/s)
-    for (const user of users) {
-      // Skip moex/forex users on weekends (crypto already handled via SQL)
-      if (user.market !== 'crypto' && !isWeekday) continue;
-
-      const text =
-        `Привет, ${user.display_name}!\n\n` +
+    await sendBatch(
+      bot,
+      users,
+      (u) =>
+        `Привет, ${u.display_name}!\n\n` +
         `Не забудьте обновить ваш депозит сегодня!\n` +
-        `Внесите данные о вашем текущем депозите, чтобы сохранить позицию в лидерборде.`;
+        `Внесите данные о вашем текущем депозите, чтобы сохранить позицию в лидерборде.`,
+      keyboard,
+    );
 
-      try {
-        await bot.api.sendMessage(user.telegram_id, text, {
-          reply_markup: keyboard,
-        });
-      } catch (msgErr) {
-        // Log per-user errors without aborting the entire batch
-        console.error(
-          `[notifications] Failed to send message to ${user.telegram_id}:`,
-          msgErr,
-        );
-      }
-
-      // Small delay between sends: ~30 messages/sec limit
-      await new Promise((resolve) => setTimeout(resolve, 50));
-    }
-
-    console.log('[notifications] Reminder batch complete');
+    console.log('[notifications] Pre-close batch complete');
   } catch (err) {
-    console.error('[notifications] Failed to query pending users:', err);
+    console.error('[notifications] Pre-close error:', err);
   }
 }
 
-/**
- * Schedules the notification cron job.
- *
- * Fires at 15:55 UTC every day (= 18:55 MSK, i.e. ~5 minutes before 19:00 MSK
- * to account for processing time and allow messages to arrive by 19:00).
- *
- * Cron expression: "55 15 * * *"
- *   55 — minute 55
- *   15 — hour 15 (UTC)
- *    * — any day of month
- *    * — any month
- *    * — any day of week  (weekday filtering is done in the handler)
- */
-export function scheduleNotifications(bot: Bot, miniAppUrl: string): cron.ScheduledTask {
-  const task = cron.schedule(
+/* ─────────────────────────────────────────────────────────────────────────────
+ * 2nd reminder — 17:00 UTC (20:00 МСК), evening nudge for laggards
+ * ───────────────────────────────────────────────────────────────────────────*/
+async function sendEveningReminders(bot: Bot, miniAppUrl: string): Promise<void> {
+  const todayStr = new Date().toISOString().slice(0, 10);
+  console.log(`[notifications] Evening reminder — ${todayStr}`);
+
+  try {
+    const users = await getPendingUsers();
+    console.log(`[notifications] Evening: ${users.length} users to notify`);
+    if (users.length === 0) return;
+
+    const keyboard = new InlineKeyboard().webApp('Открыть приложение', miniAppUrl);
+
+    await sendBatch(
+      bot,
+      users,
+      () =>
+        `Вы не заполнили данные торгового чемпионата Vesperfin&Co.Trading, ` +
+        `пожалуйста, зайдите в приложение и внесите информацию.\n\n` +
+        `Возможно, вы уже лидируете в турнире 🏆`,
+      keyboard,
+    );
+
+    console.log('[notifications] Evening batch complete');
+  } catch (err) {
+    console.error('[notifications] Evening error:', err);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * Scheduler
+ * ───────────────────────────────────────────────────────────────────────────*/
+export function scheduleNotifications(
+  bot: Bot,
+  miniAppUrl: string,
+): { stop: () => void } {
+  // 18:55 МСК — before market close
+  const preCloseTask = cron.schedule(
     '55 15 * * *',
-    () => {
-      sendDepositReminders(bot, miniAppUrl).catch((err) => {
-        console.error('[notifications] Unhandled error in reminder job:', err);
-      });
-    },
-    {
-      timezone: 'UTC',
-    },
+    () => sendPreCloseReminders(bot, miniAppUrl).catch(console.error),
+    { timezone: 'UTC' },
   );
 
-  console.log('[notifications] Cron job scheduled: 15:55 UTC daily');
-  return task;
+  // 20:00 МСК — evening reminder for those who still haven't submitted
+  const eveningTask = cron.schedule(
+    '0 17 * * *',
+    () => sendEveningReminders(bot, miniAppUrl).catch(console.error),
+    { timezone: 'UTC' },
+  );
+
+  console.log('[notifications] Cron jobs scheduled: 15:55 UTC (pre-close) + 17:00 UTC (evening)');
+
+  return {
+    stop: () => {
+      preCloseTask.stop();
+      eveningTask.stop();
+    },
+  };
 }

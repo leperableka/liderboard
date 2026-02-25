@@ -331,6 +331,40 @@ export const Profile: React.FC<ProfileProps> = ({
           >
             Рынок и инструменты указываются при регистрации и не подлежат изменению.
           </p>
+
+          {/* Community link */}
+          <div style={{ padding: '12px 20px 8px', textAlign: 'center' }}>
+            <a
+              href="https://cotrading.vesperfin.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '12px 20px',
+                borderRadius: 14,
+                background: 'var(--white)',
+                border: '1.5px solid var(--border)',
+                textDecoration: 'none',
+                color: 'var(--text)',
+                fontSize: 14,
+                fontWeight: 600,
+                fontFamily: 'var(--font)',
+                boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
+                width: '100%',
+                boxSizing: 'border-box',
+                justifyContent: 'center',
+              }}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="var(--gold-2)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width={18} height={18}>
+                <circle cx="12" cy="12" r="10" />
+                <line x1="2" y1="12" x2="22" y2="12" />
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+              </svg>
+              Сайт сообщества Vesperfin
+            </a>
+          </div>
         </div>
       </div>
 
