@@ -1,23 +1,9 @@
-version: '3.9'
-
 services:
-  caddy:
-    image: caddy:2-alpine
-    restart: unless-stopped
-    ports:
-      - '80:80'
-      - '443:443'
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      - frontend
-      - backend
-
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped
+    networks:
+      - internal
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-liderboard}
       POSTGRES_USER: ${POSTGRES_USER:-liderboard}
@@ -33,6 +19,8 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
+    networks:
+      - internal
     volumes:
       - redis_data:/data
     healthcheck:
@@ -46,6 +34,9 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     restart: unless-stopped
+    networks:
+      - internal
+      - dokploy-network
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: ${PORT:-3000}
@@ -64,17 +55,43 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.liderboard-backend.rule=Host(`leader.vesperfin.com`) && (PathPrefix(`/api`) || PathPrefix(`/health`))"
+      - "traefik.http.routers.liderboard-backend.entrypoints=websecure"
+      - "traefik.http.routers.liderboard-backend.tls=true"
+      - "traefik.http.routers.liderboard-backend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.liderboard-backend.loadbalancer.server.port=3000"
+      - "traefik.http.routers.liderboard-backend.priority=100"
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     restart: unless-stopped
+    networks:
+      - internal
+      - dokploy-network
     depends_on:
       - backend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.liderboard-frontend.rule=Host(`leader.vesperfin.com`)"
+      - "traefik.http.routers.liderboard-frontend.entrypoints=websecure"
+      - "traefik.http.routers.liderboard-frontend.tls=true"
+      - "traefik.http.routers.liderboard-frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.liderboard-frontend.loadbalancer.server.port=80"
+      - "traefik.http.routers.liderboard-frontend.priority=1"
+      - "traefik.http.routers.liderboard-frontend-http.rule=Host(`leader.vesperfin.com`)"
+      - "traefik.http.routers.liderboard-frontend-http.entrypoints=web"
+      - "traefik.http.routers.liderboard-frontend-http.middlewares=redirect-to-https@file"
 
 volumes:
   postgres_data:
   redis_data:
-  caddy_data:
-  caddy_config:
+
+networks:
+  internal:
+    driver: bridge
+  dokploy-network:
+    external: true
