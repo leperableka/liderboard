@@ -1,6 +1,16 @@
 import cron from 'node-cron';
-import { Bot, InlineKeyboard } from 'grammy';
+import { Bot } from 'grammy';
 import pool from '../db/pool.js';
+
+/** Bot API 9.4: inline button with primary (blue) style */
+function blueWebAppButton(text: string, url: string) {
+  return { text, web_app: { url }, style: 'primary' } as const;
+}
+
+function makeKeyboard(text: string, url: string) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return { inline_keyboard: [[blueWebAppButton(text, url) as any]] };
+}
 
 interface PendingUser {
   telegram_id: string;
@@ -23,7 +33,8 @@ async function sendBatch(
   bot: Bot,
   users: PendingUser[],
   getText: (u: PendingUser) => string,
-  keyboard: InlineKeyboard,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  keyboard: any,
 ): Promise<void> {
   for (const user of users) {
     try {
@@ -113,8 +124,6 @@ async function sendPreCloseReminders(bot: Bot, miniAppUrl: string): Promise<void
     console.log(`[notifications] Pre-close: ${users.length} users to notify`);
     if (users.length === 0) return;
 
-    const keyboard = new InlineKeyboard().webApp('Внести данные', miniAppUrl);
-
     await sendBatch(
       bot,
       users,
@@ -122,7 +131,7 @@ async function sendPreCloseReminders(bot: Bot, miniAppUrl: string): Promise<void
         `Привет, ${u.display_name}!\n\n` +
         `Не забудьте обновить ваш депозит сегодня!\n` +
         `Внесите данные о вашем текущем депозите, чтобы сохранить позицию в лидерборде.`,
-      keyboard,
+      makeKeyboard('Внести данные', miniAppUrl),
     );
 
     console.log('[notifications] Pre-close batch complete');
@@ -144,8 +153,6 @@ async function sendEveningReminders(bot: Bot, miniAppUrl: string): Promise<void>
     console.log(`[notifications] Evening: ${users.length} users to notify`);
     if (users.length === 0) return;
 
-    const keyboard = new InlineKeyboard().webApp('Открыть приложение', miniAppUrl);
-
     await sendBatch(
       bot,
       users,
@@ -153,7 +160,7 @@ async function sendEveningReminders(bot: Bot, miniAppUrl: string): Promise<void>
         `Вы не заполнили данные торгового чемпионата Vesperfin&Co.Trading, ` +
         `пожалуйста, зайдите в приложение и внесите информацию.\n\n` +
         `Возможно, вы уже лидируете в турнире 🏆`,
-      keyboard,
+      makeKeyboard('Открыть приложение', miniAppUrl),
     );
 
     console.log('[notifications] Evening batch complete');
@@ -176,8 +183,6 @@ async function sendDisqualificationWarnings(bot: Bot, miniAppUrl: string): Promi
     console.log(`[notifications] Disqualification warning: ${users.length} users`);
     if (users.length === 0) return;
 
-    const keyboard = new InlineKeyboard().webApp('Внести данные', miniAppUrl);
-
     await sendBatch(
       bot,
       users,
@@ -185,7 +190,7 @@ async function sendDisqualificationWarnings(bot: Bot, miniAppUrl: string): Promi
         `Добрый день!\n\n` +
         `К сожалению, вы не вносите данные торгового чемпионата Vesperfin&Co.Trading. ` +
         `Мы будем вынуждены дисквалифицировать ваш профиль из турнирной таблицы.`,
-      keyboard,
+      makeKeyboard('Внести данные', miniAppUrl),
     );
 
     console.log('[notifications] Disqualification warning batch complete');

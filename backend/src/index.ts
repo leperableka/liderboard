@@ -100,17 +100,19 @@ async function bootstrap(): Promise<void> {
 
     const bot = new Bot(botToken);
 
+    // Inline keyboard button with primary (blue) style — Bot API 9.4+
+    const appButton = {
+      text: '🏆 Открыть приложение',
+      web_app: { url: miniAppUrl },
+      style: 'primary',
+    };
+
     // Basic /start handler
     bot.command('start', async (ctx) => {
       await ctx.reply(
         'Добро пожаловать в Торговый Чемпионат! Откройте приложение, чтобы участвовать.',
-        {
-          reply_markup: {
-            inline_keyboard: [
-              [{ text: 'Открыть приложение', web_app: { url: miniAppUrl } }],
-            ],
-          },
-        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        { reply_markup: { inline_keyboard: [[appButton as any]] } },
       );
     });
 
@@ -118,13 +120,8 @@ async function bootstrap(): Promise<void> {
     bot.on('message', async (ctx) => {
       await ctx.reply(
         'Используйте кнопку ниже, чтобы открыть Торговый Чемпионат.',
-        {
-          reply_markup: {
-            inline_keyboard: [
-              [{ text: '🏆 Открыть приложение', web_app: { url: miniAppUrl } }],
-            ],
-          },
-        },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        { reply_markup: { inline_keyboard: [[appButton as any]] } },
       );
     });
 
