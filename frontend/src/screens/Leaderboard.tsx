@@ -391,7 +391,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
           }}
         >
           <span style={{ fontSize: 16 }}>🕛</span>
-          Внести данные можно завтра после 00:00
+          Внести данные можно после 00:00
         </div>
       )}
     </div>
