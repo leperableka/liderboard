@@ -33,6 +33,7 @@ async function bootstrap(): Promise<void> {
 
   // ── Fastify instance ──────────────────────────────────────────────────────
   const fastify = Fastify({
+    trustProxy: true,
     logger: {
       level: isDev ? 'debug' : 'info',
       ...(isDev

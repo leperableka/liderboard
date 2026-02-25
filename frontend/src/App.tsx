@@ -32,7 +32,7 @@ function buildDefaultUserStatus(telegramId: number, displayName: string): UserSt
 }
 
 export const App: React.FC = () => {
-  const { user, expand } = useTelegram();
+  const { user, isReady, expand } = useTelegram();
   const [state, setState] = useState<AppState>({ phase: 'loading' });
   const [registrationSeedData, setRegistrationSeedData] = useState<Partial<RegistrationData>>({});
   const [splashDone, setSplashDone] = useState(false);
@@ -118,8 +118,10 @@ export const App: React.FC = () => {
   }
 
   // ── Non-Telegram stub ────────────────────────────────────────────────────────
-  // Show stub when no Telegram user data — opened in regular browser
-  if (!user && !IS_DEV) {
+  // Show stub when not in Telegram context (initData is empty) and not in dev mode.
+  // Using isReady (based on non-empty initData) is more reliable than checking user,
+  // because initDataUnsafe.user could theoretically be null even in Telegram context.
+  if (!isReady) {
     return (
       <>
         {!splashDone && <SplashScreen onComplete={handleSplashComplete} />}
