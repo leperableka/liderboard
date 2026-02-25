@@ -209,7 +209,7 @@ export const App: React.FC = () => {
               </p>
             </div>
             <a
-              href="https://t.me/VesperfinBot"
+              href="https://t.me/vfleaderbot"
               style={{
                 marginTop: 8,
                 padding: '16px 32px',
