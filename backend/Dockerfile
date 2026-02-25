@@ -9,7 +9,7 @@ RUN npm ci --ignore-scripts
 COPY tsconfig.json ./
 COPY src ./src
 
-RUN npm run build
+RUN npm run build && cp src/db/schema.sql dist/db/schema.sql
 
 # ---- Production stage ----
 FROM node:20-alpine AS production
@@ -25,4 +25,4 @@ COPY --from=builder /app/dist ./dist
 
 EXPOSE 3000
 
-CMD ["node", "dist/index.js"]
+CMD ["sh", "-c", "node dist/db/migrate.js && node dist/index.js"]
