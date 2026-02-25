@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Торговый Чемпионат</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --gold-1:#FFD700;--gold-2:#F5A623;--gold-3:#E8960F;--gold-4:#D4850A;
+  --gold-grad:linear-gradient(145deg,#FFD700 0%,#F5A623 40%,#E8960F 100%);
+  --gold-grad-h:linear-gradient(180deg,#FFDF42 0%,#F5A623 50%,#E09010 100%);
+  --bg:#F7F7F8;--white:#FFFFFF;--card:#FFFFFF;
+  --text:#1A1A2E;--text-2:#6B7280;--text-3:#9CA3AF;
+  --green:#10B981;--green-bg:rgba(16,185,129,.1);
+  --red:#EF4444;--red-bg:rgba(239,68,68,.1);
+  --border:#E5E7EB;--shadow:0 2px 16px rgba(0,0,0,.08);
+  --radius:16px;--radius-sm:10px;--radius-xs:8px;
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI','Helvetica Neue',sans-serif;
+}
+html,body{font-family:var(--font);background:#E8E8ED;min-height:100vh;display:flex;justify-content:center;align-items:flex-start;padding:20px 0;-webkit-font-smoothing:antialiased}
+/* Phone frame */
+.phone{width:375px;min-height:812px;max-height:812px;background:var(--bg);border-radius:40px;box-shadow:0 0 0 8px #1A1A2E,0 0 0 10px #333,0 20px 60px rgba(0,0,0,.3);overflow:hidden;position:relative;display:flex;flex-direction:column}
+.phone::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:150px;height:28px;background:#1A1A2E;border-radius:0 0 18px 18px;z-index:100}
+/* Screens */
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:transform .4s cubic-bezier(.4,0,.2,1),opacity .35s ease;transform:translateX(40px);z-index:1;background:var(--bg);overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+.screen.active{opacity:1;pointer-events:auto;transform:translateX(0);z-index:10}
+.screen.slide-left{transform:translateX(-40px);opacity:0}
+/* Scrollbar hide */
+.screen::-webkit-scrollbar{display:none}
+.screen{scrollbar-width:none}
+/* Common */
+.screen-pad{padding:0 20px}
+.back-btn{position:absolute;top:42px;left:16px;z-index:20;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.2);border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(4px)}
+.back-btn svg{width:20px;height:20px}
+.back-btn.dark{background:rgba(0,0,0,.06)}
+.back-btn.dark svg path{stroke:#1A1A2E}
+/* Step indicator */
+.steps{display:flex;gap:6px;justify-content:center;padding:12px 0 4px}
+.step-dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:all .3s}
+.step-dot.active{background:var(--gold-2);width:24px;border-radius:4px}
+.step-dot.done{background:var(--gold-1)}
+/* Reg header */
+.reg-header{padding:48px 20px 8px;text-align:center}
+.reg-title{font-size:22px;font-weight:700;color:var(--text);letter-spacing:-.3px}
+.reg-sub{font-size:14px;color:var(--text-2);margin-top:4px}
+/* Buttons */
+.btn{width:100%;height:52px;border-radius:14px;border:none;font-size:16px;font-weight:600;cursor:pointer;transition:all .2s;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-gold{background:var(--gold-grad);color:#fff;box-shadow:0 4px 16px rgba(245,166,35,.35)}
+.btn-gold:active{transform:scale(.97);box-shadow:0 2px 8px rgba(245,166,35,.3)}
+.btn-gold:disabled{background:#D1D5DB;color:#9CA3AF;box-shadow:none;cursor:not-allowed}
+.btn-outline{background:transparent;border:2px solid var(--border);color:var(--text)}
+.btn-outline:active{background:rgba(0,0,0,.03)}
+.btn-area{padding:12px 20px 28px;margin-top:auto;flex-shrink:0}
+/* Inputs */
+.input-group{margin-bottom:16px}
+.input-label{font-size:13px;font-weight:600;color:var(--text-2);margin-bottom:6px;display:block;text-transform:uppercase;letter-spacing:.5px}
+.input-field{width:100%;height:50px;border-radius:var(--radius-sm);border:1.5px solid var(--border);padding:0 16px;font-size:16px;font-family:var(--font);color:var(--text);background:var(--white);transition:border-color .2s;outline:none}
+.input-field:focus{border-color:var(--gold-2)}
+.input-field.readonly{background:#F3F4F6;color:var(--text-2)}
+.input-field.large{height:64px;font-size:28px;font-weight:700;text-align:center;letter-spacing:1px}
+.input-field.error{border-color:var(--red);background:#FEF2F2}
+.input-error{font-size:12px;color:var(--red);text-align:center;margin-top:6px;min-height:16px;transition:opacity .2s}
+.input-error:empty{opacity:0}
+.input-suffix{position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:16px;font-weight:600;color:var(--text-3)}
+.input-wrap{position:relative}
+/* Checkboxes */
+.check-row{display:flex;align-items:flex-start;gap:12px;padding:12px 0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.check-box{width:22px;height:22px;border-radius:6px;border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s;margin-top:1px}
+.check-row.checked .check-box{background:var(--gold-2);border-color:var(--gold-2)}
+.check-box svg{opacity:0;transition:opacity .2s}
+.check-row.checked .check-box svg{opacity:1}
+.check-text{font-size:14px;color:var(--text);line-height:1.4}
+.check-text a{color:var(--gold-3);text-decoration:underline}
+/* Radio cards */
+.radio-card{display:flex;align-items:center;gap:14px;padding:16px;border-radius:var(--radius);border:2px solid var(--border);margin-bottom:10px;cursor:pointer;transition:all .2s;background:var(--white)}
+.radio-card.selected{border-color:var(--gold-2);background:rgba(245,166,35,.04);box-shadow:0 0 0 1px var(--gold-2)}
+.radio-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.radio-dot{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);margin-left:auto;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.radio-card.selected .radio-dot{border-color:var(--gold-2)}
+.radio-card.selected .radio-dot::after{content:'';width:12px;height:12px;border-radius:50%;background:var(--gold-2)}
+.radio-name{font-size:16px;font-weight:600;color:var(--text)}
+.radio-desc{font-size:13px;color:var(--text-2);margin-top:2px}
+/* Chips */
+.chips{display:flex;flex-wrap:wrap;gap:10px;padding:8px 0}
+.chip{padding:10px 20px;border-radius:40px;border:2px solid var(--border);font-size:15px;font-weight:500;color:var(--text);cursor:pointer;transition:all .2s;background:var(--white);-webkit-tap-highlight-color:transparent}
+.chip.active{background:var(--gold-2);border-color:var(--gold-2);color:#fff}
+/* Warning */
+.warning{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:var(--radius-sm);background:#FEF3C7;margin-bottom:16px}
+.warning-icon{font-size:18px;flex-shrink:0}
+.warning-text{font-size:13px;color:#92400E;line-height:1.4}
+/* Review card */
+.review-card{background:var(--white);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)}
+.review-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)}
+.review-row:last-child{border-bottom:none}
+.review-label{font-size:13px;color:var(--text-2);text-transform:uppercase;letter-spacing:.5px}
+.review-value{font-size:15px;font-weight:600;color:var(--text);text-align:right}
+.review-chips{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.review-chip{padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600;background:rgba(245,166,35,.12);color:var(--gold-3)}
+/* Avatar */
+.avatar-edit{width:96px;height:96px;border-radius:50%;background:linear-gradient(135deg,#E5E7EB,#D1D5DB);margin:0 auto 20px;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.avatar-edit-icon{position:absolute;bottom:0;right:0;width:32px;height:32px;border-radius:50%;background:var(--gold-2);display:flex;align-items:center;justify-content:center;border:3px solid var(--bg)}
+.avatar-edit svg{width:44px;height:44px;opacity:.4}
+/* ============ LEADERBOARD ============ */
+.lb-header{background:var(--gold-grad-h);padding:42px 0 0;position:relative;overflow:visible}
+.lb-title{text-align:center;font-size:20px;font-weight:700;color:#fff;padding:8px 0 4px;text-shadow:0 1px 2px rgba(0,0,0,.1)}
+/* Period tabs */
+.period-tabs{display:flex;justify-content:center;gap:4px;padding:10px 20px 14px;position:relative}
+.period-tab{padding:8px 20px;border-radius:40px;font-size:14px;font-weight:600;color:rgba(255,255,255,.7);cursor:pointer;transition:all .25s;border:none;background:transparent;font-family:var(--font)}
+.period-tab.active{background:rgba(255,255,255,.95);color:var(--gold-3);box-shadow:0 2px 8px rgba(0,0,0,.1)}
+/* Podium */
+.podium{display:flex;align-items:flex-end;justify-content:center;gap:0;padding:4px 16px 30px;position:relative}
+.podium-item{display:flex;flex-direction:column;align-items:center;width:110px;position:relative}
+.podium-item.first{margin-bottom:16px}
+.podium-avatar{border-radius:50%;border:3px solid rgba(255,255,255,.8);position:relative;overflow:visible;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#ddd,#bbb)}
+.podium-item.first .podium-avatar{width:76px;height:76px;border-width:4px;border-color:#fff;box-shadow:0 4px 20px rgba(0,0,0,.15)}
+.podium-item.second .podium-avatar,.podium-item.third .podium-avatar{width:60px;height:60px}
+.podium-initials{font-size:20px;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.2)}
+.podium-item.first .podium-initials{font-size:26px}
+.podium-crown{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:22px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.2))}
+.podium-badge{position:absolute;bottom:-4px;right:-4px;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;border:2px solid #fff;z-index:2}
+.podium-item.first .podium-badge{background:linear-gradient(135deg,#FFD700,#FFA500)}
+.podium-item.second .podium-badge{background:linear-gradient(135deg,#C0C0C0,#A0A0A0)}
+.podium-item.third .podium-badge{background:linear-gradient(135deg,#CD7F32,#A0622E)}
+.podium-name{font-size:13px;font-weight:600;color:#fff;margin-top:8px;text-shadow:0 1px 2px rgba(0,0,0,.1);white-space:nowrap}
+.podium-pct{font-size:13px;font-weight:700;margin-top:2px;padding:2px 8px;border-radius:6px;background:rgba(255,255,255,.2);backdrop-filter:blur(4px)}
+.podium-pct.up{color:#d4fce4}
+/* White card */
+.lb-card{background:var(--white);border-radius:24px 24px 0 0;margin-top:-16px;position:relative;z-index:5;flex:1;display:flex;flex-direction:column;min-height:0}
+.lb-card-header{display:flex;justify-content:space-between;align-items:center;padding:18px 20px 6px}
+.lb-card-title{font-size:17px;font-weight:700;color:var(--text)}
+.lb-card-subtitle{font-size:12px;color:var(--text-3);font-weight:500;margin-left:6px}
+.lb-card-link{font-size:14px;font-weight:600;color:var(--gold-2);cursor:pointer}
+.lb-count{padding:0 20px 10px;font-size:13px;color:var(--text-3)}
+.lb-count strong{color:var(--text);font-weight:700}
+/* List */
+.lb-list{flex:1;overflow-y:auto;padding:0 12px 140px;-webkit-overflow-scrolling:touch}
+.lb-list::-webkit-scrollbar{display:none}
+.lb-row{display:flex;align-items:center;gap:12px;padding:11px 8px;border-radius:var(--radius-sm);transition:background .15s}
+.lb-row:active{background:rgba(0,0,0,.03)}
+.lb-pos{width:24px;text-align:center;font-size:14px;font-weight:700;color:var(--text-2);flex-shrink:0}
+.lb-avatar{width:40px;height:40px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff}
+.lb-info{flex:1;min-width:0}
+.lb-name{font-size:15px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lb-market{display:inline-block;padding:2px 7px;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+.lb-market.crypto{background:#FEF3C7;color:#92400E}
+.lb-market.moex{background:#DBEAFE;color:#1E40AF}
+.lb-market.forex{background:#D1FAE5;color:#065F46}
+.lb-pct{font-size:15px;font-weight:700;flex-shrink:0}
+.lb-pct.up{color:var(--green)}
+.lb-pct.down{color:var(--red)}
+/* Fixed bottom for leaderboard */
+.lb-bottom{position:absolute;bottom:0;left:0;right:0;z-index:20;background:var(--white);border-top:1px solid var(--border);padding:10px 20px 0}
+.lb-bottom .btn-gold{margin-bottom:8px}
+.bottom-tabs{display:flex;justify-content:space-around;padding:4px 0 22px}
+.bottom-tab{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:600;color:var(--text-3);cursor:pointer;padding:4px 16px;border:none;background:none;font-family:var(--font);transition:color .2s}
+.bottom-tab.active{color:var(--gold-2)}
+.bottom-tab svg{width:22px;height:22px}
+/* ============ SCREEN 8 ============ */
+.deposit-prev{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:var(--white);border-radius:var(--radius-sm);margin-bottom:16px;border:1px solid var(--border)}
+.deposit-prev-label{font-size:13px;color:var(--text-2)}
+.deposit-prev-val{font-size:16px;font-weight:700;color:var(--text)}
+.deposit-change{text-align:center;padding:8px 0 4px;font-size:15px;font-weight:600}
+.deposit-date{text-align:center;font-size:14px;color:var(--text-2);margin-bottom:20px}
+/* Modal */
+.modal-overlay{position:absolute;inset:0;background:rgba(0,0,0,.5);z-index:50;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .3s}
+.modal-overlay.show{opacity:1;pointer-events:auto}
+.modal-sheet{background:var(--white);border-radius:20px 20px 0 0;width:100%;padding:24px 20px 36px;transform:translateY(100%);transition:transform .35s cubic-bezier(.4,0,.2,1)}
+.modal-overlay.show .modal-sheet{transform:translateY(0)}
+.modal-title{font-size:18px;font-weight:700;color:var(--text);text-align:center;margin-bottom:4px}
+.modal-sub{font-size:14px;color:var(--text-2);text-align:center;margin-bottom:20px}
+.modal-btns{display:flex;gap:10px}
+.modal-btns .btn{flex:1}
+/* ============ SCREEN 9 ============ */
+.stats-row{display:flex;gap:8px;padding:0 20px;margin-bottom:16px}
+.stat-card{flex:1;background:var(--white);border-radius:var(--radius-sm);padding:12px 10px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.stat-val{font-size:18px;font-weight:800;color:var(--text)}
+.stat-val.green{color:var(--green)}
+.stat-label{font-size:11px;color:var(--text-3);margin-top:2px;text-transform:uppercase;letter-spacing:.3px}
+.chart-area{margin:0 20px 16px;background:var(--white);border-radius:var(--radius);padding:16px 16px 12px;box-shadow:0 1px 4px rgba(0,0,0,.05);position:relative;-webkit-user-select:none;user-select:none}
+.chart-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px}
+.chart-subtitle{font-size:12px;color:var(--text-3);margin-bottom:10px}
+.chart-svg{display:block;touch-action:none;cursor:crosshair}
+/* Tooltip */
+.chart-tooltip{position:absolute;background:var(--text);color:#fff;padding:10px 14px;border-radius:12px;font-size:12px;pointer-events:none;opacity:0;transition:opacity .2s,transform .15s;transform:translateY(4px);z-index:10;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.2);min-width:130px}
+.chart-tooltip.show{opacity:1;transform:translateY(0)}
+.chart-tooltip::after{content:'';position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:var(--text);border-bottom:none}
+.chart-tooltip .tt-date{font-weight:600;font-size:13px;margin-bottom:4px}
+.chart-tooltip .tt-val{font-size:15px;font-weight:800;margin-bottom:2px}
+.chart-tooltip .tt-chg{font-size:12px;font-weight:600}
+.chart-tooltip .tt-chg.up{color:#6EE7B7}
+.chart-tooltip .tt-chg.down{color:#FCA5A5}
+/* Vertical indicator line */
+.chart-vline{stroke:var(--gold-2);stroke-width:1;stroke-dasharray:4 3;opacity:0;transition:opacity .2s}
+.chart-vline.show{opacity:1}
+/* Active dot pulse */
+.chart-dot-active{opacity:0;transition:opacity .15s}
+.chart-dot-active.show{opacity:1}
+/* Scrub hint */
+.chart-hint{text-align:center;font-size:11px;color:var(--text-3);padding-top:6px;opacity:1;transition:opacity .3s}
+.chart-hint.hidden{opacity:0}
+.history-section{padding:0 20px 140px}
+.history-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px}
+.history-row{display:flex;align-items:center;padding:12px 0;border-bottom:1px solid var(--border)}
+.history-row:last-child{border-bottom:none}
+.history-date{font-size:14px;color:var(--text-2);width:56px;flex-shrink:0}
+.history-val{flex:1;font-size:15px;font-weight:600;color:var(--text)}
+.history-chg{font-size:14px;font-weight:700;flex-shrink:0}
+.history-chg.up{color:var(--green)}
+.history-chg.down{color:var(--red)}
+/* Welcome */
+.welcome-bg{background:var(--gold-grad-h);flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px;text-align:center;position:relative;overflow:hidden}
+.welcome-bg::before{content:'';position:absolute;top:-60px;right:-60px;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,.08)}
+.welcome-bg::after{content:'';position:absolute;bottom:-40px;left:-40px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.06)}
+.welcome-trophy{font-size:72px;margin-bottom:16px;filter:drop-shadow(0 4px 12px rgba(0,0,0,.15));animation:float 3s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.welcome-title{font-size:30px;font-weight:800;color:#fff;letter-spacing:-.5px;line-height:1.2;text-shadow:0 2px 8px rgba(0,0,0,.1)}
+.welcome-sub{font-size:15px;color:rgba(255,255,255,.85);margin-top:12px;line-height:1.5;max-width:300px}
+.welcome-btns{width:100%;max-width:300px;margin-top:32px}
+.welcome-btns .btn-gold{background:rgba(255,255,255,.95);color:var(--gold-3);box-shadow:0 4px 20px rgba(0,0,0,.15)}
+.welcome-link{margin-top:16px;font-size:14px;color:rgba(255,255,255,.75);text-decoration:underline;cursor:pointer}
+/* Anim helpers */
+.fade-up{animation:fadeUp .5s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.delay-1{animation-delay:.1s}.delay-2{animation-delay:.2s}.delay-3{animation-delay:.3s}.delay-4{animation-delay:.4s}
+/* Avatar colors */
+.av-1{background:linear-gradient(135deg,#667eea,#764ba2)}
+.av-2{background:linear-gradient(135deg,#f093fb,#f5576c)}
+.av-3{background:linear-gradient(135deg,#4facfe,#00f2fe)}
+.av-4{background:linear-gradient(135deg,#43e97b,#38f9d7)}
+.av-5{background:linear-gradient(135deg,#fa709a,#fee140)}
+.av-6{background:linear-gradient(135deg,#a18cd1,#fbc2eb)}
+.av-7{background:linear-gradient(135deg,#fccb90,#d57eeb)}
+.av-8{background:linear-gradient(135deg,#e0c3fc,#8ec5fc)}
+.av-9{background:linear-gradient(135deg,#f5576c,#ff6a00)}
+.av-10{background:linear-gradient(135deg,#667eea,#f093fb)}
+.av-11{background:linear-gradient(135deg,#c471f5,#fa71cd)}
+/* Screen 9 bottom fix */
+.s9-wrap{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.s9-wrap::-webkit-scrollbar{display:none}
+</style>
+</head>
+<body>
+<div class="phone" id="app">
+
+<!-- ==================== SCREEN 1: WELCOME ==================== -->
+<div class="screen active" id="s1">
+<div class="welcome-bg">
+  <div class="welcome-trophy fade-up">🏆</div>
+  <div class="welcome-title fade-up delay-1">Торговый<br>Чемпионат</div>
+  <div class="welcome-sub fade-up delay-2">Покажи свои результаты в трейдинге. Соревнуйся с лучшими трейдерами и выиграй главный приз.</div>
+  <div class="welcome-btns fade-up delay-3">
+    <button class="btn btn-gold" onclick="goTo(2)">Зарегистрироваться</button>
+  </div>
+  <div class="welcome-link fade-up delay-4">Подробнее о правилах</div>
+</div>
+</div>
+
+<!-- ==================== SCREEN 2: PROFILE ==================== -->
+<div class="screen" id="s2">
+<button class="back-btn dark" onclick="goTo(1)"><svg viewBox="0 0 24 24" fill="none" stroke="#1A1A2E" stroke-width="2.5" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+<div class="reg-header"><div class="reg-title">Ваш профиль</div></div>
+<div class="steps"><div class="step-dot active"></div><div class="step-dot"></div><div class="step-dot"></div><div class="step-dot"></div><div class="step-dot"></div></div>
+<div class="screen-pad" style="padding-top:16px;flex:1">
+  <div class="avatar-edit">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    <div class="avatar-edit-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
+  </div>
+  <div class="input-group">
+    <label class="input-label">Отображаемое имя</label>
+    <input class="input-field" id="regName" value="Александр Кольцов" placeholder="Ваше имя">
+  </div>
+  <div class="check-row" id="chkPd" onclick="toggleCheck('chkPd')">
+    <div class="check-box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg></div>
+    <div class="check-text">Я согласен на <a href="#" onclick="event.stopPropagation()">обработку персональных данных</a></div>
+  </div>
+  <div class="check-row" id="chkRules" onclick="toggleCheck('chkRules')">
+    <div class="check-box"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg></div>
+    <div class="check-text">Я принимаю <a href="#" onclick="event.stopPropagation()">правила конкурса</a></div>
+  </div>
+</div>
+<div class="btn-area"><button class="btn btn-gold" id="btnS2" disabled onclick="goTo(3)">Далее</button></div>
+</div>
+
+<!-- ==================== SCREEN 3: MARKET ==================== -->
+<div class="screen" id="s3">
+<button class="back-btn dark" onclick="goTo(2)"><svg viewBox="0 0 24 24" fill="none" stroke="#1A1A2E" stroke-width="2.5" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+<div class="reg-header"><div class="reg-title">Выберите рынок</div></div>
+<div class="steps"><div class="step-dot done"></div><div class="step-dot active"></div><div class="step-dot"></div><div class="step-dot"></div><div class="step-dot"></div></div>
+<div class="screen-pad" style="padding-top:12px;flex:1">
+  <div class="warning"><div class="warning-icon">⚠️</div><div class="warning-text">Внимание: выбор рынка нельзя изменить после регистрации</div></div>
+  <div class="radio-card" onclick="selectMarket(this,'crypto')">
+    <div class="radio-icon" style="background:#FEF3C7">₿</div>
+    <div><div class="radio-name">Криптовалюта</div><div class="radio-desc">BTC, ETH и другие</div></div>
+    <div class="radio-dot"></div>
+  </div>
+  <div class="radio-card" onclick="selectMarket(this,'moex')">
+    <div class="radio-icon" style="background:#DBEAFE">🇷🇺</div>
+    <div><div class="radio-name">ММВБ</div><div class="radio-desc">Московская биржа</div></div>
+    <div class="radio-dot"></div>
+  </div>
+  <div class="radio-card" onclick="selectMarket(this,'forex')">
+    <div class="radio-icon" style="background:#D1FAE5">🌐</div>
+    <div><div class="radio-name">Форекс</div><div class="radio-desc">Валютные пары</div></div>
+    <div class="radio-dot"></div>
+  </div>
+</div>
+<div class="btn-area"><button class="btn btn-gold" id="btnS3" disabled onclick="goTo(4)">Далее</button></div>
+</div>
+
+<!-- ==================== SCREEN 4: INSTRUMENTS ==================== -->
+<div class="screen" id="s4">
+<button class="back-btn dark" onclick="goTo(3)"><svg viewBox="0 0 24 24" fill="none" stroke="#1A1A2E" stroke-width="2.5" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+<div class="reg-header"><div class="reg-title">Чем вы планируете торговать в рамках турнира?</div><div class="reg-sub">Если всеми инструментами — выбирайте все. Мультивыбор.</div></div>
+<div class="steps"><div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot active"></div><div class="step-dot"></div><div class="step-dot"></div></div>
+<div class="screen-pad" style="padding-top:12px;flex:1">
+  <div class="chips" id="instrumentChips">
+    <div class="chip" onclick="toggleChip(this)">Спот</div>
+    <div class="chip" onclick="toggleChip(this)">Фьючерсы</div>
+    <div class="chip" onclick="toggleChip(this)">Опционы</div>
+  </div>
+</div>
+<div class="btn-area"><button class="btn btn-gold" id="btnS4" disabled onclick="goTo(5)">Далее</button></div>
+</div>
+
+<!-- ==================== SCREEN 5: DEPOSIT ==================== -->
+<div class="screen" id="s5">
+<button class="back-btn dark" onclick="goTo(4)"><svg viewBox="0 0 24 24" fill="none" stroke="#1A1A2E" stroke-width="2.5" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+<div class="reg-header"><div class="reg-title">Начальный депозит</div><div class="reg-sub">Укажите реальный размер вашего торгового счёта</div></div>
+<div class="steps"><div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot active"></div><div class="step-dot"></div></div>
+<div class="screen-pad" style="padding-top:24px;flex:1">
+  <div class="input-wrap">
+    <input class="input-field large" id="initDeposit" type="text" inputmode="decimal" placeholder="0" value="5000" oninput="validateDeposit()" onkeydown="return filterNumericKey(event)">
+    <div class="input-suffix" style="font-size:20px;font-weight:700;color:#9CA3AF">USDT</div>
+  </div>
+  <div class="input-error" id="errInitDeposit"></div>
+</div>
+<div class="btn-area"><button class="btn btn-gold" id="btnS5" onclick="goTo(6)">Далее</button></div>
+</div>
+
+<!-- ==================== SCREEN 6: REVIEW ==================== -->
+<div class="screen" id="s6">
+<button class="back-btn dark" onclick="goTo(5)"><svg viewBox="0 0 24 24" fill="none" stroke="#1A1A2E" stroke-width="2.5" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+<div class="reg-header"><div class="reg-title">Проверьте данные</div></div>
+<div class="steps"><div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot active"></div></div>
+<div class="screen-pad" style="padding-top:16px;flex:1">
+  <div class="review-card">
+    <div style="display:flex;align-items:center;gap:14px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+      <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:#fff">АК</div>
+      <div><div style="font-size:17px;font-weight:700;color:var(--text)" id="rvName">Александр Кольцов</div></div>
+    </div>
+    <div class="review-row">
+      <div class="review-label">Рынок</div>
+      <div class="review-value" id="rvMarket">Криптовалюта</div>
+    </div>
+    <div class="review-row">
+      <div class="review-label">Инструменты</div>
+      <div class="review-chips" id="rvInstr"><span class="review-chip">Спот</span><span class="review-chip">Фьючерсы</span></div>
+    </div>
+    <div class="review-row">
+      <div class="review-label">Депозит</div>
+      <div class="review-value" id="rvDeposit">5,000 USDT</div>
+    </div>
+  </div>
+</div>
+<div class="btn-area" style="display:flex;gap:10px">
+  <button class="btn btn-outline" style="flex:1" onclick="goTo(2)">Исправить</button>
+  <button class="btn btn-gold" style="flex:1.5" onclick="goTo(7)">Подтвердить</button>
+</div>
+</div>
+
+<!-- ==================== SCREEN 7: LEADERBOARD ==================== -->
+<div class="screen" id="s7" style="overflow:hidden">
+<div style="flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative">
+  <div class="lb-header">
+    <div class="lb-title">Лидерборд</div>
+    <div class="period-tabs">
+      <button class="period-tab" onclick="setPeriod(this)">День</button>
+      <button class="period-tab active" onclick="setPeriod(this)">Неделя</button>
+      <button class="period-tab" onclick="setPeriod(this)">Месяц</button>
+    </div>
+    <!-- Podium -->
+    <div class="podium">
+      <div class="podium-item second">
+        <div class="podium-avatar av-2">
+          <div class="podium-badge">2</div>
+          <span class="podium-initials">ДК</span>
+        </div>
+        <div class="podium-name">Дмитрий К.</div>
+        <div class="podium-pct up">+28.1%</div>
+      </div>
+      <div class="podium-item first">
+        <div class="podium-avatar av-1">
+          <div class="podium-crown">👑</div>
+          <div class="podium-badge">1</div>
+          <span class="podium-initials">АК</span>
+        </div>
+        <div class="podium-name">Александр К.</div>
+        <div class="podium-pct up">+32.5%</div>
+      </div>
+      <div class="podium-item third">
+        <div class="podium-avatar av-3">
+          <div class="podium-badge">3</div>
+          <span class="podium-initials">ЕВ</span>
+        </div>
+        <div class="podium-name">Елена В.</div>
+        <div class="podium-pct up">+21.7%</div>
+      </div>
+    </div>
+  </div>
+  <!-- White card list -->
+  <div class="lb-card">
+    <div class="lb-card-header">
+      <div><span class="lb-card-title">Лидерборд</span><span class="lb-card-subtitle">На этой неделе</span></div>
+      <span class="lb-card-link">Все</span>
+    </div>
+    <div class="lb-count"><strong>247</strong> участников</div>
+    <div class="lb-list" id="lbList">
+      <!-- rows injected by JS -->
+    </div>
+  </div>
+  <!-- Fixed bottom -->
+  <div class="lb-bottom">
+    <button class="btn btn-gold" id="btnDeposit" onclick="goTo(8)">Внести данные</button>
+    <div class="bottom-tabs">
+      <button class="bottom-tab active" onclick="goTo(7)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+        Лидерборд
+      </button>
+      <button class="bottom-tab" onclick="goTo(9)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        История
+      </button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ==================== SCREEN 8: UPDATE DEPOSIT ==================== -->
+<div class="screen" id="s8">
+<button class="back-btn dark" onclick="goTo(7)"><svg viewBox="0 0 24 24" fill="none" stroke="#1A1A2E" stroke-width="2.5" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg></button>
+<div class="reg-header"><div class="reg-title">Обновите ваш депозит</div></div>
+<div class="deposit-date" id="depositDate">25 февраля 2026</div>
+<div class="screen-pad" style="flex:1">
+  <div class="deposit-prev">
+    <div class="deposit-prev-label">Предыдущий депозит</div>
+    <div class="deposit-prev-val">5,230.50 USDT</div>
+  </div>
+  <div class="input-group">
+    <label class="input-label">Текущий депозит</label>
+    <div class="input-wrap">
+      <input class="input-field large" id="curDeposit" type="text" inputmode="decimal" placeholder="0" oninput="calcChange()" onkeydown="return filterNumericKey(event)">
+      <div class="input-suffix" style="font-size:20px;font-weight:700">USDT</div>
+    </div>
+    <div class="input-error" id="errCurDeposit"></div>
+  </div>
+  <div class="deposit-change" id="depositChange" style="color:var(--text-3)">Введите сумму</div>
+</div>
+<div class="btn-area"><button class="btn btn-gold" onclick="showModal()">Сохранить</button></div>
+<!-- Modal -->
+<div class="modal-overlay" id="depositModal">
+  <div class="modal-sheet">
+    <div class="modal-title">Подтверждение</div>
+    <div class="modal-sub" id="modalText">Сохранить депозит <strong>0 USDT</strong>?</div>
+    <div class="modal-btns">
+      <button class="btn btn-outline" onclick="hideModal()">Отмена</button>
+      <button class="btn btn-gold" onclick="confirmDeposit()">Подтвердить</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ==================== SCREEN 9: HISTORY ==================== -->
+<div class="screen" id="s9" style="overflow:hidden">
+<div class="s9-wrap">
+<div class="reg-header" style="padding-top:48px"><div class="reg-title">История и статистика</div></div>
+<div class="stats-row">
+  <div class="stat-card"><div class="stat-val">23</div><div class="stat-label">Дней</div></div>
+  <div class="stat-card"><div class="stat-val green">+32.5%</div><div class="stat-label">PnL</div></div>
+  <div class="stat-card"><div class="stat-val">5,000</div><div class="stat-label">Нач. USDT</div></div>
+</div>
+<!-- Interactive Chart -->
+<div class="chart-area" id="chartArea">
+  <div class="chart-title">Динамика депозита</div>
+  <div class="chart-subtitle">Тапните по точке для деталей</div>
+  <div style="position:relative">
+    <svg id="chartSvg" class="chart-svg" viewBox="0 0 300 160" width="100%" height="180" preserveAspectRatio="xMidYMid meet"></svg>
+    <div class="chart-tooltip" id="chartTooltip"></div>
+  </div>
+  <div class="chart-hint" id="chartHint">Проведите пальцем по графику</div>
+</div>
+<div class="history-section">
+  <div class="history-title">История операций</div>
+  <div id="historyList"></div>
+</div>
+</div>
+<!-- Fixed bottom tabs -->
+<div class="lb-bottom" style="position:absolute;bottom:0;left:0;right:0">
+  <div class="bottom-tabs" style="padding-top:4px">
+    <button class="bottom-tab" onclick="goTo(7)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg>
+      Лидерборд
+    </button>
+    <button class="bottom-tab active" onclick="goTo(9)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+      История
+    </button>
+  </div>
+</div>
+</div>
+
+</div><!-- /phone -->
+
+<script>
+// State
+let currentScreen = 1;
+let selectedMarket = null;
+let selectedInstruments = [];
+
+// Navigate
+function goTo(n) {
+  const cur = document.getElementById('s' + currentScreen);
+  const next = document.getElementById('s' + n);
+  if (!cur || !next || n === currentScreen) return;
+
+  const forward = n > currentScreen || (currentScreen <= 6 && n === 7);
+  cur.classList.remove('active');
+  cur.classList.add(forward ? 'slide-left' : '');
+  cur.style.transform = forward ? 'translateX(-40px)' : 'translateX(40px)';
+  cur.style.opacity = '0';
+  cur.style.pointerEvents = 'none';
+
+  next.style.transform = forward ? 'translateX(40px)' : 'translateX(-40px)';
+  next.style.opacity = '0';
+
+  requestAnimationFrame(() => {
+    next.classList.add('active');
+    next.style.transform = 'translateX(0)';
+    next.style.opacity = '1';
+    next.style.pointerEvents = 'auto';
+  });
+
+  setTimeout(() => { cur.classList.remove('slide-left'); }, 400);
+  currentScreen = n;
+
+  if (n === 6) updateReview();
+}
+
+// Checkboxes
+function toggleCheck(id) {
+  document.getElementById(id).classList.toggle('checked');
+  validateS2();
+}
+
+function validateS2() {
+  const pd = document.getElementById('chkPd').classList.contains('checked');
+  const rules = document.getElementById('chkRules').classList.contains('checked');
+  const name = document.getElementById('regName').value.trim().length > 0;
+  document.getElementById('btnS2').disabled = !(pd && rules && name);
+}
+
+// Market
+function selectMarket(el, market) {
+  document.querySelectorAll('.radio-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedMarket = market;
+  document.getElementById('btnS3').disabled = false;
+}
+
+// Chips
+function toggleChip(el) {
+  el.classList.toggle('active');
+  const active = document.querySelectorAll('#instrumentChips .chip.active');
+  selectedInstruments = Array.from(active).map(c => c.textContent);
+  document.getElementById('btnS4').disabled = active.length === 0;
+}
+
+// Numeric input filter — blocks non-numeric keys
+function filterNumericKey(e) {
+  // Allow: backspace, delete, tab, escape, enter, arrows, home, end
+  if ([8,9,13,27,46,35,36,37,38,39,40].includes(e.keyCode)) return true;
+  // Allow Ctrl/Cmd+A/C/V/X
+  if ((e.ctrlKey || e.metaKey) && [65,67,86,88].includes(e.keyCode)) return true;
+  // Allow: 0-9, numpad 0-9
+  if ((e.keyCode >= 48 && e.keyCode <= 57) || (e.keyCode >= 96 && e.keyCode <= 105)) return true;
+  // Allow: period, comma (decimal separator)
+  if (e.keyCode === 190 || e.keyCode === 188 || e.keyCode === 110) {
+    // Only one decimal point allowed
+    if (e.target.value.includes('.') || e.target.value.includes(',')) { e.preventDefault(); return false; }
+    return true;
+  }
+  e.preventDefault();
+  return false;
+}
+
+// Sanitize pasted/typed value — strip non-numeric chars on input
+function sanitizeNumericInput(input, errEl) {
+  let raw = input.value;
+  // Replace comma with period
+  raw = raw.replace(',', '.');
+  // Strip anything that's not digit or single period
+  const cleaned = raw.replace(/[^\d.]/g, '');
+  // Ensure only one decimal point
+  const parts = cleaned.split('.');
+  const sanitized = parts.length > 2 ? parts[0] + '.' + parts.slice(1).join('') : cleaned;
+
+  if (raw !== sanitized) {
+    input.value = sanitized;
+    input.classList.add('error');
+    if (errEl) errEl.textContent = 'Только цифры и десятичная точка';
+    setTimeout(() => {
+      input.classList.remove('error');
+      if (errEl) errEl.textContent = '';
+    }, 2000);
+  } else if (sanitized && isNaN(parseFloat(sanitized))) {
+    input.classList.add('error');
+    if (errEl) errEl.textContent = 'Введите корректное число';
+  } else {
+    input.classList.remove('error');
+    if (errEl) errEl.textContent = '';
+  }
+
+  return parseFloat(sanitized) || 0;
+}
+
+// Deposit validation
+function validateDeposit() {
+  const input = document.getElementById('initDeposit');
+  const errEl = document.getElementById('errInitDeposit');
+  const v = sanitizeNumericInput(input, errEl);
+  document.getElementById('btnS5').disabled = !(v >= 1);
+}
+
+// Review
+function updateReview() {
+  const name = document.getElementById('regName').value || 'Александр Кольцов';
+  document.getElementById('rvName').textContent = name;
+
+  const markets = { crypto: 'Криптовалюта', moex: 'ММВБ', forex: 'Форекс' };
+  document.getElementById('rvMarket').textContent = markets[selectedMarket] || 'Криптовалюта';
+
+  const instr = selectedInstruments.length ? selectedInstruments : ['Спот', 'Фьючерсы'];
+  document.getElementById('rvInstr').innerHTML = instr.map(i => '<span class="review-chip">' + i + '</span>').join('');
+
+  const dep = document.getElementById('initDeposit').value || '5000';
+  const currencies = { crypto: 'USDT', moex: 'RUB', forex: 'USD' };
+  const cur = currencies[selectedMarket] || 'USDT';
+  document.getElementById('rvDeposit').textContent = Number(dep).toLocaleString('ru-RU') + ' ' + cur;
+}
+
+// Period tabs
+function setPeriod(el) {
+  document.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  const labels = { 'День': 'Сегодня', 'Неделя': 'На этой неделе', 'Месяц': 'За месяц' };
+  document.querySelector('.lb-card-subtitle').textContent = labels[el.textContent] || '';
+}
+
+// Deposit update
+function calcChange() {
+  const input = document.getElementById('curDeposit');
+  const errEl = document.getElementById('errCurDeposit');
+  const v = sanitizeNumericInput(input, errEl);
+  const prev = 5230.50;
+  const el = document.getElementById('depositChange');
+  if (v === 0) { el.textContent = 'Введите сумму'; el.style.color = 'var(--text-3)'; return; }
+  const pct = ((v - prev) / prev * 100).toFixed(1);
+  const diff = (v - prev).toFixed(2);
+  if (v > prev) {
+    el.innerHTML = '<span style="color:var(--green)">+' + pct + '% (+' + Number(diff).toLocaleString('ru-RU') + ' USDT)</span>';
+  } else if (v < prev) {
+    el.innerHTML = '<span style="color:var(--red)">' + pct + '% (' + Number(diff).toLocaleString('ru-RU') + ' USDT)</span>';
+  } else {
+    el.textContent = '0.0%'; el.style.color = 'var(--text-3)';
+  }
+}
+
+function showModal() {
+  const v = document.getElementById('curDeposit').value || '0';
+  document.getElementById('modalText').innerHTML = 'Сохранить депозит <strong>' + Number(v).toLocaleString('ru-RU') + ' USDT</strong>?';
+  document.getElementById('depositModal').classList.add('show');
+}
+
+function hideModal() {
+  document.getElementById('depositModal').classList.remove('show');
+}
+
+function confirmDeposit() {
+  hideModal();
+  setTimeout(() => goTo(7), 300);
+  // Disable button after submission
+  const btn = document.getElementById('btnDeposit');
+  btn.disabled = true;
+  btn.textContent = 'Данные на сегодня внесены';
+  btn.style.background = '#D1D5DB';
+  btn.style.color = '#9CA3AF';
+  btn.style.boxShadow = 'none';
+}
+
+// Populate leaderboard
+const lbData = [
+  { pos: 4, name: 'Мария С.', init: 'МС', market: 'crypto', pct: 19.3, av: 4 },
+  { pos: 5, name: 'Дмитрий К.', init: 'ДК', market: 'moex', pct: 15.8, av: 5 },
+  { pos: 6, name: 'Елена В.', init: 'ЕВ', market: 'forex', pct: 12.4, av: 6 },
+  { pos: 7, name: 'Артём Н.', init: 'АН', market: 'crypto', pct: 10.1, av: 7 },
+  { pos: 8, name: 'Ольга П.', init: 'ОП', market: 'moex', pct: 8.7, av: 8 },
+  { pos: 9, name: 'Сергей М.', init: 'СМ', market: 'crypto', pct: 5.2, av: 9 },
+  { pos: 10, name: 'Наталья Д.', init: 'НД', market: 'forex', pct: 3.1, av: 10 },
+  { pos: 11, name: 'Игорь Л.', init: 'ИЛ', market: 'moex', pct: -1.4, av: 11 },
+];
+
+const marketLabels = { crypto: 'Crypto', moex: 'MOEX', forex: 'Forex' };
+
+function renderLeaderboard() {
+  const list = document.getElementById('lbList');
+  list.innerHTML = lbData.map(d => `
+    <div class="lb-row">
+      <div class="lb-pos">${d.pos}</div>
+      <div class="lb-avatar av-${d.av}"><span style="font-size:13px">${d.init}</span></div>
+      <div class="lb-info">
+        <div class="lb-name">${d.name}</div>
+        <span class="lb-market ${d.market}">${marketLabels[d.market]}</span>
+      </div>
+      <div class="lb-pct ${d.pct >= 0 ? 'up' : 'down'}">${d.pct >= 0 ? '+' : ''}${d.pct.toFixed(1)}%</div>
+    </div>
+  `).join('');
+}
+
+// Populate history
+const historyData = [
+  { date: '25.02', val: '6,625', chg: 2.1 },
+  { date: '24.02', val: '6,490', chg: -0.8 },
+  { date: '23.02', val: '6,540', chg: 1.5 },
+  { date: '22.02', val: '6,445', chg: 0.9 },
+  { date: '21.02', val: '6,388', chg: 2.3 },
+  { date: '20.02', val: '6,245', chg: -1.2 },
+  { date: '19.02', val: '6,320', chg: 1.8 },
+];
+
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  list.innerHTML = historyData.map(d => `
+    <div class="history-row">
+      <div class="history-date">${d.date}</div>
+      <div class="history-val">${d.val} USDT</div>
+      <div class="history-chg ${d.chg >= 0 ? 'up' : 'down'}">${d.chg >= 0 ? '+' : ''}${d.chg.toFixed(1)}%</div>
+    </div>
+  `).join('');
+}
+
+// ============ INTERACTIVE CHART ============
+const chartPoints = [
+  { date: '03.02', val: 5000, chg: 0 },
+  { date: '06.02', val: 5120, chg: 2.4 },
+  { date: '09.02', val: 5085, chg: -0.7 },
+  { date: '11.02', val: 5310, chg: 4.4 },
+  { date: '13.02', val: 5580, chg: 5.1 },
+  { date: '15.02', val: 5780, chg: 3.6 },
+  { date: '17.02', val: 5690, chg: -1.6 },
+  { date: '19.02', val: 6320, chg: 11.1 },
+  { date: '20.02', val: 6245, chg: -1.2 },
+  { date: '21.02', val: 6388, chg: 2.3 },
+  { date: '22.02', val: 6445, chg: 0.9 },
+  { date: '23.02', val: 6540, chg: 1.5 },
+  { date: '24.02', val: 6490, chg: -0.8 },
+  { date: '25.02', val: 6625, chg: 2.1 },
+];
+
+function buildChart() {
+  const svg = document.getElementById('chartSvg');
+  if (!svg) return;
+
+  const W = 300, H = 160;
+  const padTop = 20, padBot = 28, padL = 8, padR = 8;
+  const plotW = W - padL - padR;
+  const plotH = H - padTop - padBot;
+
+  const vals = chartPoints.map(p => p.val);
+  const minV = Math.min(...vals) * 0.98;
+  const maxV = Math.max(...vals) * 1.02;
+  const rangeV = maxV - minV || 1;
+
+  function px(i) { return padL + (i / (chartPoints.length - 1)) * plotW; }
+  function py(v) { return padTop + plotH - ((v - minV) / rangeV) * plotH; }
+
+  // Build path
+  const linePts = chartPoints.map((p, i) => `${px(i).toFixed(1)},${py(p.val).toFixed(1)}`);
+  const fillPts = [...linePts, `${px(chartPoints.length-1).toFixed(1)},${(H - padBot).toFixed(1)}`, `${px(0).toFixed(1)},${(H - padBot).toFixed(1)}`];
+
+  // Grid Y lines (3 lines)
+  let gridLines = '';
+  for (let i = 0; i < 3; i++) {
+    const y = padTop + (plotH / 3) * i + plotH / 6;
+    gridLines += `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W - padR}" y2="${y.toFixed(1)}" stroke="#E5E7EB" stroke-width="0.5"/>`;
+  }
+
+  // X labels (show ~5)
+  const labelIdxs = [0, 3, 7, 10, chartPoints.length - 1];
+  let labels = labelIdxs.map(i => {
+    const p = chartPoints[i];
+    if (!p) return '';
+    return `<text x="${px(i).toFixed(1)}" y="${H - 4}" font-size="9" fill="#9CA3AF" font-family="sans-serif" text-anchor="middle">${p.date}</text>`;
+  }).join('');
+
+  // Dots
+  let dots = chartPoints.map((p, i) => {
+    const cx = px(i).toFixed(1);
+    const cy = py(p.val).toFixed(1);
+    const color = p.chg >= 0 ? '#10B981' : '#EF4444';
+    const isLast = i === chartPoints.length - 1;
+    const r = isLast ? 5 : 3.5;
+    return `
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="${color}" stroke="${isLast ? '#fff' : 'none'}" stroke-width="${isLast ? 2 : 0}" class="chart-dot" data-idx="${i}" style="cursor:pointer;transition:r .15s"/>
+      <circle cx="${cx}" cy="${cy}" r="12" fill="${color}" opacity="0" class="chart-dot-active" id="dotPulse${i}"/>
+      <circle cx="${cx}" cy="${cy}" r="18" fill="transparent" class="chart-hit" data-idx="${i}" style="cursor:pointer"/>
+    `;
+  }).join('');
+
+  // Vertical line (hidden by default)
+  const vline = `<line id="chartVline" class="chart-vline" x1="0" y1="${padTop}" x2="0" y2="${H - padBot}"/>`;
+
+  svg.innerHTML = `
+    <defs>
+      <linearGradient id="cg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#10B981" stop-opacity=".22"/>
+        <stop offset="100%" stop-color="#10B981" stop-opacity=".02"/>
+      </linearGradient>
+    </defs>
+    ${gridLines}
+    <path d="M${fillPts.join(' L')}" fill="url(#cg)"/>
+    <path d="M${linePts.join(' L')}" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    ${vline}
+    ${dots}
+    ${labels}
+  `;
+
+  // Store coords for interaction
+  svg._coords = chartPoints.map((p, i) => ({ x: px(i), y: py(p.val), idx: i }));
+}
+
+let activeChartIdx = -1;
+
+function showChartTooltip(idx) {
+  if (idx === activeChartIdx) return;
+  activeChartIdx = idx;
+  const p = chartPoints[idx];
+  const svg = document.getElementById('chartSvg');
+  const coords = svg._coords[idx];
+  const tooltip = document.getElementById('chartTooltip');
+  const vline = document.getElementById('chartVline');
+  const hint = document.getElementById('chartHint');
+
+  // Position tooltip
+  const svgRect = svg.getBoundingClientRect();
+  const chartAreaRect = document.getElementById('chartArea').getBoundingClientRect();
+  const scaleX = svgRect.width / 300;
+  const scaleY = svgRect.height / 160;
+  const dotScreenX = svgRect.left + coords.x * scaleX - chartAreaRect.left;
+  const dotScreenY = svgRect.top + coords.y * scaleY - chartAreaRect.top;
+
+  // Tooltip content
+  const chgClass = p.chg >= 0 ? 'up' : 'down';
+  const chgSign = p.chg >= 0 ? '+' : '';
+  const totalChg = ((p.val - 5000) / 5000 * 100).toFixed(1);
+  const totalSign = totalChg >= 0 ? '+' : '';
+  tooltip.innerHTML = `
+    <div class="tt-date">${p.date}.2026</div>
+    <div class="tt-val">${p.val.toLocaleString('ru-RU')} USDT</div>
+    <div class="tt-chg ${chgClass}">${chgSign}${p.chg.toFixed(1)}% за день &nbsp;|&nbsp; ${totalSign}${totalChg}% всего</div>
+  `;
+
+  // Position: center above dot, clamp to container
+  const ttW = 170;
+  let left = dotScreenX - ttW / 2;
+  left = Math.max(4, Math.min(left, chartAreaRect.width - ttW - 4));
+  tooltip.style.left = left + 'px';
+  tooltip.style.top = (dotScreenY - 76) + 'px';
+  tooltip.classList.add('show');
+
+  // Vertical line
+  vline.setAttribute('x1', coords.x.toFixed(1));
+  vline.setAttribute('x2', coords.x.toFixed(1));
+  vline.classList.add('show');
+
+  // Pulse active dot
+  document.querySelectorAll('.chart-dot-active').forEach(el => el.classList.remove('show'));
+  const pulse = document.getElementById('dotPulse' + idx);
+  if (pulse) {
+    pulse.classList.add('show');
+    pulse.style.opacity = '0.2';
+  }
+
+  // Enlarge active dot, shrink others
+  document.querySelectorAll('.chart-dot').forEach(el => {
+    const i = parseInt(el.dataset.idx);
+    if (i === idx) el.setAttribute('r', '6');
+    else el.setAttribute('r', i === chartPoints.length - 1 && i !== idx ? '5' : '3.5');
+  });
+
+  // Hide hint
+  if (hint) hint.classList.add('hidden');
+
+  // Haptic feedback simulation (vibrate if available)
+  if (navigator.vibrate) navigator.vibrate(10);
+}
+
+function hideChartTooltip() {
+  activeChartIdx = -1;
+  const tooltip = document.getElementById('chartTooltip');
+  const vline = document.getElementById('chartVline');
+  if (tooltip) tooltip.classList.remove('show');
+  if (vline) vline.classList.remove('show');
+  document.querySelectorAll('.chart-dot-active').forEach(el => el.classList.remove('show'));
+  document.querySelectorAll('.chart-dot').forEach(el => {
+    const i = parseInt(el.dataset.idx);
+    el.setAttribute('r', i === chartPoints.length - 1 ? '5' : '3.5');
+  });
+}
+
+function findNearestPoint(clientX) {
+  const svg = document.getElementById('chartSvg');
+  if (!svg || !svg._coords) return -1;
+  const rect = svg.getBoundingClientRect();
+  const scaleX = 300 / rect.width;
+  const svgX = (clientX - rect.left) * scaleX;
+  let closest = -1, minDist = Infinity;
+  svg._coords.forEach((c, i) => {
+    const d = Math.abs(c.x - svgX);
+    if (d < minDist) { minDist = d; closest = i; }
+  });
+  return minDist < 30 ? closest : -1;
+}
+
+// Touch & mouse events on chart
+function initChartEvents() {
+  const svg = document.getElementById('chartSvg');
+  if (!svg) return;
+
+  // Click on dots
+  svg.addEventListener('click', (e) => {
+    const hit = e.target.closest('.chart-hit, .chart-dot');
+    if (hit && hit.dataset.idx !== undefined) {
+      showChartTooltip(parseInt(hit.dataset.idx));
+      return;
+    }
+    const idx = findNearestPoint(e.clientX);
+    if (idx >= 0) showChartTooltip(idx);
+    else hideChartTooltip();
+  });
+
+  // Touch scrub
+  let isScrubbing = false;
+  svg.addEventListener('touchstart', (e) => {
+    isScrubbing = true;
+    const touch = e.touches[0];
+    const idx = findNearestPoint(touch.clientX);
+    if (idx >= 0) {
+      e.preventDefault();
+      showChartTooltip(idx);
+    }
+  }, { passive: false });
+
+  svg.addEventListener('touchmove', (e) => {
+    if (!isScrubbing) return;
+    const touch = e.touches[0];
+    const idx = findNearestPoint(touch.clientX);
+    if (idx >= 0) {
+      e.preventDefault();
+      showChartTooltip(idx);
+    }
+  }, { passive: false });
+
+  svg.addEventListener('touchend', () => {
+    isScrubbing = false;
+    // Keep tooltip visible for 2s after release
+    setTimeout(() => {
+      if (!isScrubbing) hideChartTooltip();
+    }, 2000);
+  });
+
+  // Mouse scrub (desktop)
+  let isMouseDown = false;
+  svg.addEventListener('mousedown', (e) => {
+    isMouseDown = true;
+    const idx = findNearestPoint(e.clientX);
+    if (idx >= 0) showChartTooltip(idx);
+  });
+  svg.addEventListener('mousemove', (e) => {
+    if (!isMouseDown) return;
+    const idx = findNearestPoint(e.clientX);
+    if (idx >= 0) showChartTooltip(idx);
+  });
+  svg.addEventListener('mouseup', () => { isMouseDown = false; });
+  svg.addEventListener('mouseleave', () => {
+    if (isMouseDown) { isMouseDown = false; }
+  });
+}
+
+// ============ INIT ============
+renderLeaderboard();
+renderHistory();
+buildChart();
+initChartEvents();
+
+// Set deposit date
+const now = new Date();
+const months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+document.getElementById('depositDate').textContent = now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
+
+// Listen for name changes
+document.getElementById('regName').addEventListener('input', validateS2);
+</script>
+</body>
+</html>

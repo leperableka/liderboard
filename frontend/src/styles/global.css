@@ -1,0 +1,97 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --gold-1: #FFD700;
+  --gold-2: #F5A623;
+  --gold-3: #E8960F;
+  --gold-4: #D4850A;
+  --gold-grad: linear-gradient(145deg, #FFD700 0%, #F5A623 40%, #E8960F 100%);
+  --gold-grad-h: linear-gradient(180deg, #FFDF42 0%, #F5A623 50%, #E09010 100%);
+
+  --bg: #F7F7F8;
+  --white: #FFFFFF;
+  --card: #FFFFFF;
+  --text: #1A1A2E;
+  --text-2: #6B7280;
+  --text-3: #9CA3AF;
+
+  --green: #10B981;
+  --green-bg: rgba(16, 185, 129, 0.1);
+  --red: #EF4444;
+  --red-bg: rgba(239, 68, 68, 0.1);
+
+  --border: #E5E7EB;
+  --shadow: 0 2px 16px rgba(0, 0, 0, 0.08);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --radius-xs: 8px;
+
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+}
+
+/* Telegram dark theme adaptation */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: var(--tg-theme-bg-color, #1a1a2e);
+    --white: var(--tg-theme-secondary-bg-color, #242435);
+    --card: var(--tg-theme-secondary-bg-color, #242435);
+    --text: var(--tg-theme-text-color, #ffffff);
+    --text-2: var(--tg-theme-hint-color, #aaaaaa);
+    --text-3: #6b7280;
+    --border: rgba(255, 255, 255, 0.1);
+  }
+}
+
+html, body {
+  font-family: var(--font);
+  background: var(--bg);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior: none;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Scrollbar hide */
+* {
+  scrollbar-width: none;
+}
+*::-webkit-scrollbar {
+  display: none;
+}
+
+/* Skeleton animation */
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Float animation for welcome trophy */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Tap highlight */
+button, a, [role="button"] {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Safe area for iOS */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
