@@ -249,7 +249,14 @@ export const Profile: React.FC<ProfileProps> = ({
                   transition: 'all 0.2s',
                 }}
               >
-                {saving ? 'Сохранение...' : 'Сохранить имя'}
+                {saving
+                  ? 'Сохранение...'
+                  : nameChanged && avatarChanged
+                    ? 'Сохранить изменения'
+                    : avatarChanged
+                      ? 'Сохранить фото'
+                      : 'Сохранить имя'
+                }
               </button>
             </div>
           )}
@@ -264,7 +271,7 @@ export const Profile: React.FC<ProfileProps> = ({
                 fontWeight: 600,
               }}
             >
-              ✓ Имя сохранено
+              ✓ Изменения сохранены
             </p>
           )}
 

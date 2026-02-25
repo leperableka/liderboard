@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import type { Period, Screen, UserStatus } from '../types';
 import { useLeaderboard } from '../hooks/useLeaderboard';
 import { Podium } from '../components/Podium';
@@ -34,7 +34,27 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
   const currentUserRowRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const [stickyCurrentUser, setStickyCurrentUser] = useState(false);
+  const [toastVisible, setToastVisible] = useState(false);
+  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const daysLeft = getDaysRemaining();
+
+  const handleDepositClick = useCallback(() => {
+    if (userStatus.depositUpdatedToday) {
+      // Show toast and auto-hide after 3s
+      setToastVisible(true);
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+      toastTimerRef.current = setTimeout(() => setToastVisible(false), 3000);
+    } else {
+      onUpdateDeposit();
+    }
+  }, [userStatus.depositUpdatedToday, onUpdateDeposit]);
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    };
+  }, []);
 
   // Initial fetch
   useEffect(() => {
@@ -310,8 +330,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
         )}
 
         <button
-          onClick={onUpdateDeposit}
-          disabled={userStatus.depositUpdatedToday}
+          onClick={handleDepositClick}
           style={{
             width: '100%',
             height: 52,
@@ -321,18 +340,60 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
             color: userStatus.depositUpdatedToday ? '#9CA3AF' : '#fff',
             fontSize: 16,
             fontWeight: 600,
-            cursor: userStatus.depositUpdatedToday ? 'not-allowed' : 'pointer',
+            cursor: userStatus.depositUpdatedToday ? 'default' : 'pointer',
             fontFamily: 'var(--font)',
             boxShadow: userStatus.depositUpdatedToday ? 'none' : '0 4px 16px rgba(245,166,35,0.35)',
             marginBottom: 8,
             transition: 'all 0.2s',
           }}
         >
-          {userStatus.depositUpdatedToday ? 'Данные на сегодня внесены' : 'Внести данные'}
+          {userStatus.depositUpdatedToday ? 'Данные на сегодня внесены ✓' : 'Внести данные'}
         </button>
 
         <BottomNav current="leaderboard" onNavigate={onNavigate} />
       </div>
+
+      {/* Toast: already updated today */}
+      <style>{`
+        @keyframes toastIn {
+          from { opacity: 0; transform: translateX(-50%) translateY(8px) scale(0.95); }
+          to   { opacity: 1; transform: translateX(-50%) translateY(0)   scale(1); }
+        }
+        @keyframes toastOut {
+          from { opacity: 1; transform: translateX(-50%) translateY(0)   scale(1); }
+          to   { opacity: 0; transform: translateX(-50%) translateY(8px) scale(0.95); }
+        }
+      `}</style>
+      {toastVisible && (
+        <div
+          role="status"
+          aria-live="polite"
+          style={{
+            position: 'fixed',
+            bottom: 130,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 100,
+            background: 'rgba(30,30,30,0.92)',
+            color: '#fff',
+            borderRadius: 14,
+            padding: '12px 20px',
+            fontSize: 14,
+            fontWeight: 500,
+            fontFamily: 'var(--font)',
+            whiteSpace: 'nowrap',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            backdropFilter: 'blur(8px)',
+            animation: 'toastIn 0.25s ease forwards',
+          }}
+        >
+          <span style={{ fontSize: 16 }}>🕛</span>
+          Внести данные можно завтра после 00:00
+        </div>
+      )}
     </div>
   );
 };
