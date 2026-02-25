@@ -55,9 +55,9 @@ async function bootstrap(): Promise<void> {
     allowedHeaders: ['Content-Type', 'X-Telegram-InitData'],
   });
 
-  // ── Rate limiting (10 req / min per IP) ───────────────────────────────────
+  // ── Rate limiting (60 req / min per IP) ───────────────────────────────────
   await fastify.register(rateLimit, {
-    max: 10,
+    max: 60,
     timeWindow: '1 minute',
     errorResponseBuilder: (_request, context) => ({
       error: 'Too Many Requests',
