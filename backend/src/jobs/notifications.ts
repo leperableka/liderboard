@@ -8,36 +8,15 @@ interface PendingUser {
   market: 'crypto' | 'moex' | 'forex';
 }
 
-/**
- * Queries users who have NOT submitted a deposit update for today (UTC date).
- * - crypto: every day
- * - moex / forex: Mon–Fri only
- */
-async function getPendingUsers(): Promise<PendingUser[]> {
-  const today = new Date();
-  const todayStr = today.toISOString().slice(0, 10);
-  const dayOfWeek = today.getUTCDay(); // 0=Sun … 6=Sat
-  const isWeekday = dayOfWeek >= 1 && dayOfWeek <= 5;
+// ─── Shared helpers ──────────────────────────────────────────────────────────
 
-  const result = await pool.query<PendingUser>(
-    `SELECT u.telegram_id, u.display_name, u.market
-     FROM users u
-     WHERE
-       (u.market = 'crypto' OR $1 = TRUE)
-       AND NOT EXISTS (
-         SELECT 1 FROM deposit_updates du
-         WHERE du.user_id = u.id AND du.deposit_date = $2
-       )`,
-    [isWeekday, todayStr],
-  );
-
-  return result.rows.filter(
-    (u) => u.market === 'crypto' || isWeekday,
-  );
+function isWeekdayUtc(): boolean {
+  const day = new Date().getUTCDay(); // 0=Sun … 6=Sat
+  return day >= 1 && day <= 5;
 }
 
 /**
- * Sends messages to a list of users.
+ * Sends a batch of messages to users.
  * Respects Telegram's ~30 msg/s limit via 50 ms delay between sends.
  */
 async function sendBatch(
@@ -58,9 +37,73 @@ async function sendBatch(
   }
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
- * 1st reminder — 15:55 UTC (18:55 МСК), ~5 min before market close
- * ───────────────────────────────────────────────────────────────────────────*/
+// ─── Query helpers ───────────────────────────────────────────────────────────
+
+/**
+ * Returns users who have NOT submitted today AND are still within the
+ * active window (< 5 days since last submission / registration).
+ *
+ * Business rules:
+ *  - crypto: every day
+ *  - moex / forex: Mon–Fri only
+ *  - Users inactive for 5+ calendar days are excluded (they get no more reminders)
+ */
+async function getPendingUsers(): Promise<PendingUser[]> {
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const weekday = isWeekdayUtc();
+
+  const result = await pool.query<PendingUser>(
+    `SELECT u.telegram_id, u.display_name, u.market
+     FROM users u
+     WHERE
+       -- market filter: crypto always, moex/forex on weekdays only
+       (u.market = 'crypto' OR $1 = TRUE)
+       -- not submitted today
+       AND NOT EXISTS (
+         SELECT 1 FROM deposit_updates du
+         WHERE du.user_id = u.id AND du.deposit_date = $2
+       )
+       -- active window: fewer than 5 days since last deposit or registration
+       AND (
+         CURRENT_DATE - COALESCE(
+           (SELECT MAX(du2.deposit_date) FROM deposit_updates du2 WHERE du2.user_id = u.id),
+           u.registered_at::date
+         ) < 5
+       )`,
+    [weekday, todayStr],
+  );
+
+  return result.rows.filter((u) => u.market === 'crypto' || weekday);
+}
+
+/**
+ * Returns users who have been inactive for EXACTLY 4 calendar days —
+ * meaning they should receive the disqualification warning today.
+ *
+ * Days_inactive is calculated as:
+ *   CURRENT_DATE − MAX(deposit_date)   if the user has ever submitted
+ *   CURRENT_DATE − registered_at::date if the user never submitted
+ */
+async function getDisqualificationWarningUsers(): Promise<PendingUser[]> {
+  const result = await pool.query<PendingUser>(
+    `SELECT u.telegram_id, u.display_name, u.market
+     FROM users u
+     WHERE
+       CURRENT_DATE - COALESCE(
+         (SELECT MAX(du.deposit_date) FROM deposit_updates du WHERE du.user_id = u.id),
+         u.registered_at::date
+       ) = 4`,
+  );
+
+  return result.rows;
+}
+
+// ─── Reminder jobs ───────────────────────────────────────────────────────────
+
+/**
+ * 1st reminder — 15:55 UTC (18:55 МСК)
+ * ~5 minutes before market close. Standard nudge.
+ */
 async function sendPreCloseReminders(bot: Bot, miniAppUrl: string): Promise<void> {
   const todayStr = new Date().toISOString().slice(0, 10);
   console.log(`[notifications] Pre-close reminder — ${todayStr}`);
@@ -88,9 +131,10 @@ async function sendPreCloseReminders(bot: Bot, miniAppUrl: string): Promise<void
   }
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
- * 2nd reminder — 17:00 UTC (20:00 МСК), evening nudge for laggards
- * ───────────────────────────────────────────────────────────────────────────*/
+/**
+ * 2nd reminder — 17:00 UTC (20:00 МСК)
+ * Evening nudge for those who still haven't submitted.
+ */
 async function sendEveningReminders(bot: Bot, miniAppUrl: string): Promise<void> {
   const todayStr = new Date().toISOString().slice(0, 10);
   console.log(`[notifications] Evening reminder — ${todayStr}`);
@@ -118,31 +162,78 @@ async function sendEveningReminders(bot: Bot, miniAppUrl: string): Promise<void>
   }
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
- * Scheduler
- * ───────────────────────────────────────────────────────────────────────────*/
+/**
+ * Disqualification warning — 09:00 UTC (12:00 МСК)
+ * Sent to users inactive for exactly 4 calendar days.
+ * On day 5+ they are silently excluded from all reminders.
+ */
+async function sendDisqualificationWarnings(bot: Bot, miniAppUrl: string): Promise<void> {
+  const todayStr = new Date().toISOString().slice(0, 10);
+  console.log(`[notifications] Disqualification warning — ${todayStr}`);
+
+  try {
+    const users = await getDisqualificationWarningUsers();
+    console.log(`[notifications] Disqualification warning: ${users.length} users`);
+    if (users.length === 0) return;
+
+    const keyboard = new InlineKeyboard().webApp('Внести данные', miniAppUrl);
+
+    await sendBatch(
+      bot,
+      users,
+      () =>
+        `Добрый день!\n\n` +
+        `К сожалению, вы не вносите данные торгового чемпионата Vesperfin&Co.Trading. ` +
+        `Мы будем вынуждены дисквалифицировать ваш профиль из турнирной таблицы.`,
+      keyboard,
+    );
+
+    console.log('[notifications] Disqualification warning batch complete');
+  } catch (err) {
+    console.error('[notifications] Disqualification warning error:', err);
+  }
+}
+
+// ─── Scheduler ───────────────────────────────────────────────────────────────
+
+/**
+ * Cron schedule (all UTC):
+ *  09:00 UTC (12:00 МСК) — disqualification warning for day-4 inactives
+ *  15:55 UTC (18:55 МСК) — pre-close reminder
+ *  17:00 UTC (20:00 МСК) — evening reminder
+ */
 export function scheduleNotifications(
   bot: Bot,
   miniAppUrl: string,
 ): { stop: () => void } {
-  // 18:55 МСК — before market close
+  const disqualTask = cron.schedule(
+    '0 9 * * *',
+    () => sendDisqualificationWarnings(bot, miniAppUrl).catch(console.error),
+    { timezone: 'UTC' },
+  );
+
   const preCloseTask = cron.schedule(
     '55 15 * * *',
     () => sendPreCloseReminders(bot, miniAppUrl).catch(console.error),
     { timezone: 'UTC' },
   );
 
-  // 20:00 МСК — evening reminder for those who still haven't submitted
   const eveningTask = cron.schedule(
     '0 17 * * *',
     () => sendEveningReminders(bot, miniAppUrl).catch(console.error),
     { timezone: 'UTC' },
   );
 
-  console.log('[notifications] Cron jobs scheduled: 15:55 UTC (pre-close) + 17:00 UTC (evening)');
+  console.log(
+    '[notifications] Cron jobs scheduled: ' +
+    '09:00 UTC (disqualification warning) + ' +
+    '15:55 UTC (pre-close) + ' +
+    '17:00 UTC (evening)',
+  );
 
   return {
     stop: () => {
+      disqualTask.stop();
       preCloseTask.stop();
       eveningTask.stop();
     },
