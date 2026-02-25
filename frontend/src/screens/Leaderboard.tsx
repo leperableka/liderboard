@@ -18,11 +18,16 @@ const PERIOD_OPTIONS: { key: Period; label: string; subtitle: string }[] = [
   { key: 'month', label: 'Месяц', subtitle: 'За месяц' },
 ];
 
+const CONTEST_END = new Date('2026-03-29T23:59:59');
+
 function getDaysRemaining(): number {
-  const end = new Date('2026-03-29T23:59:59');
   const now = new Date();
-  const diff = end.getTime() - now.getTime();
+  const diff = CONTEST_END.getTime() - now.getTime();
   return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+}
+
+function isContestOver(): boolean {
+  return new Date() > CONTEST_END;
 }
 
 export const Leaderboard: React.FC<LeaderboardProps> = ({
@@ -37,6 +42,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
   const [toastVisible, setToastVisible] = useState(false);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const daysLeft = getDaysRemaining();
+  const contestOver = isContestOver();
 
   const handleDepositClick = useCallback(() => {
     if (userStatus.depositUpdatedToday) {
@@ -148,7 +154,20 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
         >
           Торговый Чемпионат
         </h1>
-        {daysLeft > 0 && (
+        {contestOver ? (
+          <p
+            style={{
+              textAlign: 'center',
+              fontSize: 12,
+              color: 'rgba(255,255,255,0.85)',
+              marginBottom: 4,
+              fontWeight: 600,
+              letterSpacing: '0.2px',
+            }}
+          >
+            🏆 Чемпионат завершён
+          </p>
+        ) : daysLeft > 0 ? (
           <p
             style={{
               textAlign: 'center',
@@ -159,7 +178,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
           >
             Осталось дней: {daysLeft}
           </p>
-        )}
+        ) : null}
 
         {/* Period tabs */}
         <nav aria-label="Период" style={{ display: 'flex', justifyContent: 'center', gap: 4, padding: '10px 20px 14px' }}>
@@ -329,26 +348,49 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
           </div>
         )}
 
-        <button
-          onClick={handleDepositClick}
-          style={{
-            width: '100%',
-            height: 52,
-            borderRadius: 14,
-            border: 'none',
-            background: userStatus.depositUpdatedToday ? '#D1D5DB' : 'var(--gold-grad)',
-            color: userStatus.depositUpdatedToday ? '#9CA3AF' : '#fff',
-            fontSize: 16,
-            fontWeight: 600,
-            cursor: userStatus.depositUpdatedToday ? 'default' : 'pointer',
-            fontFamily: 'var(--font)',
-            boxShadow: userStatus.depositUpdatedToday ? 'none' : '0 4px 16px rgba(245,166,35,0.35)',
-            marginBottom: 8,
-            transition: 'all 0.2s',
-          }}
-        >
-          {userStatus.depositUpdatedToday ? 'Данные на сегодня внесены ✓' : 'Внести данные'}
-        </button>
+        {contestOver ? (
+          <div
+            style={{
+              width: '100%',
+              borderRadius: 14,
+              background: 'linear-gradient(135deg, #f5a623 0%, #c9730a 100%)',
+              color: '#fff',
+              padding: '12px 16px',
+              marginBottom: 8,
+              textAlign: 'center',
+              boxShadow: '0 4px 16px rgba(245,166,35,0.30)',
+            }}
+          >
+            <div style={{ fontSize: 20, marginBottom: 2 }}>🏆</div>
+            <div style={{ fontSize: 15, fontWeight: 700, fontFamily: 'var(--font)', lineHeight: 1.3 }}>
+              Конкурс завершён. Поздравляем победителей!
+            </div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.85)', marginTop: 4, fontFamily: 'var(--font)' }}>
+              До встречи на следующем конкурсе
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={handleDepositClick}
+            style={{
+              width: '100%',
+              height: 52,
+              borderRadius: 14,
+              border: 'none',
+              background: userStatus.depositUpdatedToday ? '#D1D5DB' : 'var(--gold-grad)',
+              color: userStatus.depositUpdatedToday ? '#9CA3AF' : '#fff',
+              fontSize: 16,
+              fontWeight: 600,
+              cursor: userStatus.depositUpdatedToday ? 'default' : 'pointer',
+              fontFamily: 'var(--font)',
+              boxShadow: userStatus.depositUpdatedToday ? 'none' : '0 4px 16px rgba(245,166,35,0.35)',
+              marginBottom: 8,
+              transition: 'all 0.2s',
+            }}
+          >
+            {userStatus.depositUpdatedToday ? 'Данные на сегодня внесены ✓' : 'Внести данные'}
+          </button>
+        )}
 
         <BottomNav current="leaderboard" onNavigate={onNavigate} />
       </div>
