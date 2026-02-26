@@ -210,7 +210,10 @@ export const Rules: React.FC<RulesProps> = ({ onNavigate }) => (
 
     {/* Header */}
     <div style={{
-      padding: '16px 20px 12px',
+      paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)',
+      paddingBottom: 12,
+      paddingLeft: 20,
+      paddingRight: 20,
       background: 'var(--white)',
       borderBottom: '1px solid var(--border)',
     }}>
