@@ -20,6 +20,9 @@ interface PendingUser {
 
 // ─── Shared helpers ──────────────────────────────────────────────────────────
 
+/** Contest opens 6 March 2026 00:00 МСК — notifications are sent only from this date. */
+const CONTEST_START_MOSCOW = '2026-03-06';
+
 /** Returns ISO date string (YYYY-MM-DD) in Moscow timezone (UTC+3). */
 function getMoscowDateStr(): string {
   const now = new Date();
@@ -77,21 +80,27 @@ async function getPendingUsers(): Promise<PendingUser[]> {
     `SELECT u.telegram_id, u.display_name, u.market
      FROM users u
      WHERE
+       -- only after contest start (6 March 2026 00:00 МСК)
+       (NOW() AT TIME ZONE 'Europe/Moscow')::date >= $3::date
        -- market filter: crypto always, moex/forex on weekdays only
-       (u.market = 'crypto' OR $1 = TRUE)
+       AND (u.market = 'crypto' OR $1 = TRUE)
        -- not submitted today (Moscow date)
        AND NOT EXISTS (
          SELECT 1 FROM deposit_updates du
          WHERE du.user_id = u.id AND du.deposit_date = $2
        )
-       -- active window: fewer than 5 days since last deposit or registration (Moscow time)
+       -- active window: < 5 days since last deposit or contest start (not registration date)
+       -- GREATEST ensures users registered before contest start get full 5-day window from day 1
        AND (
-         (NOW() AT TIME ZONE 'Europe/Moscow')::date - COALESCE(
-           (SELECT MAX(du2.deposit_date) FROM deposit_updates du2 WHERE du2.user_id = u.id),
-           u.registered_at::date
+         (NOW() AT TIME ZONE 'Europe/Moscow')::date - GREATEST(
+           COALESCE(
+             (SELECT MAX(du2.deposit_date) FROM deposit_updates du2 WHERE du2.user_id = u.id),
+             u.registered_at::date
+           ),
+           $3::date
          ) < 5
        )`,
-    [weekday, todayStr],
+    [weekday, todayStr, CONTEST_START_MOSCOW],
   );
 
   return result.rows.filter((u) => u.market === 'crypto' || weekday);
@@ -110,10 +119,17 @@ async function getDisqualificationWarningUsers(): Promise<PendingUser[]> {
     `SELECT u.telegram_id, u.display_name, u.market
      FROM users u
      WHERE
-       (NOW() AT TIME ZONE 'Europe/Moscow')::date - COALESCE(
-         (SELECT MAX(du.deposit_date) FROM deposit_updates du WHERE du.user_id = u.id),
-         u.registered_at::date
+       -- only after contest start
+       (NOW() AT TIME ZONE 'Europe/Moscow')::date >= $1::date
+       -- exactly 4 days inactive since last deposit or contest start (not registration)
+       AND (NOW() AT TIME ZONE 'Europe/Moscow')::date - GREATEST(
+         COALESCE(
+           (SELECT MAX(du.deposit_date) FROM deposit_updates du WHERE du.user_id = u.id),
+           u.registered_at::date
+         ),
+         $1::date
        ) = 4`,
+    [CONTEST_START_MOSCOW],
   );
 
   return result.rows;

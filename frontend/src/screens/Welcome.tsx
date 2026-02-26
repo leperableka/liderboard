@@ -1,6 +1,7 @@
 import React from 'react';
 
-const REGISTRATION_DEADLINE = new Date('2026-03-31T23:59:59');
+// 6 марта 00:00 МСК = 5 марта 21:00:00 UTC
+const REGISTRATION_DEADLINE = new Date('2026-03-05T21:00:00Z');
 
 interface WelcomeProps {
   onRegister: () => void;
@@ -124,7 +125,7 @@ export const Welcome: React.FC<WelcomeProps> = ({
                   lineHeight: 1.4,
                 }}
               >
-                Регистрация завершена. Вы можете следить за лидербордом.
+                Регистрация закрыта, чемпионат начался. Вы&nbsp;можете следить за&nbsp;лидербордом.
               </p>
             )}
             <button

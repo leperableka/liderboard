@@ -47,6 +47,9 @@ function stripFormatting(value: string): string {
   return value.replace(/[\u202F\u00A0\s]/g, '');
 }
 
+// 6 марта 00:00 МСК = 5 марта 21:00:00 UTC
+const CONTEST_START = new Date('2026-03-05T21:00:00Z');
+
 export const UpdateDeposit: React.FC<UpdateDepositProps> = ({
   userStatus,
   onBack,
@@ -56,6 +59,9 @@ export const UpdateDeposit: React.FC<UpdateDepositProps> = ({
   const [error, setError] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showStartHint, setShowStartHint] = useState(false);
+
+  const isBeforeStart = new Date() < CONTEST_START;
   const { showBackButton, hideBackButton, onBackButtonClicked, hapticFeedback } = useTelegram();
 
   const currency = userStatus.market ? MARKET_CURRENCY[userStatus.market] : 'USDT';
@@ -188,160 +194,222 @@ export const UpdateDeposit: React.FC<UpdateDepositProps> = ({
           {formatDate(today)}
         </p>
 
-        <main style={{ padding: '0 20px', flex: 1 }}>
-          {/* Previous deposit */}
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              padding: '14px 16px',
-              background: 'var(--white)',
-              borderRadius: 'var(--radius-sm)',
-              marginBottom: 16,
-              border: '1px solid var(--border)',
-            }}
-            aria-label="Предыдущий депозит"
-          >
-            <span style={{ fontSize: 13, color: 'var(--text-2)' }}>Предыдущий депозит</span>
-            <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>
-              {prevDeposit.toLocaleString('ru-RU')} {currency}
-            </span>
-          </div>
-
-          {/* Input */}
-          <div style={{ marginBottom: 16 }}>
-            <label
-              htmlFor="current-deposit"
+        {isBeforeStart ? (
+          /* ── Заблокировано до старта ── */
+          <main style={{ padding: '0 20px', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+            <div style={{ fontSize: 48, lineHeight: 1 }} aria-hidden="true">🔒</div>
+            <p style={{ fontSize: 15, color: 'var(--text)', fontWeight: 600, textAlign: 'center', margin: 0 }}>
+              Конкурс стартует 6 марта в 00:00 МСК
+            </p>
+            <p style={{ fontSize: 13, color: 'var(--text-2)', textAlign: 'center', lineHeight: 1.5, margin: 0, maxWidth: 280 }}>
+              До старта доступна только регистрация с&nbsp;начальным депозитом.
+              Вносить обновления можно с&nbsp;момента начала конкурса.
+            </p>
+          </main>
+        ) : (
+          <main style={{ padding: '0 20px', flex: 1 }}>
+            {/* Previous deposit */}
+            <div
               style={{
-                display: 'block',
-                fontSize: 13,
-                fontWeight: 600,
-                color: 'var(--text-2)',
-                marginBottom: 6,
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '14px 16px',
+                background: 'var(--white)',
+                borderRadius: 'var(--radius-sm)',
+                marginBottom: 16,
+                border: '1px solid var(--border)',
               }}
+              aria-label="Предыдущий депозит"
             >
-              Текущий депозит
-            </label>
-            <div style={{ position: 'relative' }}>
-              <input
-                id="current-deposit"
-                type="text"
-                inputMode="decimal"
-                value={formatDisplay(value)}
-                onChange={handleChange}
-                onKeyDown={handleKeyDown}
-                placeholder="0"
-                aria-describedby={error ? 'deposit-error' : 'deposit-hint'}
-                aria-invalid={!!error}
-                style={{
-                  width: '100%',
-                  height: 64,
-                  borderRadius: 'var(--radius-sm)',
-                  border: `1.5px solid ${error ? 'var(--red)' : 'var(--border)'}`,
-                  padding: '0 80px 0 16px',
-                  fontSize: 28,
-                  fontWeight: 700,
-                  textAlign: 'center',
-                  letterSpacing: 1,
-                  fontFamily: 'var(--font)',
-                  color: 'var(--text)',
-                  background: error ? '#FEF2F2' : 'var(--white)',
-                  outline: 'none',
-                  transition: 'border-color 0.2s',
-                }}
-                onFocus={(e) => {
-                  if (!error) e.currentTarget.style.borderColor = 'var(--gold-2)';
-                }}
-                onBlur={(e) => {
-                  if (!error) e.currentTarget.style.borderColor = 'var(--border)';
-                }}
-              />
-              <span
-                aria-hidden="true"
-                style={{
-                  position: 'absolute',
-                  right: 16,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  fontSize: 20,
-                  fontWeight: 700,
-                  color: '#9CA3AF',
-                  pointerEvents: 'none',
-                }}
-              >
-                {currency}
+              <span style={{ fontSize: 13, color: 'var(--text-2)' }}>Предыдущий депозит</span>
+              <span style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>
+                {prevDeposit.toLocaleString('ru-RU')} {currency}
               </span>
             </div>
-            {error ? (
-              <p id="deposit-error" role="alert" style={{ fontSize: 12, color: 'var(--red)', textAlign: 'center', marginTop: 6 }}>
-                {error}
-              </p>
-            ) : (
-              <p id="deposit-hint" style={{ fontSize: 12, color: 'var(--text-3)', textAlign: 'center', marginTop: 6 }}>
-                &nbsp;
-              </p>
-            )}
-          </div>
 
-          {/* Change indicator */}
-          <div
-            style={{
-              textAlign: 'center',
-              padding: '8px 0 4px',
-              fontSize: 15,
-              fontWeight: 600,
-              color:
-                changePct === null
-                  ? 'var(--text-3)'
-                  : changePct > 0
-                  ? 'var(--green)'
-                  : changePct < 0
-                  ? 'var(--red)'
-                  : 'var(--text-3)',
-            }}
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            {changePct === null || !isValid || value === '' ? (
-              <span style={{ color: 'var(--text-3)' }}>Введите сумму</span>
-            ) : changePct === 0 ? (
-              '0.0%'
-            ) : (
-              <>
-                {changePct > 0 ? '+' : ''}{changePct.toFixed(1)}%
-                {' '}
-                ({changeAmount !== null && changeAmount > 0 ? '+' : ''}
-                {changeAmount?.toLocaleString('ru-RU', { maximumFractionDigits: 2 })} {currency})
-              </>
-            )}
-          </div>
-        </main>
+            {/* Input */}
+            <div style={{ marginBottom: 16 }}>
+              <label
+                htmlFor="current-deposit"
+                style={{
+                  display: 'block',
+                  fontSize: 13,
+                  fontWeight: 600,
+                  color: 'var(--text-2)',
+                  marginBottom: 6,
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                }}
+              >
+                Текущий депозит
+              </label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  id="current-deposit"
+                  type="text"
+                  inputMode="decimal"
+                  value={formatDisplay(value)}
+                  onChange={handleChange}
+                  onKeyDown={handleKeyDown}
+                  placeholder="0"
+                  aria-describedby={error ? 'deposit-error' : 'deposit-hint'}
+                  aria-invalid={!!error}
+                  style={{
+                    width: '100%',
+                    height: 64,
+                    borderRadius: 'var(--radius-sm)',
+                    border: `1.5px solid ${error ? 'var(--red)' : 'var(--border)'}`,
+                    padding: '0 80px 0 16px',
+                    fontSize: 28,
+                    fontWeight: 700,
+                    textAlign: 'center',
+                    letterSpacing: 1,
+                    fontFamily: 'var(--font)',
+                    color: 'var(--text)',
+                    background: error ? '#FEF2F2' : 'var(--white)',
+                    outline: 'none',
+                    transition: 'border-color 0.2s',
+                  }}
+                  onFocus={(e) => {
+                    if (!error) e.currentTarget.style.borderColor = 'var(--gold-2)';
+                  }}
+                  onBlur={(e) => {
+                    if (!error) e.currentTarget.style.borderColor = 'var(--border)';
+                  }}
+                />
+                <span
+                  aria-hidden="true"
+                  style={{
+                    position: 'absolute',
+                    right: 16,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    fontSize: 20,
+                    fontWeight: 700,
+                    color: '#9CA3AF',
+                    pointerEvents: 'none',
+                  }}
+                >
+                  {currency}
+                </span>
+              </div>
+              {error ? (
+                <p id="deposit-error" role="alert" style={{ fontSize: 12, color: 'var(--red)', textAlign: 'center', marginTop: 6 }}>
+                  {error}
+                </p>
+              ) : (
+                <p id="deposit-hint" style={{ fontSize: 12, color: 'var(--text-3)', textAlign: 'center', marginTop: 6 }}>
+                  &nbsp;
+                </p>
+              )}
+            </div>
 
-        {/* Save button */}
-        <div style={{ padding: '12px 20px 28px' }}>
-          <button
-            onClick={handleSave}
-            disabled={!isValid || !value}
-            style={{
-              width: '100%',
-              height: 52,
-              borderRadius: 14,
-              border: 'none',
-              background: isValid && value ? 'var(--gold-grad)' : '#D1D5DB',
-              color: isValid && value ? '#fff' : '#9CA3AF',
-              fontSize: 16,
-              fontWeight: 600,
-              cursor: isValid && value ? 'pointer' : 'not-allowed',
-              fontFamily: 'var(--font)',
-              boxShadow: isValid && value ? '0 4px 16px rgba(245,166,35,0.35)' : 'none',
-              transition: 'all 0.2s',
-            }}
-          >
-            Сохранить
-          </button>
+            {/* Change indicator */}
+            <div
+              style={{
+                textAlign: 'center',
+                padding: '8px 0 4px',
+                fontSize: 15,
+                fontWeight: 600,
+                color:
+                  changePct === null
+                    ? 'var(--text-3)'
+                    : changePct > 0
+                    ? 'var(--green)'
+                    : changePct < 0
+                    ? 'var(--red)'
+                    : 'var(--text-3)',
+              }}
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              {changePct === null || !isValid || value === '' ? (
+                <span style={{ color: 'var(--text-3)' }}>Введите сумму</span>
+              ) : changePct === 0 ? (
+                '0.0%'
+              ) : (
+                <>
+                  {changePct > 0 ? '+' : ''}{changePct.toFixed(1)}%
+                  {' '}
+                  ({changeAmount !== null && changeAmount > 0 ? '+' : ''}
+                  {changeAmount?.toLocaleString('ru-RU', { maximumFractionDigits: 2 })} {currency})
+                </>
+              )}
+            </div>
+          </main>
+        )}
+
+        {/* Save / Start button */}
+        <div style={{ padding: '12px 20px 28px', position: 'relative' }}>
+          {isBeforeStart ? (
+            <>
+              {showStartHint && (
+                <div
+                  role="tooltip"
+                  style={{
+                    position: 'absolute',
+                    bottom: 88,
+                    left: 20,
+                    right: 20,
+                    background: 'var(--text)',
+                    color: 'var(--white)',
+                    padding: '10px 14px',
+                    borderRadius: 10,
+                    fontSize: 13,
+                    textAlign: 'center',
+                    lineHeight: 1.4,
+                    zIndex: 10,
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
+                  }}
+                >
+                  Внести новые данные можно только когда начинается конкурс
+                </div>
+              )}
+              <button
+                onClick={() => {
+                  setShowStartHint(true);
+                  setTimeout(() => setShowStartHint(false), 3000);
+                }}
+                style={{
+                  width: '100%',
+                  height: 52,
+                  borderRadius: 14,
+                  border: 'none',
+                  background: '#D1D5DB',
+                  color: '#6B7280',
+                  fontSize: 16,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  fontFamily: 'var(--font)',
+                  transition: 'all 0.2s',
+                }}
+              >
+                Старт 6 марта 00:00
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={handleSave}
+              disabled={!isValid || !value}
+              style={{
+                width: '100%',
+                height: 52,
+                borderRadius: 14,
+                border: 'none',
+                background: isValid && value ? 'var(--gold-grad)' : '#D1D5DB',
+                color: isValid && value ? '#fff' : '#9CA3AF',
+                fontSize: 16,
+                fontWeight: 600,
+                cursor: isValid && value ? 'pointer' : 'not-allowed',
+                fontFamily: 'var(--font)',
+                boxShadow: isValid && value ? '0 4px 16px rgba(245,166,35,0.35)' : 'none',
+                transition: 'all 0.2s',
+              }}
+            >
+              Сохранить
+            </button>
+          )}
         </div>
       </div>
 
