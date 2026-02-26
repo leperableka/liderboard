@@ -63,6 +63,14 @@ async function sendBatch(
 
 // ─── Query helpers ───────────────────────────────────────────────────────────
 
+/** Returns ALL registered users (for the championship-start blast). */
+async function getAllUsers(): Promise<PendingUser[]> {
+  const result = await pool.query<PendingUser>(
+    `SELECT telegram_id, display_name, market FROM users`,
+  );
+  return result.rows;
+}
+
 /**
  * Returns users who have NOT submitted today AND are still within the
  * active window (< 5 days since last submission / registration).
@@ -136,6 +144,35 @@ async function getDisqualificationWarningUsers(): Promise<PendingUser[]> {
 }
 
 // ─── Reminder jobs ───────────────────────────────────────────────────────────
+
+/**
+ * Championship-start blast — 07:00 UTC (10:00 МСК) on 6 March 2026 only.
+ * Fires once via cron `0 7 6 3 *`.
+ * Sends to ALL registered participants.
+ */
+async function sendChampionshipStartNotification(bot: Bot, miniAppUrl: string): Promise<void> {
+  console.log('[notifications] Championship-start notification — sending to all users');
+
+  try {
+    const users = await getAllUsers();
+    console.log(`[notifications] Championship-start: ${users.length} users`);
+    if (users.length === 0) return;
+
+    await sendBatch(
+      bot,
+      users,
+      (u) =>
+        `🏆 ${u.display_name}, Торговый Чемпионат Vesperfin&Co.Trading начался!\n\n` +
+        `Сегодня можно внести первые данные по\u00A0движению вашего счёта.\n` +
+        `Удачи в\u00A0соревновании!`,
+      makeKeyboard('Внести данные', miniAppUrl),
+    );
+
+    console.log('[notifications] Championship-start batch complete');
+  } catch (err) {
+    console.error('[notifications] Championship-start error:', err);
+  }
+}
 
 /**
  * 1st reminder — 15:55 UTC (18:55 МСК)
@@ -237,6 +274,13 @@ export function scheduleNotifications(
   bot: Bot,
   miniAppUrl: string,
 ): { stop: () => void } {
+  // One-time blast on 6 March 2026 at 07:00 UTC (10:00 МСК)
+  const startBlastTask = cron.schedule(
+    '0 7 6 3 *',
+    () => sendChampionshipStartNotification(bot, miniAppUrl).catch(console.error),
+    { timezone: 'UTC' },
+  );
+
   const disqualTask = cron.schedule(
     '0 9 * * *',
     () => sendDisqualificationWarnings(bot, miniAppUrl).catch(console.error),
@@ -257,6 +301,7 @@ export function scheduleNotifications(
 
   console.log(
     '[notifications] Cron jobs scheduled: ' +
+    '07:00 UTC 6 Mar (championship start blast) + ' +
     '09:00 UTC (disqualification warning) + ' +
     '15:55 UTC (pre-close) + ' +
     '17:00 UTC (evening)',
@@ -264,6 +309,7 @@ export function scheduleNotifications(
 
   return {
     stop: () => {
+      startBlastTask.stop();
       disqualTask.stop();
       preCloseTask.stop();
       eveningTask.stop();

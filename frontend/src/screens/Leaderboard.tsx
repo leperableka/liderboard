@@ -374,10 +374,10 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
           >
             <div style={{ fontSize: 20, marginBottom: 2 }}>🏆</div>
             <div style={{ fontSize: 15, fontWeight: 700, fontFamily: 'var(--font)', lineHeight: 1.3 }}>
-              Конкурс завершён. Поздравляем победителей!
+              Чемпионат завершён. Поздравляем победителей!
             </div>
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.85)', marginTop: 4, fontFamily: 'var(--font)' }}>
-              До встречи на следующем конкурсе
+              До встречи на следующем чемпионате
             </div>
           </div>
         ) : (
@@ -449,7 +449,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
         >
           <span style={{ fontSize: 16 }}>{isBeforeStart ? '🔒' : '🕛'}</span>
           {isBeforeStart
-            ? 'Конкурс начнётся 6 марта в 00:00 МСК'
+            ? 'Чемпионат начнётся 6 марта в 00:00 МСК'
             : 'Внести данные можно после 00:00'}
         </div>
       )}
