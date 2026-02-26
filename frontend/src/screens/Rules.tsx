@@ -223,13 +223,13 @@ export const Rules: React.FC<RulesProps> = ({ onNavigate }) => (
       {/* Цель */}
       <Section title="Цель">
         <p style={bodyText}>
-          Это не погоня за быстрым заработком, а тренажёр, который прокачивает ключевые
-          навыки трейдера — чувство рынка, риск-менеджмент и дисциплину. Именно они дают
-          стабильный результат, а не разовые удачные сделки.
+          Это не&nbsp;погоня за&nbsp;быстрым заработком, а&nbsp;тренажёр, который прокачивает
+          ключевые навыки трейдера&nbsp;— чувство рынка, риск-менеджмент и&nbsp;дисциплину.
+          Именно они дают стабильный результат, а&nbsp;не разовые удачные сделки.
         </p>
         <p style={{ ...bodyText, marginBottom: 0 }}>
-          Главная метрика соревнования — P&L (Profit & Loss). Побеждает тот, кто покажет
-          максимальную доходность за ограниченный период.
+          Главная метрика соревнования&nbsp;— P&amp;L (Profit&nbsp;&&nbsp;Loss). Побеждает тот,
+          кто&nbsp;покажет максимальную доходность за&nbsp;ограниченный период.
         </p>
       </Section>
 
@@ -238,7 +238,7 @@ export const Rules: React.FC<RulesProps> = ({ onNavigate }) => (
         {[
           'Один раз указываете стартовый депозит.',
           'Каждый день вводите текущее значение депозита.',
-          'P&L рассчитывается автоматически как прирост относительно старта.',
+          'P&L рассчитывается автоматически как\u00A0прирост относительно старта.',
         ].map((text, i) => (
           <div key={i} style={{ display: 'flex', gap: 12, marginBottom: i < 2 ? 10 : 0, alignItems: 'flex-start' }}>
             <div style={{
@@ -277,7 +277,7 @@ export const Rules: React.FC<RulesProps> = ({ onNavigate }) => (
         <div style={{ background: 'var(--bg)', borderRadius: 12, padding: '12px 14px' }}>
           {[
             { text: 'Стартовый депозит: 100 000 ₽', bold: false },
-            { text: 'На конец дня участник вводит: 112 000 ₽', bold: false },
+            { text: 'На\u00A0конец дня участник вводит: 112\u00A0000\u00A0₽', bold: false },
             { text: '', bold: false },
             { text: '112 000 − 100 000 = 12 000 ₽ прибыли', bold: false },
             { text: '12 000 / 100 000 × 100 = +12%', bold: true },
@@ -302,9 +302,9 @@ export const Rules: React.FC<RulesProps> = ({ onNavigate }) => (
       {/* Важно */}
       <Section title="Важно">
         {[
-          'Учитывается полный депозит, а не отдельные сделки.',
-          'Нереализованные позиции входят в расчёт — берётся фактический баланс счёта.',
-          'Пополнение и вывод средств запрещены.',
+          'Учитывается полный депозит, а\u00A0не отдельные сделки.',
+          'Нереализованные позиции входят в\u00A0расчёт\u00A0— берётся фактический баланс счёта.',
+          'Пополнение и\u00A0вывод средств запрещены.',
         ].map((text, i) => (
           <div key={i} style={{ display: 'flex', gap: 10, marginBottom: i < 2 ? 10 : 0, alignItems: 'flex-start' }}>
             <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--gold-2)', flexShrink: 0, marginTop: 7 }} />
@@ -317,8 +317,8 @@ export const Rules: React.FC<RulesProps> = ({ onNavigate }) => (
       <Section title="Подведение итогов">
         {[
           'Итоговый рейтинг публикуется после проверки данных всех участников.',
-          'Победители объявляются до 23:59 в последний день соревнования.',
-          'Vesperfin&Co.Trading оставляет за собой право проводить дополнительные проверки и корректировать результаты при выявлении несоответствий.',
+          'Победители объявляются до\u00A023:59 в\u00A0последний день соревнования.',
+          'Vesperfin&Co.Trading оставляет за\u00A0собой право проводить дополнительные проверки и\u00A0корректировать результаты при\u00A0выявлении несоответствий.',
         ].map((text, i) => (
           <div key={i} style={{ display: 'flex', gap: 10, marginBottom: i < 2 ? 10 : 0, alignItems: 'flex-start' }}>
             <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--border)', flexShrink: 0, marginTop: 7 }} />
@@ -347,8 +347,8 @@ export const Rules: React.FC<RulesProps> = ({ onNavigate }) => (
           padding: '16px',
         }}>
           {[
-            'Нарушение правил и махинации ведут к немедленной дисквалификации.',
-            'Vesperfin&Co.Trading оставляет за собой право дисквалифицировать участника без объяснения причин.',
+            'Нарушение правил и\u00A0махинации ведут к\u00A0немедленной дисквалификации.',
+            'Vesperfin&Co.Trading оставляет за\u00A0собой право дисквалифицировать участника без\u00A0объяснения причин.',
           ].map((text, i) => (
             <div key={i} style={{ display: 'flex', gap: 10, marginBottom: i < 1 ? 10 : 0, alignItems: 'flex-start' }}>
               <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(239,68,68,0.7)', flexShrink: 0, marginTop: 7 }} />
