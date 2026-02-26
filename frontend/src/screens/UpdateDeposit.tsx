@@ -171,7 +171,7 @@ export const UpdateDeposit: React.FC<UpdateDepositProps> = ({
         </button>
 
         {/* Header */}
-        <header style={{ padding: '48px 20px 8px', textAlign: 'center' }}>
+        <header style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 48px)', paddingLeft: 20, paddingRight: 20, paddingBottom: 8, textAlign: 'center' }}>
           <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.3px' }}>
             Обновите ваш депозит
           </h1>

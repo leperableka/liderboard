@@ -209,24 +209,11 @@ export const Rules: React.FC<RulesProps> = ({ onNavigate }) => (
   <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', flexDirection: 'column' }}>
 
     {/* Header */}
-    <div style={{
-      paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)',
-      paddingBottom: 12,
-      paddingLeft: 20,
-      paddingRight: 20,
-      background: 'var(--white)',
-      borderBottom: '1px solid var(--border)',
-    }}>
-      <h1 style={{
-        margin: 0,
-        fontSize: 18,
-        fontWeight: 700,
-        color: 'var(--text)',
-        fontFamily: 'var(--font)',
-      }}>
+    <header style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 48px)', paddingLeft: 20, paddingRight: 20, paddingBottom: 8, textAlign: 'center' }}>
+      <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.3px', margin: 0, fontFamily: 'var(--font)' }}>
         Правила
       </h1>
-    </div>
+    </header>
 
     {/* Scrollable body */}
     <div style={{ flex: 1, overflowY: 'auto', padding: '20px 16px 100px' }}>
