@@ -92,6 +92,7 @@ export const History: React.FC<HistoryProps> = ({ userStatus, onNavigate }) => {
             display: 'flex',
             gap: 8,
             padding: '0 20px',
+            marginTop: 20,
             marginBottom: 16,
           }}
         >
