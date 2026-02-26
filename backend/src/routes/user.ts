@@ -295,10 +295,6 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
 
       const { telegramId } = paramParse.data;
 
-      if (String(request.telegramUser.id) !== telegramId) {
-        return reply.code(403).send({ error: 'Forbidden' });
-      }
-
       try {
         const userResult = await pool.query<{
           id: number;

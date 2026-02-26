@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import type { Period, Screen, UserStatus } from '../types';
+import type { LeaderboardEntry, Period, Screen, UserStatus } from '../types';
 import { useLeaderboard } from '../hooks/useLeaderboard';
 import { Podium } from '../components/Podium';
 import { LeaderboardRow } from '../components/LeaderboardRow';
 import { BottomNav } from '../components/BottomNav';
 import { LeaderboardSkeleton, PodiumSkeleton } from '../components/Skeleton';
+import { UserHistoryModal } from '../components/UserHistoryModal';
 
 interface LeaderboardProps {
   userStatus: UserStatus;
@@ -41,6 +42,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
   const [stickyCurrentUser, setStickyCurrentUser] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [selectedEntry, setSelectedEntry] = useState<LeaderboardEntry | null>(null);
   const daysLeft = getDaysRemaining();
   const contestOver = isContestOver();
 
@@ -211,7 +213,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
         {loading && !data ? (
           <PodiumSkeleton />
         ) : topEntries.length > 0 ? (
-          <Podium entries={topEntries} />
+          <Podium entries={topEntries} onUserClick={setSelectedEntry} />
         ) : null}
       </div>
 
@@ -306,6 +308,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
                   entry={entry}
                   isCurrentUser={entry.isCurrentUser}
                   innerRef={entry.isCurrentUser ? currentUserRowRef : undefined}
+                  onUserClick={setSelectedEntry}
                 />
               ))}
               {!isCurrentUserInTop3 && !currentUserInList && currentUser && (
@@ -436,6 +439,11 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
           Внести данные можно после 00:00
         </div>
       )}
+
+      <UserHistoryModal
+        entry={selectedEntry}
+        onClose={() => setSelectedEntry(null)}
+      />
     </div>
   );
 };

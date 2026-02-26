@@ -4,11 +4,13 @@ import { Avatar } from './Avatar';
 
 interface PodiumProps {
   entries: LeaderboardEntry[];
+  onUserClick?: (entry: LeaderboardEntry) => void;
 }
 
 interface PodiumItemProps {
   entry: LeaderboardEntry;
   rank: 1 | 2 | 3;
+  onUserClick?: (entry: LeaderboardEntry) => void;
 }
 
 const RANK_BADGE_STYLES: Record<1 | 2 | 3, { bg: string }> = {
@@ -17,19 +19,21 @@ const RANK_BADGE_STYLES: Record<1 | 2 | 3, { bg: string }> = {
   3: { bg: 'linear-gradient(135deg, #CD7F32, #A0622E)' },
 };
 
-const PodiumItem: React.FC<PodiumItemProps> = ({ entry, rank }) => {
+const PodiumItem: React.FC<PodiumItemProps> = ({ entry, rank, onUserClick }) => {
   const isFirst = rank === 1;
   const avatarSize = isFirst ? 76 : 60;
   const badgeStyle = RANK_BADGE_STYLES[rank];
 
   return (
     <div
+      onClick={() => onUserClick?.(entry)}
       style={{
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         width: 110,
         marginBottom: isFirst ? 16 : 0,
+        cursor: onUserClick ? 'pointer' : 'default',
       }}
     >
       <div style={{ position: 'relative', display: 'inline-flex' }}>
@@ -116,7 +120,7 @@ const PodiumItem: React.FC<PodiumItemProps> = ({ entry, rank }) => {
   );
 };
 
-export const Podium: React.FC<PodiumProps> = ({ entries }) => {
+export const Podium: React.FC<PodiumProps> = ({ entries, onUserClick }) => {
   const top3 = entries.slice(0, 3);
   const first = top3[0];
   const second = top3[1];
@@ -135,17 +139,17 @@ export const Podium: React.FC<PodiumProps> = ({ entries }) => {
     >
       {second && (
         <div role="listitem">
-          <PodiumItem entry={second} rank={2} />
+          <PodiumItem entry={second} rank={2} onUserClick={onUserClick} />
         </div>
       )}
       {first && (
         <div role="listitem">
-          <PodiumItem entry={first} rank={1} />
+          <PodiumItem entry={first} rank={1} onUserClick={onUserClick} />
         </div>
       )}
       {third && (
         <div role="listitem">
-          <PodiumItem entry={third} rank={3} />
+          <PodiumItem entry={third} rank={3} onUserClick={onUserClick} />
         </div>
       )}
     </div>

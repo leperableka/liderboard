@@ -71,12 +71,14 @@ interface LeaderboardRowProps {
   entry: LeaderboardEntry;
   isCurrentUser?: boolean;
   innerRef?: React.Ref<HTMLDivElement>;
+  onUserClick?: (entry: LeaderboardEntry) => void;
 }
 
 export const LeaderboardRow: React.FC<LeaderboardRowProps> = ({
   entry,
   isCurrentUser = false,
   innerRef,
+  onUserClick,
 }) => {
   const pnlUp = entry.pnlPercent >= 0;
 
@@ -85,6 +87,7 @@ export const LeaderboardRow: React.FC<LeaderboardRowProps> = ({
       ref={innerRef}
       role="row"
       aria-label={`${entry.position} место — ${entry.displayName}`}
+      onClick={() => onUserClick?.(entry)}
       style={{
         display: 'flex',
         alignItems: 'center',
@@ -95,6 +98,7 @@ export const LeaderboardRow: React.FC<LeaderboardRowProps> = ({
         border: isCurrentUser ? '1.5px solid rgba(245,166,35,0.3)' : '1.5px solid transparent',
         marginBottom: 2,
         transition: 'background 0.15s',
+        cursor: onUserClick ? 'pointer' : 'default',
       }}
     >
       <span
