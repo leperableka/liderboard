@@ -327,6 +327,37 @@ export const Rules: React.FC<RulesProps> = ({ onNavigate }) => (
         ))}
       </Section>
 
+      {/* Нарушение правил */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{
+          fontSize: 11,
+          fontWeight: 700,
+          color: 'var(--text-3)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.8px',
+          marginBottom: 10,
+          fontFamily: 'var(--font)',
+        }}>
+          Нарушение правил
+        </div>
+        <div style={{
+          background: 'rgba(239,68,68,0.06)',
+          border: '1.5px solid rgba(239,68,68,0.2)',
+          borderRadius: 16,
+          padding: '16px',
+        }}>
+          {[
+            'Нарушение правил и махинации ведут к немедленной дисквалификации.',
+            'Vesperfin&Co.Trading оставляет за собой право дисквалифицировать участника без объяснения причин.',
+          ].map((text, i) => (
+            <div key={i} style={{ display: 'flex', gap: 10, marginBottom: i < 1 ? 10 : 0, alignItems: 'flex-start' }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'rgba(239,68,68,0.7)', flexShrink: 0, marginTop: 7 }} />
+              <p style={{ ...bodyText, margin: 0, color: 'var(--text-2)' }}>{text}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
     </div>
 
     {/* Bottom nav — same structure as Leaderboard/History */}
