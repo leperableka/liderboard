@@ -1,9 +1,21 @@
 import React, { useEffect, useRef, useState } from 'react';
-import type { HistoryResponse, LeaderboardEntry } from '../types';
+import type { HistoryResponse, LeaderboardEntry, Market } from '../types';
+import { MARKET_LABELS } from '../types';
 import { getHistory } from '../api/client';
 import { Avatar } from './Avatar';
 import { LineChart } from './LineChart';
 import { Skeleton } from './Skeleton';
+
+const MARKET_BADGE_COLOR: Record<Market, string> = {
+  crypto: '#92400E',
+  moex:   '#1E40AF',
+  forex:  '#065F46',
+};
+const MARKET_BADGE_BG: Record<Market, string> = {
+  crypto: 'rgba(254,243,199,0.6)',
+  moex:   'rgba(219,234,254,0.6)',
+  forex:  'rgba(209,250,229,0.6)',
+};
 
 interface UserHistoryModalProps {
   entry: LeaderboardEntry | null;
@@ -169,6 +181,38 @@ export const UserHistoryModal: React.FC<UserHistoryModalProps> = ({ entry, onClo
               fontFamily: 'var(--font)',
             }}>
               {entry.pnlPercent >= 0 ? '+' : ''}{entry.pnlPercent.toFixed(1)}% за всё время
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>
+              <span style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '2px 7px',
+                borderRadius: 5,
+                fontSize: 11,
+                fontWeight: 700,
+                letterSpacing: '0.3px',
+                background: MARKET_BADGE_BG[entry.market],
+                color: MARKET_BADGE_COLOR[entry.market],
+                fontFamily: 'var(--font)',
+              }}>
+                {MARKET_LABELS[entry.market]}
+              </span>
+              {entry.instruments.map((inst) => (
+                <span key={inst} style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  padding: '2px 7px',
+                  borderRadius: 5,
+                  fontSize: 11,
+                  fontWeight: 600,
+                  background: MARKET_BADGE_BG[entry.market],
+                  color: MARKET_BADGE_COLOR[entry.market],
+                  opacity: 0.8,
+                  fontFamily: 'var(--font)',
+                }}>
+                  {inst}
+                </span>
+              ))}
             </div>
           </div>
 
