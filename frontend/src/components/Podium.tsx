@@ -13,6 +13,17 @@ interface PodiumItemProps {
   onUserClick?: (entry: LeaderboardEntry) => void;
 }
 
+/** Для подиума: длинные составные имена сокращаем "Имя Ф.", одиночные — CSS ellipsis */
+function formatPodiumName(name: string): string {
+  const MAX_CHARS = 10;
+  if (name.length <= MAX_CHARS) return name;
+  const spaceIdx = name.indexOf(' ');
+  if (spaceIdx > 0 && spaceIdx < name.length - 1) {
+    return name.slice(0, spaceIdx + 1) + name[spaceIdx + 1] + '.';
+  }
+  return name; // одиночное слово — обрежет CSS
+}
+
 const RANK_BADGE_STYLES: Record<1 | 2 | 3, { bg: string }> = {
   1: { bg: 'linear-gradient(135deg, #FFD700, #FFA500)' },
   2: { bg: 'linear-gradient(135deg, #C0C0C0, #A0A0A0)' },
@@ -100,7 +111,7 @@ const PodiumItem: React.FC<PodiumItemProps> = ({ entry, rank, onUserClick }) => 
           textAlign: 'center',
         }}
       >
-        {entry.displayName}
+        {formatPodiumName(entry.displayName)}
       </p>
       <p
         style={{
