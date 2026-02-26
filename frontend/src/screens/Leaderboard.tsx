@@ -19,6 +19,8 @@ const PERIOD_OPTIONS: { key: Period; label: string; subtitle: string }[] = [
   { key: 'month', label: 'Месяц', subtitle: 'За месяц' },
 ];
 
+// 6 марта 00:00 МСК = 5 марта 21:00:00 UTC
+const CONTEST_START = new Date('2026-03-05T21:00:00Z');
 const CONTEST_END = new Date('2026-03-29T23:59:59');
 
 function getDaysRemaining(): number {
@@ -45,17 +47,23 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
   const [selectedEntry, setSelectedEntry] = useState<LeaderboardEntry | null>(null);
   const daysLeft = getDaysRemaining();
   const contestOver = isContestOver();
+  const isBeforeStart = new Date() < CONTEST_START;
 
   const handleDepositClick = useCallback(() => {
-    if (userStatus.depositUpdatedToday) {
-      // Show toast and auto-hide after 3s
+    if (isBeforeStart) {
+      // Contest hasn't started yet — show "not started" toast
+      setToastVisible(true);
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+      toastTimerRef.current = setTimeout(() => setToastVisible(false), 3000);
+    } else if (userStatus.depositUpdatedToday) {
+      // Already submitted today — show "after 00:00" toast
       setToastVisible(true);
       if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
       toastTimerRef.current = setTimeout(() => setToastVisible(false), 3000);
     } else {
       onUpdateDeposit();
     }
-  }, [userStatus.depositUpdatedToday, onUpdateDeposit]);
+  }, [isBeforeStart, userStatus.depositUpdatedToday, onUpdateDeposit]);
 
   // Cleanup timer on unmount
   useEffect(() => {
@@ -380,18 +388,22 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
               height: 52,
               borderRadius: 14,
               border: 'none',
-              background: userStatus.depositUpdatedToday ? '#D1D5DB' : 'var(--gold-grad)',
-              color: userStatus.depositUpdatedToday ? '#9CA3AF' : '#fff',
+              background: (isBeforeStart || userStatus.depositUpdatedToday) ? '#D1D5DB' : 'var(--gold-grad)',
+              color: (isBeforeStart || userStatus.depositUpdatedToday) ? '#9CA3AF' : '#fff',
               fontSize: 16,
               fontWeight: 600,
-              cursor: userStatus.depositUpdatedToday ? 'default' : 'pointer',
+              cursor: (isBeforeStart || userStatus.depositUpdatedToday) ? 'default' : 'pointer',
               fontFamily: 'var(--font)',
-              boxShadow: userStatus.depositUpdatedToday ? 'none' : '0 4px 16px rgba(245,166,35,0.35)',
+              boxShadow: (isBeforeStart || userStatus.depositUpdatedToday) ? 'none' : '0 4px 16px rgba(245,166,35,0.35)',
               marginBottom: 8,
               transition: 'all 0.2s',
             }}
           >
-            {userStatus.depositUpdatedToday ? 'Данные на сегодня внесены ✓' : 'Внести данные'}
+            {isBeforeStart
+              ? 'Старт 6 марта 00:00'
+              : userStatus.depositUpdatedToday
+              ? 'Данные на сегодня внесены ✓'
+              : 'Внести данные'}
           </button>
         )}
 
@@ -435,8 +447,10 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
             animation: 'toastIn 0.25s ease forwards',
           }}
         >
-          <span style={{ fontSize: 16 }}>🕛</span>
-          Внести данные можно после 00:00
+          <span style={{ fontSize: 16 }}>{isBeforeStart ? '🔒' : '🕛'}</span>
+          {isBeforeStart
+            ? 'Конкурс начнётся 6 марта в 00:00 МСК'
+            : 'Внести данные можно после 00:00'}
         </div>
       )}
 
