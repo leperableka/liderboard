@@ -6,7 +6,8 @@ export type Screen =
   | 'leaderboard'
   | 'update-deposit'
   | 'history'
-  | 'profile';
+  | 'profile'
+  | 'rules';
 
 // ─── Markets & Instruments ────────────────────────────────────────────────────
 

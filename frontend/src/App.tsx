@@ -8,6 +8,7 @@ import { Leaderboard } from './screens/Leaderboard';
 import { UpdateDeposit } from './screens/UpdateDeposit';
 import { History } from './screens/History';
 import { Profile } from './screens/Profile';
+import { Rules } from './screens/Rules';
 import { SplashScreen } from './components/SplashScreen';
 
 const IS_DEV = import.meta.env.DEV;
@@ -362,6 +363,10 @@ export const App: React.FC = () => {
               onNavigate={navigateTo}
               onProfileUpdated={handleProfileUpdated}
             />
+          )}
+
+          {readyState.screen === 'rules' && (
+            <Rules onNavigate={navigateTo} />
           )}
         </div>
       )}
