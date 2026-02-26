@@ -5,6 +5,8 @@ interface AvatarProps {
   avatarUrl?: string | null;
   size?: number;
   colorIndex?: number;
+  /** Lazy-load the image (default: true). Pass false for above-the-fold avatars. */
+  lazy?: boolean;
 }
 
 const GRADIENTS = [
@@ -42,6 +44,7 @@ export const Avatar: React.FC<AvatarProps> = ({
   avatarUrl,
   size = 40,
   colorIndex,
+  lazy = true,
 }) => {
   const index = colorIndex ?? getColorIndex(name);
   const gradient = GRADIENTS[index % GRADIENTS.length];
@@ -65,6 +68,10 @@ export const Avatar: React.FC<AvatarProps> = ({
         <img
           src={avatarUrl}
           alt={name}
+          width={size}
+          height={size}
+          loading={lazy ? 'lazy' : 'eager'}
+          decoding="async"
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
           onError={(e) => {
             const target = e.currentTarget;

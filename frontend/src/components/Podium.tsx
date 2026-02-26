@@ -72,7 +72,7 @@ const PodiumItem: React.FC<PodiumItemProps> = ({ entry, rank, onUserClick }) => 
             position: 'relative',
           }}
         >
-          <Avatar name={entry.displayName} avatarUrl={entry.avatarUrl} size={avatarSize} />
+          <Avatar name={entry.displayName} avatarUrl={entry.avatarUrl} size={avatarSize} lazy={false} />
           <div
             style={{
               position: 'absolute',
