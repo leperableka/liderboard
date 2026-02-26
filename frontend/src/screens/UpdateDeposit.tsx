@@ -141,6 +141,11 @@ export const UpdateDeposit: React.FC<UpdateDepositProps> = ({
       ? (changeAmount / prevDeposit) * 100
       : null;
 
+  // Anomaly threshold: warn if change exceeds ±40 %
+  const ANOMALY_THRESHOLD = 40;
+  const isAnomalous =
+    changePct !== null && isValid && value !== '' && Math.abs(changePct) > ANOMALY_THRESHOLD;
+
   return (
     <>
       <div
@@ -337,6 +342,33 @@ export const UpdateDeposit: React.FC<UpdateDepositProps> = ({
                 </>
               )}
             </div>
+
+            {/* Anomaly warning — shown live when change exceeds ±40 % */}
+            {isAnomalous && (
+              <div
+                role="alert"
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 8,
+                  background: '#FFFBEB',
+                  border: '1.5px solid #F5A623',
+                  borderRadius: 12,
+                  padding: '10px 14px',
+                  marginTop: 12,
+                  fontSize: 13,
+                  color: '#92610A',
+                  lineHeight: 1.5,
+                }}
+              >
+                <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>⚠️</span>
+                <span>
+                  Значение сильно отличается от&nbsp;предыдущего депозита
+                  ({changePct !== null ? (changePct > 0 ? '+' : '') + changePct.toFixed(1) : ''}%).
+                  Возможно, допущена ошибка — пожалуйста, перепроверьте данные.
+                </span>
+              </div>
+            )}
           </main>
         )}
 
@@ -427,6 +459,11 @@ export const UpdateDeposit: React.FC<UpdateDepositProps> = ({
               ?
             </>
           ) : undefined
+        }
+        warning={
+          isAnomalous
+            ? 'Значение очень сильно отличается от предыдущего депозита. Возможно, допущена ошибка — пожалуйста, перепроверьте данные.'
+            : undefined
         }
         onCancel={() => setModalVisible(false)}
         onConfirm={handleConfirm}

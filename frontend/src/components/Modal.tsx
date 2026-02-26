@@ -4,6 +4,8 @@ interface ModalProps {
   visible: boolean;
   title: string;
   subtitle?: React.ReactNode;
+  /** Optional warning block shown between subtitle and buttons (yellow banner). */
+  warning?: React.ReactNode;
   onCancel: () => void;
   onConfirm: () => void;
   cancelLabel?: string;
@@ -15,6 +17,7 @@ export const Modal: React.FC<ModalProps> = ({
   visible,
   title,
   subtitle,
+  warning,
   onCancel,
   onConfirm,
   cancelLabel = 'Отмена',
@@ -79,11 +82,33 @@ export const Modal: React.FC<ModalProps> = ({
               fontSize: 14,
               color: 'var(--text-2)',
               textAlign: 'center',
-              margin: '0 0 20px',
+              margin: '0 0 12px',
             }}
           >
             {subtitle}
           </p>
+        )}
+        {warning && (
+          <div
+            role="alert"
+            style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: 8,
+              background: '#FFFBEB',
+              border: '1.5px solid #F5A623',
+              borderRadius: 12,
+              padding: '10px 14px',
+              marginBottom: 16,
+              fontSize: 13,
+              color: '#92610A',
+              lineHeight: 1.5,
+              textAlign: 'left',
+            }}
+          >
+            <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>⚠️</span>
+            <span>{warning}</span>
+          </div>
         )}
         <div style={{ display: 'flex', gap: 10 }}>
           <button
