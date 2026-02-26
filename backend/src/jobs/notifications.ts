@@ -20,8 +20,18 @@ interface PendingUser {
 
 // ─── Shared helpers ──────────────────────────────────────────────────────────
 
-function isWeekdayUtc(): boolean {
-  const day = new Date().getUTCDay(); // 0=Sun … 6=Sat
+/** Returns ISO date string (YYYY-MM-DD) in Moscow timezone (UTC+3). */
+function getMoscowDateStr(): string {
+  const now = new Date();
+  const moscowMs = now.getTime() + 3 * 60 * 60 * 1000;
+  return new Date(moscowMs).toISOString().slice(0, 10);
+}
+
+/** Returns true if today is Mon–Fri in Moscow timezone. */
+function isWeekdayMoscow(): boolean {
+  const now = new Date();
+  const moscowMs = now.getTime() + 3 * 60 * 60 * 1000;
+  const day = new Date(moscowMs).getUTCDay(); // 0=Sun … 6=Sat
   return day >= 1 && day <= 5;
 }
 
@@ -60,8 +70,8 @@ async function sendBatch(
  *  - Users inactive for 5+ calendar days are excluded (they get no more reminders)
  */
 async function getPendingUsers(): Promise<PendingUser[]> {
-  const todayStr = new Date().toISOString().slice(0, 10);
-  const weekday = isWeekdayUtc();
+  const todayStr = getMoscowDateStr();
+  const weekday = isWeekdayMoscow();
 
   const result = await pool.query<PendingUser>(
     `SELECT u.telegram_id, u.display_name, u.market
@@ -69,14 +79,14 @@ async function getPendingUsers(): Promise<PendingUser[]> {
      WHERE
        -- market filter: crypto always, moex/forex on weekdays only
        (u.market = 'crypto' OR $1 = TRUE)
-       -- not submitted today
+       -- not submitted today (Moscow date)
        AND NOT EXISTS (
          SELECT 1 FROM deposit_updates du
          WHERE du.user_id = u.id AND du.deposit_date = $2
        )
-       -- active window: fewer than 5 days since last deposit or registration
+       -- active window: fewer than 5 days since last deposit or registration (Moscow time)
        AND (
-         CURRENT_DATE - COALESCE(
+         (NOW() AT TIME ZONE 'Europe/Moscow')::date - COALESCE(
            (SELECT MAX(du2.deposit_date) FROM deposit_updates du2 WHERE du2.user_id = u.id),
            u.registered_at::date
          ) < 5
@@ -100,7 +110,7 @@ async function getDisqualificationWarningUsers(): Promise<PendingUser[]> {
     `SELECT u.telegram_id, u.display_name, u.market
      FROM users u
      WHERE
-       CURRENT_DATE - COALESCE(
+       (NOW() AT TIME ZONE 'Europe/Moscow')::date - COALESCE(
          (SELECT MAX(du.deposit_date) FROM deposit_updates du WHERE du.user_id = u.id),
          u.registered_at::date
        ) = 4`,
@@ -116,8 +126,8 @@ async function getDisqualificationWarningUsers(): Promise<PendingUser[]> {
  * ~5 minutes before market close. Standard nudge.
  */
 async function sendPreCloseReminders(bot: Bot, miniAppUrl: string): Promise<void> {
-  const todayStr = new Date().toISOString().slice(0, 10);
-  console.log(`[notifications] Pre-close reminder — ${todayStr}`);
+  const todayStr = getMoscowDateStr();
+  console.log(`[notifications] Pre-close reminder — ${todayStr} (Moscow)`);
 
   try {
     const users = await getPendingUsers();
@@ -145,8 +155,8 @@ async function sendPreCloseReminders(bot: Bot, miniAppUrl: string): Promise<void
  * Evening nudge for those who still haven't submitted.
  */
 async function sendEveningReminders(bot: Bot, miniAppUrl: string): Promise<void> {
-  const todayStr = new Date().toISOString().slice(0, 10);
-  console.log(`[notifications] Evening reminder — ${todayStr}`);
+  const todayStr = getMoscowDateStr();
+  console.log(`[notifications] Evening reminder — ${todayStr} (Moscow)`);
 
   try {
     const users = await getPendingUsers();
@@ -175,8 +185,8 @@ async function sendEveningReminders(bot: Bot, miniAppUrl: string): Promise<void>
  * On day 5+ they are silently excluded from all reminders.
  */
 async function sendDisqualificationWarnings(bot: Bot, miniAppUrl: string): Promise<void> {
-  const todayStr = new Date().toISOString().slice(0, 10);
-  console.log(`[notifications] Disqualification warning — ${todayStr}`);
+  const todayStr = getMoscowDateStr();
+  console.log(`[notifications] Disqualification warning — ${todayStr} (Moscow)`);
 
   try {
     const users = await getDisqualificationWarningUsers();

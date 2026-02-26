@@ -20,20 +20,18 @@ const DepositUpdateBodySchema = z.object({
 
 /**
  * Returns an ISO date string (YYYY-MM-DD) for "today" adjusted by the provided
- * UTC offset in minutes.  Falls back to UTC when offset is not provided.
+ * UTC offset in minutes.  Falls back to Moscow time (UTC+3) when offset is not provided.
  */
 function getTodayForUser(utcOffsetMinutes?: number): string {
   const now = new Date();
-  if (utcOffsetMinutes !== undefined) {
-    // Shift the timestamp by the user's offset so getUTC* methods return local values
-    const localMs = now.getTime() + utcOffsetMinutes * 60_000;
-    const localDate = new Date(localMs);
-    const y = localDate.getUTCFullYear();
-    const m = String(localDate.getUTCMonth() + 1).padStart(2, '0');
-    const d = String(localDate.getUTCDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
-  }
-  return now.toISOString().slice(0, 10);
+  // Default to Moscow UTC+3 since all participants are in Russia
+  const offsetMinutes = utcOffsetMinutes ?? 180;
+  const localMs = now.getTime() + offsetMinutes * 60_000;
+  const localDate = new Date(localMs);
+  const y = localDate.getUTCFullYear();
+  const m = String(localDate.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(localDate.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }
 
 // ─── Route plugin ─────────────────────────────────────────────────────────────

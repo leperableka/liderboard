@@ -4,6 +4,15 @@ import pool from '../db/pool.js';
 import { authPreHandler } from '../middleware/auth.js';
 import type { UserRow, DepositUpdateRow } from '../types.js';
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/** Returns ISO date string (YYYY-MM-DD) in Moscow timezone (UTC+3). */
+function getMoscowDateStr(): string {
+  const now = new Date();
+  const moscowMs = now.getTime() + 3 * 60 * 60 * 1000;
+  return new Date(moscowMs).toISOString().slice(0, 10);
+}
+
 // ─── Currency mapping ────────────────────────────────────────────────────────
 
 const MARKET_CURRENCY: Record<string, string> = {
@@ -74,7 +83,7 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
         }
 
         const user = result.rows[0]!;
-        const today = new Date().toISOString().slice(0, 10);
+        const today = getMoscowDateStr();
 
         const depositResult = await pool.query<{ has_today: boolean }>(
           `SELECT EXISTS(
@@ -158,7 +167,7 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
         );
 
         const newUser = insertUser.rows[0]!;
-        const today = new Date().toISOString().slice(0, 10);
+        const today = getMoscowDateStr();
 
         await client.query(
           `INSERT INTO deposit_updates (user_id, deposit_date, deposit_value)
