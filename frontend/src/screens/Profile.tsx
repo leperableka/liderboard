@@ -4,21 +4,12 @@ import { MARKET_LABELS } from '../types';
 import { Avatar } from '../components/Avatar';
 import { InstrumentBadge } from '../components/Badge';
 import { BottomNav } from '../components/BottomNav';
-import { updateProfile } from '../api/client';
+import { updateProfile, uploadAvatar } from '../api/client';
 
 interface ProfileProps {
   userStatus: UserStatus;
   onNavigate: (screen: Screen) => void;
   onProfileUpdated: (displayName: string, avatarUrl?: string | null) => void;
-}
-
-function fileToDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
 }
 
 export const Profile: React.FC<ProfileProps> = ({
@@ -27,35 +18,42 @@ export const Profile: React.FC<ProfileProps> = ({
   onProfileUpdated,
 }) => {
   const [displayName, setDisplayName] = useState(userStatus.displayName);
+  // avatarUrl — current preview (may be object URL while file is pending upload)
   const [avatarUrl, setAvatarUrl] = useState<string | null>(userStatus.avatarUrl);
+  // avatarFile — File selected by user, null once uploaded
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // Track the object URL so we can revoke it after upload
+  const previewUrlRef = useRef<string | null>(null);
 
   const marketLabel = userStatus.market ? MARKET_LABELS[userStatus.market] : '—';
   const nameChanged = displayName.trim() !== userStatus.displayName;
-  const avatarChanged = avatarUrl !== userStatus.avatarUrl;
+  const avatarChanged = avatarFile !== null;
   const hasChanges = nameChanged || avatarChanged;
 
-  async function handleAvatarClick() {
+  function handleAvatarClick() {
     fileInputRef.current?.click();
   }
 
-  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-      setError('Фото не должно превышать 2 МБ');
+    // Allow up to 10 MB — server compresses with sharp
+    if (file.size > 10 * 1024 * 1024) {
+      setError('Фото не должно превышать 10 МБ');
+      e.target.value = '';
       return;
     }
-    try {
-      const dataUrl = await fileToDataUrl(file);
-      setAvatarUrl(dataUrl);
-      setError('');
-    } catch {
-      setError('Не удалось загрузить фото');
-    }
+    // Revoke previous preview URL to free memory
+    if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
+    const preview = URL.createObjectURL(file);
+    previewUrlRef.current = preview;
+    setAvatarFile(file);
+    setAvatarUrl(preview);
+    setError('');
     e.target.value = '';
   }
 
@@ -68,12 +66,27 @@ export const Profile: React.FC<ProfileProps> = ({
     setSaving(true);
     setError('');
     try {
-      await updateProfile(
-        userStatus.telegramId,
-        trimmed,
-        avatarChanged ? avatarUrl : undefined,
-      );
-      onProfileUpdated(trimmed, avatarChanged ? avatarUrl : undefined);
+      let savedAvatarUrl: string | undefined;
+
+      // Upload new avatar first (server compresses to WebP 400×400)
+      if (avatarFile) {
+        const serverUrl = await uploadAvatar(userStatus.telegramId, avatarFile);
+        // Revoke local preview and switch to server URL
+        if (previewUrlRef.current) {
+          URL.revokeObjectURL(previewUrlRef.current);
+          previewUrlRef.current = null;
+        }
+        setAvatarUrl(serverUrl);
+        setAvatarFile(null);
+        savedAvatarUrl = serverUrl;
+      }
+
+      // Update display name if changed
+      if (nameChanged) {
+        await updateProfile(userStatus.telegramId, trimmed);
+      }
+
+      onProfileUpdated(trimmed, savedAvatarUrl);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (err: unknown) {
@@ -180,7 +193,7 @@ export const Profile: React.FC<ProfileProps> = ({
               </div>
             </button>
             <p style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 8 }}>
-              Нажмите для замены фото
+              Нажмите для замены фото · до 10 МБ
             </p>
           </div>
 

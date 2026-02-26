@@ -10,6 +10,7 @@ import { createRedisClient } from './services/cache.js';
 import { userRoutes } from './routes/user.js';
 import { leaderboardRoutes } from './routes/leaderboard.js';
 import { depositRoutes } from './routes/deposit.js';
+import { avatarRoutes } from './routes/avatar.js';
 import { scheduleNotifications } from './jobs/notifications.js';
 
 // ─── Environment validation ──────────────────────────────────────────────────
@@ -86,6 +87,7 @@ async function bootstrap(): Promise<void> {
   await fastify.register(userRoutes);
   await fastify.register(leaderboardRoutes);
   await fastify.register(depositRoutes);
+  await fastify.register(avatarRoutes);
 
   // ── Redis ─────────────────────────────────────────────────────────────────
   const redisUrl = process.env['REDIS_URL'] ?? 'redis://localhost:6379';

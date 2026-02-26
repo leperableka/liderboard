@@ -37,6 +37,8 @@ services:
     networks:
       - internal
       - dokploy-network
+    volumes:
+      - uploads_data:/app/uploads
     environment:
       NODE_ENV: ${NODE_ENV:-production}
       PORT: ${PORT:-3000}
@@ -72,6 +74,8 @@ services:
     networks:
       - internal
       - dokploy-network
+    volumes:
+      - uploads_data:/usr/share/nginx/html/uploads:ro
     depends_on:
       - backend
     labels:
@@ -89,6 +93,7 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  uploads_data:
 
 networks:
   internal:

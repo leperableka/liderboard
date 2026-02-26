@@ -204,3 +204,31 @@ export async function updateProfile(
   if (avatarUrl !== undefined) body.photo_url = avatarUrl;
   await request<void>('PATCH', `/api/user/${telegramId}/profile`, body);
 }
+
+/**
+ * Upload a new avatar image for the user.
+ * The backend compresses it to WebP 400×400 quality 85 via sharp.
+ * Returns the server URL of the saved file (e.g. /uploads/123456789.webp).
+ */
+export async function uploadAvatar(telegramId: number, file: File): Promise<string> {
+  if (IS_DEV) {
+    await mockDelay(800);
+    // Return an object URL as mock — works fine for local preview
+    return URL.createObjectURL(file);
+  }
+  const form = new FormData();
+  form.append('file', file);
+  const response = await fetch(`${BASE_URL}/api/user/${telegramId}/avatar`, {
+    method: 'POST',
+    headers: { 'X-Telegram-InitData': getInitData() },
+    body: form,
+  });
+  if (!response.ok) {
+    const text = await response.text().catch(() => '');
+    let msg = `HTTP ${response.status}`;
+    try { msg = (JSON.parse(text) as { error?: string }).error ?? msg; } catch { /* ignore */ }
+    throw new Error(msg);
+  }
+  const { avatarUrl } = (await response.json()) as { avatarUrl: string };
+  return avatarUrl;
+}
