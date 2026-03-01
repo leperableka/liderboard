@@ -92,7 +92,7 @@ export const Welcome: React.FC<WelcomeProps> = ({
         style={{
           fontSize: 30,
           fontWeight: 800,
-          color: 'rgba(255,255,255,0.75)',
+          color: '#fff',
           marginTop: 4,
           letterSpacing: '-0.5px',
           lineHeight: 1.2,
