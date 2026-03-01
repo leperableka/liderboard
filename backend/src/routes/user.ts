@@ -55,9 +55,11 @@ export async function userRoutes(fastify: FastifyInstance, opts: UserRoutesOpts)
   /**
    * GET /api/user/:telegramId/status
    * Returns flat UserStatus compatible with frontend expectations.
+   * Requires auth — only the authenticated user may fetch their own status.
    */
   fastify.get(
     '/api/user/:telegramId/status',
+    { preHandler: authPreHandler },
     async (request: FastifyRequest, reply: FastifyReply) => {
       const paramParse = TelegramIdParamSchema.safeParse(request.params);
       if (!paramParse.success) {
@@ -65,6 +67,11 @@ export async function userRoutes(fastify: FastifyInstance, opts: UserRoutesOpts)
       }
 
       const { telegramId } = paramParse.data;
+
+      // Authorization: only the authenticated user may fetch their own status
+      if (String(request.telegramUser.id) !== telegramId) {
+        return reply.code(403).send({ error: 'Forbidden' });
+      }
 
       try {
         const result = await pool.query<UserRow>(
@@ -147,21 +154,15 @@ export async function userRoutes(fastify: FastifyInstance, opts: UserRoutesOpts)
       try {
         await client.query('BEGIN');
 
-        const existing = await client.query<{ id: number }>(
-          'SELECT id FROM users WHERE telegram_id = $1',
-          [telegramId],
-        );
-        if ((existing.rowCount ?? 0) > 0) {
-          await client.query('ROLLBACK');
-          return reply.code(409).send({ error: 'User already registered' });
-        }
-
+        // Use INSERT ON CONFLICT to avoid SELECT+INSERT race condition.
+        // If the user already exists, the INSERT returns no rows.
         const insertUser = await client.query<UserRow>(
           `INSERT INTO users
              (telegram_id, username, display_name, photo_url, market, instruments,
               initial_deposit, currency, consented_pd, consented_rules,
               initial_deposit_rub, deposit_category)
            VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10, $11, $12)
+           ON CONFLICT (telegram_id) DO NOTHING
            RETURNING id, telegram_id, username, display_name, photo_url, market,
                      instruments, initial_deposit, currency, registered_at,
                      consented_pd, consented_rules, initial_deposit_rub, deposit_category`,
@@ -180,6 +181,11 @@ export async function userRoutes(fastify: FastifyInstance, opts: UserRoutesOpts)
             category,
           ],
         );
+
+        if ((insertUser.rowCount ?? 0) === 0) {
+          await client.query('ROLLBACK');
+          return reply.code(409).send({ error: 'User already registered' });
+        }
 
         const newUser = insertUser.rows[0]!;
         const today = getMoscowDateStr();

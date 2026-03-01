@@ -7,9 +7,9 @@ import { MARKET_CURRENCY } from '../../types';
 const APPROX_RATE = 90; // approximate USD/RUB for display only
 
 const CATEGORY_INFO: Record<1 | 2 | 3, { label: string; range: string; color: string; bg: string }> = {
-  1: { label: 'Вы будете соревноваться в категории\u00A01 с участниками со схожим депозитом', range: 'до 69\u202F999 ₽', color: '#2563EB', bg: '#EFF6FF' },
-  2: { label: 'Вы будете соревноваться в категории\u00A02 с участниками со схожим депозитом', range: '70\u202F000–249\u202F999 ₽', color: '#D97706', bg: '#FFFBEB' },
-  3: { label: 'Вы будете соревноваться в категории\u00A03 с участниками со схожим депозитом', range: 'от 250\u202F000 ₽',  color: '#7C3AED', bg: '#F5F3FF' },
+  1: { label: 'Вы будете соревноваться в\u00A0категории\u00A01 с\u00A0участниками со\u00A0схожим депозитом', range: 'до 69\u202F999 ₽', color: '#2563EB', bg: '#EFF6FF' },
+  2: { label: 'Вы будете соревноваться в\u00A0категории\u00A02 с\u00A0участниками со\u00A0схожим депозитом', range: '70\u202F000–249\u202F999 ₽', color: '#D97706', bg: '#FFFBEB' },
+  3: { label: 'Вы будете соревноваться в\u00A0категории\u00A03 с\u00A0участниками со\u00A0схожим депозитом', range: 'от 250\u202F000 ₽',  color: '#7C3AED', bg: '#F5F3FF' },
 };
 
 function computeCategory(amount: number, currency: string): { cat: 1 | 2 | 3; approximate: boolean } | null {

@@ -7,9 +7,13 @@ interface Step1ProfileProps {
   onNext: () => void;
 }
 
+const MAX_AVATAR_BYTES = 10 * 1024 * 1024; // 10 MB
+
 export const Step1Profile: React.FC<Step1ProfileProps> = ({ data, onChange, onNext }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const prevObjectUrlRef = useRef<string | null>(null);
   const [nameError, setNameError] = useState('');
+  const [avatarError, setAvatarError] = useState('');
 
   const canProceed =
     data.displayName.trim().length > 0 && data.pdConsent && data.rulesConsent;
@@ -18,7 +22,17 @@ export const Step1Profile: React.FC<Step1ProfileProps> = ({ data, onChange, onNe
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/')) return;
+    if (file.size > MAX_AVATAR_BYTES) {
+      setAvatarError('Размер файла не должен превышать 10 МБ');
+      return;
+    }
+    setAvatarError('');
+    // Revoke the previous object URL to prevent memory leak
+    if (prevObjectUrlRef.current) {
+      URL.revokeObjectURL(prevObjectUrlRef.current);
+    }
     const url = URL.createObjectURL(file);
+    prevObjectUrlRef.current = url;
     onChange({ avatarUrl: url, avatarFile: file });
   }
 
@@ -109,6 +123,15 @@ export const Step1Profile: React.FC<Step1ProfileProps> = ({ data, onChange, onNe
           />
         </div>
       </div>
+
+      {avatarError && (
+        <p
+          role="alert"
+          style={{ fontSize: 12, color: 'var(--red)', textAlign: 'center', marginTop: 6, padding: '0 20px' }}
+        >
+          {avatarError}
+        </p>
+      )}
 
       {/* Form */}
       <div style={{ padding: '16px 20px 0', flex: 1 }}>

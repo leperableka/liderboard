@@ -23,7 +23,8 @@ function getInitData(): string {
 async function request<T>(
   method: 'GET' | 'POST' | 'PUT' | 'PATCH',
   path: string,
-  body?: unknown
+  body?: unknown,
+  signal?: AbortSignal,
 ): Promise<T> {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -34,6 +35,7 @@ async function request<T>(
     method,
     headers,
     body: body !== undefined ? JSON.stringify(body) : undefined,
+    signal,
   });
 
   if (!response.ok) {
@@ -149,7 +151,7 @@ export async function register(payload: RegisterPayload): Promise<UserStatus> {
   return request<UserStatus>('POST', '/api/user/register', payload);
 }
 
-export async function getLeaderboard(category: LeaderboardCategory, telegramId?: number): Promise<LeaderboardResponse> {
+export async function getLeaderboard(category: LeaderboardCategory, telegramId?: number, signal?: AbortSignal): Promise<LeaderboardResponse> {
   if (IS_DEV) {
     await mockDelay(700);
     const currentId = telegramId ?? mockStatus.telegramId;
@@ -160,7 +162,7 @@ export async function getLeaderboard(category: LeaderboardCategory, telegramId?:
     const currentUser = entries.find((e) => e.isCurrentUser) ?? null;
     return { ...mockLeaderboard, category, entries, currentUser };
   }
-  const raw = await request<LeaderboardResponse>('GET', `/api/leaderboard?category=${category}`);
+  const raw = await request<LeaderboardResponse>('GET', `/api/leaderboard?category=${category}`, undefined, signal);
   const entries = raw.entries.map((e) => ({
     ...e,
     isCurrentUser: telegramId ? e.telegramId === telegramId : false,
@@ -174,10 +176,8 @@ export async function updateDeposit(payload: UpdateDepositPayload): Promise<void
     await mockDelay(800);
     return;
   }
-  // Backend expects {deposit_value, user_timezone_offset?}
   await request<void>('POST', '/api/deposit/update', {
     deposit_value: payload.amount,
-    user_timezone_offset: new Date().getTimezoneOffset() * -1,
   });
 }
 

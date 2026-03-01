@@ -1,4 +1,5 @@
 import type { FastifyInstance } from 'fastify';
+import { z } from 'zod';
 import sharp from 'sharp';
 import { promises as fs } from 'fs';
 import path from 'path';
@@ -8,6 +9,10 @@ import { authPreHandler } from '../middleware/auth.js';
 const UPLOADS_DIR = process.env.UPLOADS_DIR ?? '/app/uploads';
 const MAX_RAW_BYTES = 10 * 1024 * 1024; // 10 MB raw input limit
 const AVATAR_SIZE = 400; // max width/height in pixels
+
+const AvatarParamSchema = z.object({
+  telegramId: z.string().regex(/^\d+$/, 'Must be a numeric telegram ID'),
+});
 
 export async function avatarRoutes(app: FastifyInstance) {
   /**
@@ -20,7 +25,12 @@ export async function avatarRoutes(app: FastifyInstance) {
     '/api/user/:telegramId/avatar',
     { preHandler: [authPreHandler] },
     async (request, reply) => {
-      const { telegramId } = request.params;
+      // Validate telegramId is strictly numeric before any use (prevents NaN bypass + path traversal)
+      const paramParse = AvatarParamSchema.safeParse(request.params);
+      if (!paramParse.success) {
+        return reply.status(400).send({ error: 'Invalid telegramId parameter' });
+      }
+      const { telegramId } = paramParse.data;
 
       // Authorization: only the owner can update their own avatar
       if (request.telegramUser.id !== parseInt(telegramId, 10)) {

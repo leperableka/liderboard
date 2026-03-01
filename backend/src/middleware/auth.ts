@@ -42,6 +42,14 @@ function verifyTelegramInitData(initData: string, botToken: string): TelegramUse
 
   if (expectedHash !== receivedHash) return null;
 
+  // Reject initData older than 24 hours (replay attack prevention)
+  const authDateStr = params.get('auth_date');
+  if (!authDateStr) return null;
+  const authDate = parseInt(authDateStr, 10);
+  if (isNaN(authDate) || Math.floor(Date.now() / 1000) - authDate > 86400) {
+    return null;
+  }
+
   // Parse the user field
   const userRaw = params.get('user');
   if (!userRaw) return null;

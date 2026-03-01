@@ -22,12 +22,13 @@ export function useLeaderboard(telegramId?: number): UseLeaderboardReturn {
     if (abortRef.current) {
       abortRef.current.abort();
     }
-    abortRef.current = new AbortController();
+    const controller = new AbortController();
+    abortRef.current = controller;
 
     setLoading(true);
     setError(null);
     try {
-      const result = await getLeaderboard(c, telegramId);
+      const result = await getLeaderboard(c, telegramId, controller.signal);
       setData(result);
     } catch (err: unknown) {
       if (err instanceof Error && err.name !== 'AbortError') {

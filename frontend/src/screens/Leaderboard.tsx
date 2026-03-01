@@ -22,7 +22,8 @@ const CATEGORY_OPTIONS: { key: LeaderboardCategory; label: string; subtitle: str
 
 // 6 марта 00:00 МСК = 5 марта 21:00:00 UTC
 const CONTEST_START = new Date('2026-03-05T21:00:00Z');
-const CONTEST_END = new Date('2026-03-29T23:59:59');
+// 29 марта 23:59:59 МСК (UTC+3), явный offset чтобы парсилось корректно на любом устройстве
+const CONTEST_END = new Date('2026-03-29T23:59:59+03:00');
 
 function getDaysRemaining(): number {
   const now = new Date();
@@ -222,7 +223,10 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
         {loading && !data ? (
           <PodiumSkeleton />
         ) : topEntries.length > 0 ? (
-          <Podium entries={topEntries} onUserClick={setSelectedEntry} />
+          <Podium
+            entries={topEntries}
+            onUserClick={(entry) => { if (entry.isCurrentUser) setSelectedEntry(entry); }}
+          />
         ) : null}
       </div>
 
@@ -317,7 +321,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
                   entry={entry}
                   isCurrentUser={entry.isCurrentUser}
                   innerRef={entry.isCurrentUser ? currentUserRowRef : undefined}
-                  onUserClick={setSelectedEntry}
+                  onUserClick={entry.isCurrentUser ? setSelectedEntry : undefined}
                 />
               ))}
               {!isCurrentUserInTop3 && !currentUserInList && currentUser && (

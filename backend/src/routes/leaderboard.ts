@@ -48,6 +48,15 @@ interface LeaderboardRow {
   deposit_category: number | null;
 }
 
+// ─── Moscow time helper ───────────────────────────────────────────────────────
+
+/** Returns ISO date string (YYYY-MM-DD) in Moscow timezone (UTC+3). */
+function getMoscowDateStr(): string {
+  const now = new Date();
+  const moscowMs = now.getTime() + 3 * 60 * 60 * 1000;
+  return new Date(moscowMs).toISOString().slice(0, 10);
+}
+
 // ─── Route plugin ─────────────────────────────────────────────────────────────
 
 export async function leaderboardRoutes(fastify: FastifyInstance): Promise<void> {
@@ -83,12 +92,11 @@ export async function leaderboardRoutes(fastify: FastifyInstance): Promise<void>
         request.log.warn({ cacheErr }, 'Redis cache read failed, falling back to DB');
       }
 
-      const today = new Date().toISOString().slice(0, 10);
+      // Use Moscow time so the leaderboard date matches deposit dates (also in MSK)
+      const today = getMoscowDateStr();
 
-      // Category WHERE clause
-      const categoryFilter = category !== 'all'
-        ? `AND u.deposit_category = ${parseInt(category)}`
-        : '';
+      // Parameterized category filter: null → no filter, 1/2/3 → filter by category
+      const categoryInt: number | null = category !== 'all' ? parseInt(category, 10) : null;
 
       try {
         /*
@@ -131,7 +139,7 @@ export async function leaderboardRoutes(fastify: FastifyInstance): Promise<void>
             FROM users u
             LEFT JOIN current_deposits  cd  ON cd.user_id = u.id
             LEFT JOIN today_updates     tu  ON tu.user_id = u.id
-            WHERE 1=1 ${categoryFilter}
+            WHERE ($4::integer IS NULL OR u.deposit_category = $4::integer)
           )
           SELECT
             user_id,
@@ -160,7 +168,7 @@ export async function leaderboardRoutes(fastify: FastifyInstance): Promise<void>
 
         const result = await pool.query<LeaderboardRow & { change_percent: string }>(
           sql,
-          [today, limit, offset],
+          [today, limit, offset, categoryInt],
         );
 
         const totalCount =

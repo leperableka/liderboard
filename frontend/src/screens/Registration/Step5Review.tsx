@@ -99,7 +99,7 @@ export const Step5Review: React.FC<Step5ReviewProps> = ({ data, onEdit, onConfir
 
           {/* Category */}
           {category && (
-            <ReviewRow label="Категория" last>
+            <ReviewRow label="Категория турнира" last>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span
                   style={{

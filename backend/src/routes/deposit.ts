@@ -8,30 +8,15 @@ import { cacheDelPattern } from '../services/cache.js';
 
 const DepositUpdateBodySchema = z.object({
   deposit_value: z.number().positive().multipleOf(0.01),
-  /**
-   * Optional UTC offset in minutes supplied by the client, e.g. +180 for MSK.
-   * Used to derive the "today" date in the user's local timezone.
-   * If omitted, UTC date is used.
-   */
-  user_timezone_offset: z.number().int().min(-840).max(840).optional(),
 });
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-/**
- * Returns an ISO date string (YYYY-MM-DD) for "today" adjusted by the provided
- * UTC offset in minutes.  Falls back to Moscow time (UTC+3) when offset is not provided.
- */
-function getTodayForUser(utcOffsetMinutes?: number): string {
+/** Returns ISO date string (YYYY-MM-DD) in Moscow timezone (UTC+3). */
+function getMoscowDateStr(): string {
   const now = new Date();
-  // Default to Moscow UTC+3 since all participants are in Russia
-  const offsetMinutes = utcOffsetMinutes ?? 180;
-  const localMs = now.getTime() + offsetMinutes * 60_000;
-  const localDate = new Date(localMs);
-  const y = localDate.getUTCFullYear();
-  const m = String(localDate.getUTCMonth() + 1).padStart(2, '0');
-  const d = String(localDate.getUTCDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
+  const moscowMs = now.getTime() + 3 * 60 * 60 * 1000;
+  return new Date(moscowMs).toISOString().slice(0, 10);
 }
 
 // ─── Route plugin ─────────────────────────────────────────────────────────────
@@ -56,9 +41,9 @@ export async function depositRoutes(fastify: FastifyInstance): Promise<void> {
         });
       }
 
-      const { deposit_value, user_timezone_offset } = bodyParse.data;
+      const { deposit_value } = bodyParse.data;
       const telegramId = request.telegramUser.id;
-      const depositDate = getTodayForUser(user_timezone_offset);
+      const depositDate = getMoscowDateStr();
 
       try {
         // Resolve internal user id
