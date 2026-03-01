@@ -27,10 +27,12 @@ CREATE TABLE IF NOT EXISTS deposit_updates (
 
 CREATE INDEX IF NOT EXISTS idx_users_telegram_id ON users(telegram_id);
 CREATE INDEX IF NOT EXISTS idx_users_market ON users(market);
-CREATE INDEX IF NOT EXISTS idx_users_category ON users(deposit_category);
 
 -- Idempotent column additions for existing deployments
 ALTER TABLE users ADD COLUMN IF NOT EXISTS initial_deposit_rub DECIMAL(18,2);
 ALTER TABLE users ADD COLUMN IF NOT EXISTS deposit_category SMALLINT CHECK (deposit_category IN (1, 2, 3));
+
+-- Index on deposit_category must come AFTER the column is guaranteed to exist
+CREATE INDEX IF NOT EXISTS idx_users_category ON users(deposit_category);
 CREATE INDEX IF NOT EXISTS idx_deposit_updates_user_date ON deposit_updates(user_id, deposit_date);
 CREATE INDEX IF NOT EXISTS idx_deposit_updates_date ON deposit_updates(deposit_date);
