@@ -1,6 +1,7 @@
 import cron from 'node-cron';
 import { Bot } from 'grammy';
 import pool from '../db/pool.js';
+import { getMoscowDateStr, isWeekdayMoscow } from '../utils/time.js';
 
 /** Bot API 9.4: inline button with primary (blue) style */
 function blueWebAppButton(text: string, url: string) {
@@ -22,21 +23,6 @@ interface PendingUser {
 
 /** Contest opens 6 March 2026 00:00 МСК — notifications are sent only from this date. */
 const CONTEST_START_MOSCOW = '2026-03-06';
-
-/** Returns ISO date string (YYYY-MM-DD) in Moscow timezone (UTC+3). */
-function getMoscowDateStr(): string {
-  const now = new Date();
-  const moscowMs = now.getTime() + 3 * 60 * 60 * 1000;
-  return new Date(moscowMs).toISOString().slice(0, 10);
-}
-
-/** Returns true if today is Mon–Fri in Moscow timezone. */
-function isWeekdayMoscow(): boolean {
-  const now = new Date();
-  const moscowMs = now.getTime() + 3 * 60 * 60 * 1000;
-  const day = new Date(moscowMs).getUTCDay(); // 0=Sun … 6=Sat
-  return day >= 1 && day <= 5;
-}
 
 /**
  * Sends a batch of messages to users.

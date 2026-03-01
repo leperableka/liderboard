@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 interface AvatarProps {
   name: string;
@@ -46,6 +46,7 @@ export const Avatar: React.FC<AvatarProps> = ({
   colorIndex,
   lazy = true,
 }) => {
+  const [imgError, setImgError] = useState(false);
   const index = colorIndex ?? getColorIndex(name);
   const gradient = GRADIENTS[index % GRADIENTS.length];
   const fontSize = Math.round(size * 0.35);
@@ -62,7 +63,7 @@ export const Avatar: React.FC<AvatarProps> = ({
     background: gradient,
   };
 
-  if (avatarUrl) {
+  if (avatarUrl && !imgError) {
     return (
       <div style={style}>
         <img
@@ -73,10 +74,7 @@ export const Avatar: React.FC<AvatarProps> = ({
           loading={lazy ? 'lazy' : 'eager'}
           decoding="async"
           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-          onError={(e) => {
-            const target = e.currentTarget;
-            target.style.display = 'none';
-          }}
+          onError={() => setImgError(true)}
         />
       </div>
     );

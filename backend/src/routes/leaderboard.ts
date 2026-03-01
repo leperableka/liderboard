@@ -6,6 +6,7 @@ import {
   cacheSet,
 } from '../services/cache.js';
 import type { LeaderboardEntry } from '../types.js';
+import { getMoscowDateStr } from '../utils/time.js';
 
 // ─── Zod schema ─────────────────────────────────────────────────────────────
 
@@ -21,8 +22,8 @@ const LeaderboardQuerySchema = z.object({
     .string()
     .regex(/^\d+$/)
     .transform(Number)
-    .pipe(z.number().int().min(1).max(500))
-    .default('200'),
+    .pipe(z.number().int().min(1).max(100))
+    .default('50'),
   userId: z.string().regex(/^\d+$/).optional(),
 });
 
@@ -58,15 +59,6 @@ interface LeaderboardRow {
   has_today_update: boolean;
   total_count: string;
   deposit_category: number | null;
-}
-
-// ─── Moscow time helper ───────────────────────────────────────────────────────
-
-/** Returns ISO date string (YYYY-MM-DD) in Moscow timezone (UTC+3). */
-function getMoscowDateStr(): string {
-  const now = new Date();
-  const moscowMs = now.getTime() + 3 * 60 * 60 * 1000;
-  return new Date(moscowMs).toISOString().slice(0, 10);
 }
 
 // ─── Route plugin ─────────────────────────────────────────────────────────────

@@ -51,7 +51,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       REDIS_URL: redis://redis:6379
       CORS_ORIGIN: ${CORS_ORIGIN}
-      REGISTRATION_DEADLINE: ${REGISTRATION_DEADLINE:-2026-05-05}
+      REGISTRATION_DEADLINE: ${REGISTRATION_DEADLINE:-2026-03-06}
     depends_on:
       postgres:
         condition: service_healthy

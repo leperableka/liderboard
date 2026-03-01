@@ -77,7 +77,7 @@ async function bootstrap(): Promise<void> {
   fastify.get('/health', async (_request, reply) => {
     try {
       await pool.query('SELECT 1');
-      return reply.code(200).send({ status: 'ok', env: nodeEnv });
+      return reply.code(200).send({ status: 'ok' });
     } catch {
       return reply.code(503).send({ status: 'degraded', db: 'unreachable' });
     }

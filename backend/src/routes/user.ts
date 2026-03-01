@@ -5,19 +5,11 @@ import pool from '../db/pool.js';
 import { authPreHandler } from '../middleware/auth.js';
 import { toRub, depositCategory } from '../services/exchangeRate.js';
 import type { UserRow, DepositUpdateRow } from '../types.js';
+import { getMoscowDateStr } from '../utils/time.js';
 
 interface UserRoutesOpts {
   bot?: Bot;
   miniAppUrl?: string;
-}
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-/** Returns ISO date string (YYYY-MM-DD) in Moscow timezone (UTC+3). */
-function getMoscowDateStr(): string {
-  const now = new Date();
-  const moscowMs = now.getTime() + 3 * 60 * 60 * 1000;
-  return new Date(moscowMs).toISOString().slice(0, 10);
 }
 
 // ─── Currency mapping ────────────────────────────────────────────────────────
@@ -34,13 +26,13 @@ const RegisterBodySchema = z.object({
   displayName: z.string().min(1).max(128),
   avatarUrl: z.string().url().max(500).optional().nullable(),
   market: z.enum(['crypto', 'moex', 'forex']),
-  instruments: z.array(z.string().min(1)).min(1).max(20),
-  initialDeposit: z.number().positive().multipleOf(0.01),
+  instruments: z.array(z.string().min(1).max(200)).min(1).max(20),
+  initialDeposit: z.number().positive().max(100_000_000).multipleOf(0.01),
 });
 
 const UpdateProfileBodySchema = z.object({
   display_name: z.string().min(1).max(128).optional(),
-  photo_url: z.string().max(500).nullable().optional(),
+  photo_url: z.string().url().max(500).nullable().optional(),
 });
 
 const TelegramIdParamSchema = z.object({
@@ -153,8 +145,9 @@ export async function userRoutes(fastify: FastifyInstance, opts: UserRoutesOpts)
         });
       }
 
-      // Block new registrations once the tournament has started (6 March 2026 MSK)
-      if (getMoscowDateStr() >= '2026-03-06') {
+      // Block new registrations once the tournament has started
+      const registrationDeadline = process.env['REGISTRATION_DEADLINE'] ?? '2026-03-06';
+      if (getMoscowDateStr() >= registrationDeadline) {
         return reply.code(403).send({ error: 'Регистрация закрыта. Турнир уже начался.' });
       }
 
@@ -430,7 +423,8 @@ export async function userRoutes(fastify: FastifyInstance, opts: UserRoutesOpts)
           `SELECT id, user_id, deposit_date::text, deposit_value, created_at, updated_at
            FROM deposit_updates
            WHERE user_id = $1
-           ORDER BY deposit_date ASC`,
+           ORDER BY deposit_date ASC
+           LIMIT 365`,
           [userId],
         );
 

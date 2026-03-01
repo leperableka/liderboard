@@ -14,6 +14,7 @@ export const History: React.FC<HistoryProps> = ({ userStatus, onNavigate }) => {
   const [data, setData] = useState<HistoryResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -34,7 +35,7 @@ export const History: React.FC<HistoryProps> = ({ userStatus, onNavigate }) => {
     return () => {
       cancelled = true;
     };
-  }, [userStatus.telegramId]);
+  }, [userStatus.telegramId, retryCount]);
 
   return (
     <div
@@ -68,7 +69,7 @@ export const History: React.FC<HistoryProps> = ({ userStatus, onNavigate }) => {
           <div role="alert" style={{ padding: '16px 20px', textAlign: 'center' }}>
             <p style={{ fontSize: 14, color: 'var(--red)', marginBottom: 12 }}>{error}</p>
             <button
-              onClick={() => window.location.reload()}
+              onClick={() => setRetryCount((c) => c + 1)}
               style={{
                 padding: '10px 24px',
                 borderRadius: 10,

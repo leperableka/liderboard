@@ -63,9 +63,3 @@ export async function cacheDelPattern(pattern: string): Promise<void> {
   } while (cursor !== '0');
 }
 
-/**
- * Returns a standardised cache key for leaderboard pages.
- */
-export function leaderboardCacheKey(period: string, page: number): string {
-  return `leaderboard:${period}:${page}`;
-}

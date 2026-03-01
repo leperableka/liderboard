@@ -3,21 +3,13 @@ import { z } from 'zod';
 import pool from '../db/pool.js';
 import { authPreHandler } from '../middleware/auth.js';
 import { cacheDelPattern } from '../services/cache.js';
+import { getMoscowDateStr } from '../utils/time.js';
 
 // ─── Zod schema ─────────────────────────────────────────────────────────────
 
 const DepositUpdateBodySchema = z.object({
-  deposit_value: z.number().positive().multipleOf(0.01),
+  deposit_value: z.number().positive().max(100_000_000).multipleOf(0.01),
 });
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-/** Returns ISO date string (YYYY-MM-DD) in Moscow timezone (UTC+3). */
-function getMoscowDateStr(): string {
-  const now = new Date();
-  const moscowMs = now.getTime() + 3 * 60 * 60 * 1000;
-  return new Date(moscowMs).toISOString().slice(0, 10);
-}
 
 // ─── Route plugin ─────────────────────────────────────────────────────────────
 
@@ -44,6 +36,11 @@ export async function depositRoutes(fastify: FastifyInstance): Promise<void> {
       const { deposit_value } = bodyParse.data;
       const telegramId = request.telegramUser.id;
       const depositDate = getMoscowDateStr();
+
+      // Block deposit submissions after tournament end (30 March 2026 00:00 MSK)
+      if (depositDate > '2026-03-29') {
+        return reply.code(403).send({ error: 'Турнир завершён. Внесение данных недоступно.' });
+      }
 
       try {
         // Resolve internal user id

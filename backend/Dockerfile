@@ -25,4 +25,6 @@ COPY --from=builder /app/dist ./dist
 
 EXPOSE 3000
 
+USER node
+
 CMD ["sh", "-c", "node dist/db/migrate.js && node dist/index.js"]

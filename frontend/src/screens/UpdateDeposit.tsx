@@ -49,6 +49,8 @@ function stripFormatting(value: string): string {
 
 // 6 марта 00:00 МСК = 5 марта 21:00:00 UTC
 const CONTEST_START = new Date('2026-03-05T21:00:00Z');
+// 30 марта 00:00 МСК = 29 марта 21:00:00 UTC
+const CONTEST_END = new Date('2026-03-29T21:00:00Z');
 
 export const UpdateDeposit: React.FC<UpdateDepositProps> = ({
   userStatus,
@@ -62,13 +64,15 @@ export const UpdateDeposit: React.FC<UpdateDepositProps> = ({
   const [showStartHint, setShowStartHint] = useState(false);
   const startHintTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const isBeforeStart = new Date() < CONTEST_START;
+  const now = new Date();
+  const isBeforeStart = now < CONTEST_START;
+  const isContestOver = now > CONTEST_END;
   const { showBackButton, hideBackButton, onBackButtonClicked, hapticFeedback } = useTelegram();
 
   const currency = userStatus.market ? MARKET_CURRENCY[userStatus.market] : 'USDT';
   const today = new Date();
   const numValue = parseFloat(value);
-  const isValid = !isNaN(numValue) && numValue >= 0;
+  const isValid = !isNaN(numValue) && numValue > 0;
   const prevDeposit = userStatus.currentDeposit ?? userStatus.initialDeposit;
 
   useEffect(() => {
@@ -201,7 +205,18 @@ export const UpdateDeposit: React.FC<UpdateDepositProps> = ({
           {formatDate(today)}
         </p>
 
-        {isBeforeStart ? (
+        {isContestOver ? (
+          /* ── Турнир завершён ── */
+          <main style={{ padding: '0 20px', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+            <div style={{ fontSize: 48, lineHeight: 1 }} aria-hidden="true">🏁</div>
+            <p style={{ fontSize: 15, color: 'var(--text)', fontWeight: 600, textAlign: 'center', margin: 0 }}>
+              Турнир завершён
+            </p>
+            <p style={{ fontSize: 13, color: 'var(--text-2)', textAlign: 'center', lineHeight: 1.5, margin: 0, maxWidth: 280 }}>
+              Приём данных по депозиту закрыт. Следите за итоговым рейтингом.
+            </p>
+          </main>
+        ) : isBeforeStart ? (
           /* ── Заблокировано до старта ── */
           <main style={{ padding: '0 20px', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
             <div style={{ fontSize: 48, lineHeight: 1 }} aria-hidden="true">🔒</div>
@@ -376,7 +391,25 @@ export const UpdateDeposit: React.FC<UpdateDepositProps> = ({
 
         {/* Save / Start button */}
         <div style={{ padding: '12px 20px 28px', position: 'relative' }}>
-          {isBeforeStart ? (
+          {isContestOver ? (
+            <button
+              disabled
+              style={{
+                width: '100%',
+                height: 52,
+                borderRadius: 14,
+                border: 'none',
+                background: '#D1D5DB',
+                color: '#9CA3AF',
+                fontSize: 16,
+                fontWeight: 600,
+                cursor: 'not-allowed',
+                fontFamily: 'var(--font)',
+              }}
+            >
+              Турнир завершён
+            </button>
+          ) : isBeforeStart ? (
             <>
               {showStartHint && (
                 <div

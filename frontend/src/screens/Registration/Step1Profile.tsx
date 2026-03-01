@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { RegistrationData } from '../../types';
 
 interface Step1ProfileProps {
@@ -17,6 +17,16 @@ export const Step1Profile: React.FC<Step1ProfileProps> = ({ data, onChange, onNe
 
   const canProceed =
     data.displayName.trim().length > 0 && data.pdConsent && data.rulesConsent;
+
+  // Revoke Object URL on unmount to prevent memory leak
+  useEffect(() => {
+    return () => {
+      if (prevObjectUrlRef.current) {
+        URL.revokeObjectURL(prevObjectUrlRef.current);
+        prevObjectUrlRef.current = null;
+      }
+    };
+  }, []);
 
   function handleAvatarChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -156,7 +166,7 @@ export const Step1Profile: React.FC<Step1ProfileProps> = ({ data, onChange, onNe
             value={data.displayName}
             onChange={handleNameChange}
             placeholder="Ваше имя"
-            maxLength={50}
+            maxLength={128}
             aria-describedby={nameError ? 'name-error' : undefined}
             aria-invalid={!!nameError}
             style={{

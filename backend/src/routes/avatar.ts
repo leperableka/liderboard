@@ -7,7 +7,7 @@ import pool from '../db/pool.js';
 import { authPreHandler } from '../middleware/auth.js';
 
 const UPLOADS_DIR = process.env.UPLOADS_DIR ?? '/app/uploads';
-const MAX_RAW_BYTES = 10 * 1024 * 1024; // 10 MB raw input limit
+const MAX_RAW_BYTES = 5 * 1024 * 1024; // 5 MB — matches global multipart limit in index.ts
 const AVATAR_SIZE = 400; // max width/height in pixels
 
 const AvatarParamSchema = z.object({
@@ -52,10 +52,15 @@ export async function avatarRoutes(app: FastifyInstance) {
       const inputBuffer = await data.toBuffer();
 
       // Compress: resize to max 400×400, encode as WebP quality 85
-      const compressed = await sharp(inputBuffer)
-        .resize(AVATAR_SIZE, AVATAR_SIZE, { fit: 'cover', withoutEnlargement: true })
-        .webp({ quality: 85 })
-        .toBuffer();
+      let compressed: Buffer;
+      try {
+        compressed = await sharp(inputBuffer)
+          .resize(AVATAR_SIZE, AVATAR_SIZE, { fit: 'cover', withoutEnlargement: true })
+          .webp({ quality: 85 })
+          .toBuffer();
+      } catch {
+        return reply.status(400).send({ error: 'Не удалось обработать изображение. Файл повреждён или имеет неподдерживаемый формат.' });
+      }
 
       // Ensure uploads directory exists
       await fs.mkdir(UPLOADS_DIR, { recursive: true });
