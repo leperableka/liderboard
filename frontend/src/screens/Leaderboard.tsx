@@ -250,7 +250,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
         >
           <div>
             <span style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)' }}>
-              Лидерборд
+              Рейтинг
             </span>
             <span style={{ fontSize: 12, color: 'var(--text-3)', fontWeight: 500, marginLeft: 6 }}>
               {activeCategory.subtitle}

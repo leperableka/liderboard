@@ -35,14 +35,14 @@ export const BottomNav: React.FC<BottomNavProps> = ({ current, onNavigate }) => 
     <button
       className={`bottom-tab${current === 'leaderboard' ? ' active' : ''}`}
       onClick={() => onNavigate('leaderboard')}
-      aria-label="Лидерборд"
+      aria-label="Рейтинг"
       aria-current={current === 'leaderboard' ? 'page' : undefined}
       style={tabStyle(current === 'leaderboard')}
     >
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width={22} height={22} aria-hidden="true">
         <path d="M18 20V10M12 20V4M6 20v-6" />
       </svg>
-      Лидерборд
+      Рейтинг
     </button>
 
     <button
