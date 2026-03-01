@@ -373,7 +373,7 @@ export async function userRoutes(fastify: FastifyInstance, opts: UserRoutesOpts)
 
           bot.api.sendMessage(telegramId, farewellText, {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            reply_markup: { inline_keyboard: [[{ text: 'Открыть приложение', web_app: { url: miniAppUrl } }]] },
+            reply_markup: { inline_keyboard: [[{ text: '🏆 Открыть приложение', web_app: { url: miniAppUrl } }]] },
           }).catch((err) => {
             fastify.log.warn({ err, telegramId }, 'Failed to send farewell message');
           });

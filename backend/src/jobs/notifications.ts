@@ -220,7 +220,7 @@ async function sendEveningReminders(bot: Bot, miniAppUrl: string): Promise<void>
         `Вы не заполнили данные торгового турнира Vesperfin&Co.Trading, ` +
         `пожалуйста, зайдите в приложение и внесите информацию.\n\n` +
         `Возможно, вы уже лидируете в турнире 🏆`,
-      makeKeyboard('Открыть приложение', miniAppUrl),
+      makeKeyboard('🏆 Открыть приложение', miniAppUrl),
     );
 
     console.log('[notifications] Evening batch complete');
