@@ -83,24 +83,15 @@ async function bootstrap(): Promise<void> {
     }
   });
 
-  // ── Routes ────────────────────────────────────────────────────────────────
-  await fastify.register(userRoutes);
-  await fastify.register(leaderboardRoutes);
-  await fastify.register(depositRoutes);
-  await fastify.register(avatarRoutes);
-
-  // ── Redis ─────────────────────────────────────────────────────────────────
-  const redisUrl = process.env['REDIS_URL'] ?? 'redis://localhost:6379';
-  const redis = createRedisClient(redisUrl);
-
-  // ── Grammy bot + cron ──────────────────────────────────────────────────────
+  // ── Grammy bot (init before routes so register handler can send welcome) ──
   let cronTask: { stop: () => void } | null = null;
+  let bot: Bot | undefined;
 
   if (!isDev) {
     const botToken = requireEnv('BOT_TOKEN');
     const miniAppUrl = requireEnv('MINI_APP_URL');
 
-    const bot = new Bot(botToken);
+    bot = new Bot(botToken);
 
     // Inline keyboard button with primary (blue) style — Bot API 9.4+
     const appButton = {
@@ -140,6 +131,16 @@ async function bootstrap(): Promise<void> {
   } else {
     fastify.log.info('Development mode: Grammy bot and cron disabled');
   }
+
+  // ── Routes ────────────────────────────────────────────────────────────────
+  await fastify.register(userRoutes, { bot, miniAppUrl: process.env['MINI_APP_URL'] ?? '' });
+  await fastify.register(leaderboardRoutes);
+  await fastify.register(depositRoutes);
+  await fastify.register(avatarRoutes);
+
+  // ── Redis ─────────────────────────────────────────────────────────────────
+  const redisUrl = process.env['REDIS_URL'] ?? 'redis://localhost:6379';
+  const redis = createRedisClient(redisUrl);
 
   // ── Start server ──────────────────────────────────────────────────────────
   await fastify.listen({ port, host });

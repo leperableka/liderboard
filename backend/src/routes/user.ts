@@ -1,9 +1,15 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
+import type { Bot } from 'grammy';
 import pool from '../db/pool.js';
 import { authPreHandler } from '../middleware/auth.js';
 import { toRub, depositCategory } from '../services/exchangeRate.js';
 import type { UserRow, DepositUpdateRow } from '../types.js';
+
+interface UserRoutesOpts {
+  bot?: Bot;
+  miniAppUrl?: string;
+}
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -44,7 +50,8 @@ const TelegramIdParamSchema = z.object({
 
 // ─── Route plugin ───────────────────────────────────────────────────────────
 
-export async function userRoutes(fastify: FastifyInstance): Promise<void> {
+export async function userRoutes(fastify: FastifyInstance, opts: UserRoutesOpts): Promise<void> {
+  const { bot, miniAppUrl } = opts;
   /**
    * GET /api/user/:telegramId/status
    * Returns flat UserStatus compatible with frontend expectations.
@@ -185,6 +192,22 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
         );
 
         await client.query('COMMIT');
+
+        // Send welcome message via bot (fire-and-forget)
+        if (bot && miniAppUrl) {
+          const welcomeText =
+            'Добро пожаловать на турнир! 🎉\n\n' +
+            'Чтобы не потерять доступ к турниру, закрепите его у себя в Telegram!\n\n' +
+            'Как это сделать:\n' +
+            '— Нажмите и удерживайте канал\n' +
+            '— Выберите «Закрепить» 📌';
+          bot.api.sendMessage(telegramId, welcomeText, {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            reply_markup: { inline_keyboard: [[{ text: '🏆 Открыть приложение', web_app: { url: miniAppUrl } } as any]] },
+          }).catch((err) => {
+            fastify.log.warn({ err, telegramId }, 'Failed to send welcome message');
+          });
+        }
 
         return reply.code(201).send({
           registered: true,

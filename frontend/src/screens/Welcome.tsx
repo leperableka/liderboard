@@ -90,11 +90,12 @@ export const Welcome: React.FC<WelcomeProps> = ({
 
       <p
         style={{
-          fontSize: 15,
-          fontWeight: 700,
+          fontSize: 30,
+          fontWeight: 800,
           color: 'rgba(255,255,255,0.75)',
-          marginTop: 6,
-          letterSpacing: '0.2px',
+          marginTop: 4,
+          letterSpacing: '-0.5px',
+          lineHeight: 1.2,
           fontFamily: 'var(--font)',
           animation: 'fadeUp 0.5s ease both',
           animationDelay: '0.15s',
