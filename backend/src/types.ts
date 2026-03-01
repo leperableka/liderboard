@@ -46,16 +46,15 @@ export interface UserProfile {
 }
 
 export interface LeaderboardEntry {
-  rank: number;
-  user_id: number;
-  display_name: string;
-  photo_url: string | null;
+  position: number;
+  telegramId: number;
+  displayName: string;
+  avatarUrl: string | null;
   market: 'crypto' | 'moex' | 'forex';
   instruments: string[];
-  change_percent: number;
-  current_deposit: number;
-  currency: string;
-  has_today_update: boolean;
+  pnlPercent: number;
+  isCurrentUser: boolean;
+  depositCategory: number | null;
 }
 
 export type LeaderboardPeriod = 'day' | 'week' | 'month';
