@@ -152,6 +152,9 @@ export const UpdateDeposit: React.FC<UpdateDepositProps> = ({
   const isAnomalous =
     changePct !== null && isValid && value !== '' && Math.abs(changePct) > ANOMALY_THRESHOLD;
 
+  // Large deposit warning: warn if value exceeds 1M (significantly above tournament average)
+  const isLargeDeposit = isValid && value !== '' && numValue > 1_000_000;
+
   return (
     <>
       <div
@@ -359,6 +362,32 @@ export const UpdateDeposit: React.FC<UpdateDepositProps> = ({
                 </>
               )}
             </div>
+
+            {/* Large deposit warning — shown when value exceeds 1M */}
+            {isLargeDeposit && (
+              <div
+                role="alert"
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: 8,
+                  background: '#FFFBEB',
+                  border: '1.5px solid #F5A623',
+                  borderRadius: 12,
+                  padding: '10px 14px',
+                  marginTop: 12,
+                  fontSize: 13,
+                  color: '#92610A',
+                  lineHeight: 1.5,
+                }}
+              >
+                <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>⚠️</span>
+                <span>
+                  Сумма значительно превышает среднее значение депозита участников турнира.
+                  Максимально допустимо&nbsp;<strong>10&nbsp;000&nbsp;000&nbsp;{currency}</strong>.
+                </span>
+              </div>
+            )}
 
             {/* Anomaly warning — shown live when change exceeds ±40 % */}
             {isAnomalous && (

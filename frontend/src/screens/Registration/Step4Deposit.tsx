@@ -57,6 +57,7 @@ export const Step4Deposit: React.FC<Step4DepositProps> = ({ data, onChange, onNe
   const numValue = parseFloat(data.initialDeposit);
   const isValid = !isNaN(numValue) && numValue >= 1;
   const catResult = isValid ? computeCategory(numValue, currency) : null;
+  const isLargeDeposit = isValid && numValue > 1_000_000;
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const raw = stripFormatting(e.target.value);
@@ -160,6 +161,31 @@ export const Step4Deposit: React.FC<Step4DepositProps> = ({ data, onChange, onNe
           >
             {error}
           </p>
+        )}
+
+        {isLargeDeposit && !error && (
+          <div
+            role="alert"
+            style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: 8,
+              background: '#FFFBEB',
+              border: '1.5px solid #F5A623',
+              borderRadius: 12,
+              padding: '10px 14px',
+              marginTop: 10,
+              fontSize: 13,
+              color: '#92610A',
+              lineHeight: 1.5,
+            }}
+          >
+            <span style={{ fontSize: 16, flexShrink: 0, marginTop: 1 }}>⚠️</span>
+            <span>
+              Сумма значительно превышает среднее значение депозита участников турнира.
+              Максимально допустимо&nbsp;<strong>10&nbsp;000&nbsp;000&nbsp;{currency}</strong>.
+            </span>
+          </div>
         )}
 
         {catResult && !error && (
