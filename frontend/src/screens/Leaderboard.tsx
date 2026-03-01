@@ -240,7 +240,9 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
             entries={topEntries}
             onUserClick={(entry) => setSelectedEntry(entry)}
           />
-        ) : null}
+        ) : (
+          <div style={{ height: 28 }} />
+        )}
       </div>
 
       {/* White card */}
@@ -343,6 +345,23 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
                   isCurrentUser
                   innerRef={currentUserRowRef}
                 />
+              )}
+              {data && data.entries.length === 0 && (
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '48px 20px',
+                    gap: 12,
+                  }}
+                >
+                  <span style={{ fontSize: 40 }}>🏆</span>
+                  <p style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-2)', margin: 0, textAlign: 'center' }}>
+                    В этой категории пока нет участников
+                  </p>
+                </div>
               )}
             </>
           )}
