@@ -225,7 +225,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
         ) : topEntries.length > 0 ? (
           <Podium
             entries={topEntries}
-            onUserClick={(entry) => { if (entry.isCurrentUser) setSelectedEntry(entry); }}
+            onUserClick={(entry) => setSelectedEntry(entry)}
           />
         ) : null}
       </div>
@@ -321,7 +321,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
                   entry={entry}
                   isCurrentUser={entry.isCurrentUser}
                   innerRef={entry.isCurrentUser ? currentUserRowRef : undefined}
-                  onUserClick={entry.isCurrentUser ? setSelectedEntry : undefined}
+                  onUserClick={setSelectedEntry}
                 />
               ))}
               {!isCurrentUserInTop3 && !currentUserInList && currentUser && (
@@ -360,7 +360,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
               border: '1px solid rgba(245,166,35,0.2)',
             }}
           >
-            <LeaderboardRow entry={currentUser} isCurrentUser />
+            <LeaderboardRow entry={currentUser} isCurrentUser onUserClick={setSelectedEntry} />
           </div>
         )}
 

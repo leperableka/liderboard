@@ -4,18 +4,20 @@ import { MARKET_LABELS } from '../types';
 import { Avatar } from '../components/Avatar';
 import { InstrumentBadge } from '../components/Badge';
 import { BottomNav } from '../components/BottomNav';
-import { updateProfile, uploadAvatar } from '../api/client';
+import { updateProfile, uploadAvatar, deleteAccount } from '../api/client';
 
 interface ProfileProps {
   userStatus: UserStatus;
   onNavigate: (screen: Screen) => void;
   onProfileUpdated: (displayName: string, avatarUrl?: string | null) => void;
+  onDeleteAccount: () => void;
 }
 
 export const Profile: React.FC<ProfileProps> = ({
   userStatus,
   onNavigate,
   onProfileUpdated,
+  onDeleteAccount,
 }) => {
   const [displayName, setDisplayName] = useState(userStatus.displayName);
   // avatarUrl — current preview (may be object URL while file is pending upload)
@@ -25,6 +27,8 @@ export const Profile: React.FC<ProfileProps> = ({
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   // Track the object URL so we can revoke it after upload
   const previewUrlRef = useRef<string | null>(null);
@@ -55,6 +59,19 @@ export const Profile: React.FC<ProfileProps> = ({
     setAvatarUrl(preview);
     setError('');
     e.target.value = '';
+  }
+
+  async function handleDeleteAccount() {
+    setDeleting(true);
+    try {
+      await deleteAccount(userStatus.telegramId);
+      onDeleteAccount();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Ошибка удаления');
+      setShowDeleteConfirm(false);
+    } finally {
+      setDeleting(false);
+    }
   }
 
   async function handleSave() {
@@ -378,8 +395,129 @@ export const Profile: React.FC<ProfileProps> = ({
               Vesperfin&amp;Co.Trading
             </a>
           </div>
+
+          {/* Danger zone */}
+          <div style={{ padding: '8px 20px 24px' }}>
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              style={{
+                width: '100%',
+                height: 48,
+                borderRadius: 14,
+                border: '1.5px solid #FCA5A5',
+                background: 'transparent',
+                color: '#EF4444',
+                fontSize: 14,
+                fontWeight: 600,
+                cursor: 'pointer',
+                fontFamily: 'var(--font)',
+                transition: 'all 0.2s',
+              }}
+            >
+              Удалить аккаунт
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Delete confirmation modal */}
+      {showDeleteConfirm && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 100,
+            display: 'flex',
+            alignItems: 'flex-end',
+            justifyContent: 'center',
+            background: 'rgba(0,0,0,0.5)',
+          }}
+          onClick={() => { if (!deleting) setShowDeleteConfirm(false); }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: '100%',
+              maxWidth: 600,
+              background: 'var(--white)',
+              borderRadius: '20px 20px 0 0',
+              padding: '20px 20px calc(env(safe-area-inset-bottom, 0px) + 28px)',
+            }}
+          >
+            <div
+              style={{
+                width: 40,
+                height: 4,
+                borderRadius: 2,
+                background: 'var(--border)',
+                margin: '0 auto 20px',
+              }}
+            />
+            <h2
+              style={{
+                fontSize: 18,
+                fontWeight: 700,
+                color: 'var(--text)',
+                textAlign: 'center',
+                marginBottom: 12,
+              }}
+            >
+              Удалить аккаунт?
+            </h2>
+            <p
+              style={{
+                fontSize: 14,
+                color: 'var(--text-2)',
+                textAlign: 'center',
+                lineHeight: 1.5,
+                marginBottom: 24,
+                padding: '0 8px',
+              }}
+            >
+              Вы точно хотите удалить данные из турнирной таблицы? Это действие нельзя отменить.
+            </p>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deleting}
+                style={{
+                  flex: 1,
+                  height: 52,
+                  borderRadius: 14,
+                  border: '1.5px solid var(--border)',
+                  background: 'var(--white)',
+                  color: 'var(--text)',
+                  fontSize: 16,
+                  fontWeight: 600,
+                  cursor: deleting ? 'not-allowed' : 'pointer',
+                  fontFamily: 'var(--font)',
+                }}
+              >
+                Отмена
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleting}
+                style={{
+                  flex: 1,
+                  height: 52,
+                  borderRadius: 14,
+                  border: 'none',
+                  background: deleting ? '#D1D5DB' : '#EF4444',
+                  color: deleting ? '#9CA3AF' : '#fff',
+                  fontSize: 16,
+                  fontWeight: 600,
+                  cursor: deleting ? 'not-allowed' : 'pointer',
+                  fontFamily: 'var(--font)',
+                  transition: 'all 0.2s',
+                }}
+              >
+                {deleting ? 'Удаление...' : 'Удалить'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Bottom nav */}
       <div

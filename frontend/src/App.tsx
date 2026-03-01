@@ -118,6 +118,18 @@ export const App: React.FC = () => {
     });
   }
 
+  function handleAccountDeleted() {
+    const telegramId = user?.id ?? 0;
+    const displayName = user
+      ? `${user.first_name}${user.last_name ? ' ' + user.last_name : ''}`
+      : 'Гость';
+    setState({
+      phase: 'ready',
+      screen: 'welcome',
+      userStatus: buildDefaultUserStatus(telegramId, displayName),
+    });
+  }
+
   // ── Non-Telegram stub ────────────────────────────────────────────────────────
   // Show stub when not in Telegram context (initData is empty) and not in dev mode.
   // Using isReady (based on non-empty initData) is more reliable than checking user,
@@ -362,6 +374,7 @@ export const App: React.FC = () => {
               userStatus={readyState.userStatus}
               onNavigate={navigateTo}
               onProfileUpdated={handleProfileUpdated}
+              onDeleteAccount={handleAccountDeleted}
             />
           )}
 
