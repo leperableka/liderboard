@@ -387,8 +387,8 @@ export const Rules: React.FC<RulesProps> = ({ onNavigate }) => (
       {/* Призовой фонд */}
       <Section title="Призовой фонд">
         <TableHeader cols={['Место', 'Приз']} />
-        <TableRow cells={[<span key="1" style={{ fontSize: 16 }}>🥇 1 место</span>, <strong key="p1" style={{ color: 'var(--text)' }}>25\u00A0000\u00A0₽</strong>]} />
-        <TableRow cells={[<span key="2" style={{ fontSize: 16 }}>🥈 2 место</span>, <strong key="p2" style={{ color: 'var(--text)' }}>10\u00A0000\u00A0₽</strong>]} />
+        <TableRow cells={[<span key="1" style={{ fontSize: 16 }}>🥇 1 место</span>, <strong key="p1" style={{ color: 'var(--text)' }}>{'25\u00A0000\u00A0₽'}</strong>]} />
+        <TableRow cells={[<span key="2" style={{ fontSize: 16 }}>🥈 2 место</span>, <strong key="p2" style={{ color: 'var(--text)' }}>{'10\u00A0000\u00A0₽'}</strong>]} />
         <TableRow cells={[<span key="3" style={{ fontSize: 16 }}>🥉 3 место</span>, 'Набор книг']} last />
         <p style={{ ...bodyText, margin: '12px 0 0', fontSize: 13 }}>
           Призы вручаются в&nbsp;каждой категории. Организатор выступает налоговым агентом
