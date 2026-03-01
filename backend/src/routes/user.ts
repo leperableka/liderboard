@@ -396,10 +396,8 @@ export async function userRoutes(fastify: FastifyInstance, opts: UserRoutesOpts)
 
       const { telegramId } = paramParse.data;
 
-      // Authorization: only the owner can read their own history
-      if (request.telegramUser.id !== parseInt(telegramId, 10)) {
-        return reply.code(403).send({ error: 'Forbidden' });
-      }
+      // History is public within the tournament — any authenticated user
+      // can view any participant's deposit history (shown in leaderboard modal).
 
       try {
         const userResult = await pool.query<{
