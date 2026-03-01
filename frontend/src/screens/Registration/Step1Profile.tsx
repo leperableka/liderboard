@@ -176,7 +176,9 @@ export const Step1Profile: React.FC<Step1ProfileProps> = ({ data, onChange, onNe
             <>
               Я согласен на{' '}
               <a
-                href="#pd"
+                href="https://vesperfin.com/upload/iblock/95c/policy_ip_kundiy.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
                 style={{ color: 'var(--gold-3)', textDecoration: 'underline' }}
                 onClick={(e) => e.stopPropagation()}
               >
@@ -193,7 +195,9 @@ export const Step1Profile: React.FC<Step1ProfileProps> = ({ data, onChange, onNe
             <>
               Я принимаю{' '}
               <a
-                href="#rules"
+                href="https://vesperfin.com/upload/iblock/0df/ll0nmk4s2zrahdlmv0wikv7hi2flm8g9/%D0%9F%D1%80%D0%B0%D0%B2%D0%B8%D0%BB%D0%B0_%D0%BA%D0%BE%D0%BD%D0%BA%D1%83%D1%80%D1%81%D0%B0_%D0%A2%D1%80%D0%B5%D0%B9%D0%B4%D0%B8%D0%BD%D0%B3_%D1%82%D1%83%D1%80%D0%BD%D0%B8%D1%80_%D0%BA%D0%BB%D1%83%D0%B1.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
                 style={{ color: 'var(--gold-3)', textDecoration: 'underline' }}
                 onClick={(e) => e.stopPropagation()}
               >
