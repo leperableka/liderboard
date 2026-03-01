@@ -243,6 +243,22 @@ export const UserHistoryModal: React.FC<UserHistoryModalProps> = ({ entry, onClo
                   {inst}
                 </span>
               ))}
+              {entry.depositCategory != null && (
+                <span style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  padding: '2px 7px',
+                  borderRadius: 5,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  letterSpacing: '0.3px',
+                  background: 'rgba(139,92,246,0.12)',
+                  color: '#6D28D9',
+                  fontFamily: 'var(--font)',
+                }}>
+                  Категория {entry.depositCategory}
+                </span>
+              )}
             </div>
           </div>
 
