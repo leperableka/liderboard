@@ -75,17 +75,18 @@ export const Welcome: React.FC<WelcomeProps> = ({
 
       <h1
         style={{
-          fontSize: 30,
+          fontSize: 'clamp(22px, 7vw, 30px)',
           fontWeight: 800,
           color: '#fff',
           letterSpacing: '-0.5px',
           lineHeight: 1.2,
+          whiteSpace: 'nowrap',
           textShadow: '0 2px 8px rgba(0,0,0,0.1)',
           animation: 'fadeUp 0.5s ease both',
           animationDelay: '0.1s',
         }}
       >
-        Торговый<br />Турнир
+        Торговый Турнир
       </h1>
 
       <p
