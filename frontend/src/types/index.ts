@@ -56,6 +56,7 @@ export interface UserStatus {
   market: Market | null;
   instruments: string[];
   initialDeposit: number;
+  currentDeposit?: number;
   currency: Currency;
   avatarUrl: string | null;
 }

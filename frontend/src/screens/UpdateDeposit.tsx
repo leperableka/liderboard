@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { UserStatus } from '../types';
 import { MARKET_CURRENCY } from '../types';
 import { updateDeposit } from '../api/client';
@@ -60,6 +60,7 @@ export const UpdateDeposit: React.FC<UpdateDepositProps> = ({
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [showStartHint, setShowStartHint] = useState(false);
+  const startHintTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isBeforeStart = new Date() < CONTEST_START;
   const { showBackButton, hideBackButton, onBackButtonClicked, hapticFeedback } = useTelegram();
@@ -68,7 +69,7 @@ export const UpdateDeposit: React.FC<UpdateDepositProps> = ({
   const today = new Date();
   const numValue = parseFloat(value);
   const isValid = !isNaN(numValue) && numValue >= 0;
-  const prevDeposit = userStatus.initialDeposit;
+  const prevDeposit = userStatus.currentDeposit ?? userStatus.initialDeposit;
 
   useEffect(() => {
     showBackButton();
@@ -76,6 +77,7 @@ export const UpdateDeposit: React.FC<UpdateDepositProps> = ({
     return () => {
       cleanup();
       hideBackButton();
+      if (startHintTimerRef.current) clearTimeout(startHintTimerRef.current);
     };
   }, [showBackButton, hideBackButton, onBackButtonClicked, onBack]);
 
@@ -401,7 +403,8 @@ export const UpdateDeposit: React.FC<UpdateDepositProps> = ({
               <button
                 onClick={() => {
                   setShowStartHint(true);
-                  setTimeout(() => setShowStartHint(false), 3000);
+                  if (startHintTimerRef.current) clearTimeout(startHintTimerRef.current);
+                  startHintTimerRef.current = setTimeout(() => setShowStartHint(false), 3000);
                 }}
                 style={{
                   width: '100%',

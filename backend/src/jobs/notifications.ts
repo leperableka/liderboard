@@ -151,6 +151,13 @@ async function getDisqualificationWarningUsers(): Promise<PendingUser[]> {
  * Sends to ALL registered participants.
  */
 async function sendChampionshipStartNotification(bot: Bot, miniAppUrl: string): Promise<void> {
+  // Guard against annual cron replay: only run on the actual contest start date
+  const today = getMoscowDateStr();
+  if (today !== CONTEST_START_MOSCOW) {
+    console.log(`[notifications] Championship-start skipped: today=${today}, expected=${CONTEST_START_MOSCOW}`);
+    return;
+  }
+
   console.log('[notifications] Championship-start notification — sending to all users');
 
   try {
@@ -162,7 +169,11 @@ async function sendChampionshipStartNotification(bot: Bot, miniAppUrl: string): 
       bot,
       users,
       (u) =>
-        `🏆 ${u.display_name}, Торговый Турнир Vesperfin&Co.Trading начался!\n\n` +
+        `Добро пожаловать на турнир! 🎉\n\n` +
+        `${u.display_name}, Торговый Турнир Vesperfin&Co.Trading начался!\n\n` +
+        `Чтобы не\u00A0потерять доступ к\u00A0турниру, закрепите его у\u00A0себя в\u00A0Telegram:\n` +
+        `— Нажмите и\u00A0удерживайте чат с\u00A0ботом\n` +
+        `— Выберите «Закрепить» 📌\n\n` +
         `Сегодня можно внести первые данные по\u00A0движению вашего счёта.\n` +
         `Удачи в\u00A0соревновании!`,
       makeKeyboard('Внести данные', miniAppUrl),

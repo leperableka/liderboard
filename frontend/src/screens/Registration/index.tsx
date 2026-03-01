@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import type { RegistrationData, UserStatus } from '../../types';
-import { register } from '../../api/client';
+import { register, uploadAvatar, updateProfile } from '../../api/client';
 import { useTelegram } from '../../hooks/useTelegram';
 import { Step1Profile } from './Step1Profile';
 import { Step2Market } from './Step2Market';
@@ -92,13 +92,26 @@ export const RegistrationContainer: React.FC<RegistrationContainerProps> = ({
     const depositNum = parseFloat(data.initialDeposit);
     if (isNaN(depositNum) || depositNum < 1) throw new Error('Некорректный депозит');
 
+    // avatarUrl intentionally omitted: blob: URLs are invalid after reload.
+    // Custom avatar is uploaded to the server separately after registration.
     const status = await register({
       displayName: data.displayName.trim(),
       market: data.market,
       instruments: data.instruments,
       initialDeposit: depositNum,
-      avatarUrl: data.avatarUrl,
     });
+
+    if (data.avatarFile) {
+      try {
+        const serverUrl = await uploadAvatar(status.telegramId, data.avatarFile);
+        await updateProfile(status.telegramId, status.displayName, serverUrl);
+        onComplete({ ...status, avatarUrl: serverUrl });
+      } catch {
+        // Avatar upload failed — registration succeeded, continue without avatar
+        onComplete(status);
+      }
+      return;
+    }
 
     onComplete(status);
   }

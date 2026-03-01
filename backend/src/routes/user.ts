@@ -32,16 +32,15 @@ const MARKET_CURRENCY: Record<string, string> = {
 
 const RegisterBodySchema = z.object({
   displayName: z.string().min(1).max(128),
-  avatarUrl: z.string().url().optional().nullable(),
+  avatarUrl: z.string().url().max(500).optional().nullable(),
   market: z.enum(['crypto', 'moex', 'forex']),
-  instruments: z.array(z.string().min(1)).min(1),
+  instruments: z.array(z.string().min(1)).min(1).max(20),
   initialDeposit: z.number().positive().multipleOf(0.01),
 });
 
 const UpdateProfileBodySchema = z.object({
   display_name: z.string().min(1).max(128).optional(),
-  // Accept both http(s) URLs and base64 data URIs for user-uploaded photos
-  photo_url: z.string().nullable().optional(),
+  photo_url: z.string().max(500).nullable().optional(),
 });
 
 const TelegramIdParamSchema = z.object({
@@ -100,13 +99,24 @@ export async function userRoutes(fastify: FastifyInstance, opts: UserRoutesOpts)
         const user = result.rows[0]!;
         const today = getMoscowDateStr();
 
-        const depositResult = await pool.query<{ has_today: boolean }>(
-          `SELECT EXISTS(
-             SELECT 1 FROM deposit_updates WHERE user_id = $1 AND deposit_date = $2
-           ) AS has_today`,
+        const depositResult = await pool.query<{ has_today: boolean; current_deposit: string | null }>(
+          `SELECT
+             EXISTS(
+               SELECT 1 FROM deposit_updates WHERE user_id = $1 AND deposit_date = $2
+             ) AS has_today,
+             (
+               SELECT deposit_value FROM deposit_updates
+               WHERE user_id = $1
+               ORDER BY deposit_date DESC
+               LIMIT 1
+             )::text AS current_deposit`,
           [user.id, today],
         );
         const depositUpdatedToday = depositResult.rows[0]?.has_today ?? false;
+        const currentDepositRaw = depositResult.rows[0]?.current_deposit;
+        const currentDeposit = currentDepositRaw != null
+          ? parseFloat(currentDepositRaw)
+          : parseFloat(user.initial_deposit);
 
         return reply.code(200).send({
           registered: true,
@@ -116,6 +126,7 @@ export async function userRoutes(fastify: FastifyInstance, opts: UserRoutesOpts)
           market: user.market,
           instruments: user.instruments,
           initialDeposit: parseFloat(user.initial_deposit),
+          currentDeposit,
           currency: user.currency,
           avatarUrl: user.photo_url,
         });
@@ -140,6 +151,11 @@ export async function userRoutes(fastify: FastifyInstance, opts: UserRoutesOpts)
           error: 'Validation failed',
           details: bodyParse.error.flatten().fieldErrors,
         });
+      }
+
+      // Block new registrations once the tournament has started (6 March 2026 MSK)
+      if (getMoscowDateStr() >= '2026-03-06') {
+        return reply.code(403).send({ error: 'Регистрация закрыта. Турнир уже начался.' });
       }
 
       const body = bodyParse.data;
@@ -209,7 +225,7 @@ export async function userRoutes(fastify: FastifyInstance, opts: UserRoutesOpts)
             '— Выберите «Закрепить» 📌';
           bot.api.sendMessage(telegramId, welcomeText, {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            reply_markup: { inline_keyboard: [[{ text: '🏆 Открыть приложение', web_app: { url: miniAppUrl } } as any]] },
+            reply_markup: { inline_keyboard: [[{ text: '🏆 Открыть приложение', web_app: { url: miniAppUrl }, style: 'primary' } as any]] },
           }).catch((err) => {
             fastify.log.warn({ err, telegramId }, 'Failed to send welcome message');
           });
@@ -312,6 +328,61 @@ export async function userRoutes(fastify: FastifyInstance, opts: UserRoutesOpts)
         });
       } catch (err) {
         request.log.error({ err }, 'Failed to update user profile');
+        return reply.code(500).send({ error: 'Internal server error' });
+      }
+    },
+  );
+
+  /**
+   * DELETE /api/user/:telegramId
+   * Removes the user and all their deposit data from the tournament.
+   * Sends a farewell Telegram message via bot.
+   */
+  fastify.delete(
+    '/api/user/:telegramId',
+    { preHandler: authPreHandler },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const paramParse = TelegramIdParamSchema.safeParse(request.params);
+      if (!paramParse.success) {
+        return reply.code(400).send({ error: 'Invalid telegramId parameter' });
+      }
+
+      const { telegramId } = paramParse.data;
+
+      if (String(request.telegramUser.id) !== telegramId) {
+        return reply.code(403).send({ error: 'Forbidden' });
+      }
+
+      try {
+        const result = await pool.query(
+          'DELETE FROM users WHERE telegram_id = $1',
+          [telegramId],
+        );
+
+        if ((result.rowCount ?? 0) === 0) {
+          return reply.code(404).send({ error: 'User not found' });
+        }
+
+        // Send farewell message via bot (fire-and-forget)
+        if (bot && miniAppUrl) {
+          const afterStart = getMoscowDateStr() >= '2026-03-06';
+          const farewellText = afterStart
+            ? 'Нам очень жаль, что вы решили завершить соревнование. Будем ждать вас снова!\n\n' +
+              'Вы можете продолжать смотреть за соревнованиями. До нового турнира вы сможете повторно зарегистрироваться и принять участие вновь.'
+            : 'Нам очень жаль, что вы решили завершить соревнование. Будем ждать вас снова!\n\n' +
+              'Вы сможете повторно пройти регистрацию и принять участие в турнире.';
+
+          bot.api.sendMessage(telegramId, farewellText, {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            reply_markup: { inline_keyboard: [[{ text: 'Открыть приложение', web_app: { url: miniAppUrl }, style: 'primary' } as any]] },
+          }).catch((err) => {
+            fastify.log.warn({ err, telegramId }, 'Failed to send farewell message');
+          });
+        }
+
+        return reply.code(204).send();
+      } catch (err) {
+        request.log.error({ err }, 'Failed to delete user');
         return reply.code(500).send({ error: 'Internal server error' });
       }
     },

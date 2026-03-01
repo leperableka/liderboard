@@ -21,7 +21,7 @@ function getInitData(): string {
 
 
 async function request<T>(
-  method: 'GET' | 'POST' | 'PUT' | 'PATCH',
+  method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
   path: string,
   body?: unknown,
   signal?: AbortSignal,
@@ -162,12 +162,15 @@ export async function getLeaderboard(category: LeaderboardCategory, telegramId?:
     const currentUser = entries.find((e) => e.isCurrentUser) ?? null;
     return { ...mockLeaderboard, category, entries, currentUser };
   }
-  const raw = await request<LeaderboardResponse>('GET', `/api/leaderboard?category=${category}`, undefined, signal);
+  const userParam = telegramId != null ? `&userId=${telegramId}` : '';
+  const raw = await request<LeaderboardResponse>('GET', `/api/leaderboard?category=${category}${userParam}`, undefined, signal);
   const entries = raw.entries.map((e) => ({
     ...e,
     isCurrentUser: telegramId ? e.telegramId === telegramId : false,
   }));
-  const currentUser = entries.find((e) => e.isCurrentUser) ?? null;
+  // Prefer backend-computed currentUser (correct position even beyond page limit),
+  // fall back to finding in loaded entries
+  const currentUser = raw.currentUser ?? entries.find((e) => e.isCurrentUser) ?? null;
   return { ...raw, category, entries, currentUser };
 }
 
@@ -188,6 +191,14 @@ export async function getHistory(telegramId: number): Promise<HistoryResponse> {
   }
   // Backend returns computed HistoryResponse format
   return request<HistoryResponse>('GET', `/api/user/${telegramId}/history`);
+}
+
+export async function deleteAccount(telegramId: number): Promise<void> {
+  if (IS_DEV) {
+    await mockDelay(600);
+    return;
+  }
+  await request<void>('DELETE', `/api/user/${telegramId}`);
 }
 
 export async function updateProfile(
