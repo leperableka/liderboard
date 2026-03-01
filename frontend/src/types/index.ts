@@ -111,6 +111,8 @@ export interface RegisterPayload {
   instruments: string[];
   initialDeposit: number;
   avatarUrl?: string | null;
+  consentedPd: boolean;
+  consentedRules: boolean;
 }
 
 export interface UpdateDepositPayload {

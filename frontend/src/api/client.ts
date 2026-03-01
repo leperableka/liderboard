@@ -27,9 +27,11 @@ async function request<T>(
   signal?: AbortSignal,
 ): Promise<T> {
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
     'X-Telegram-InitData': getInitData(),
   };
+  if (body !== undefined) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   const response = await fetch(`${BASE_URL}${path}`, {
     method,

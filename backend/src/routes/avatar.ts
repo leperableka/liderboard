@@ -5,6 +5,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import pool from '../db/pool.js';
 import { authPreHandler } from '../middleware/auth.js';
+import { cacheDelPattern } from '../services/cache.js';
 
 const UPLOADS_DIR = process.env.UPLOADS_DIR ?? '/app/uploads';
 const MAX_RAW_BYTES = 10 * 1024 * 1024; // 10 MB — matches frontend limit; sharp compresses before storage
@@ -75,6 +76,7 @@ export async function avatarRoutes(app: FastifyInstance) {
         [avatarUrl, telegramId],
       );
 
+      cacheDelPattern('leaderboard:*').catch((e) => request.log.warn({ e }, 'Cache invalidation failed'));
       return reply.send({ avatarUrl });
     },
   );

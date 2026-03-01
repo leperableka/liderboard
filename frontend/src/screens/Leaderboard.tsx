@@ -34,15 +34,6 @@ const CONTEST_START_LABEL = CONTEST_START.toLocaleDateString('ru-RU', {
   timeZone: 'Europe/Moscow',
 });
 
-function getDaysRemaining(): number {
-  const now = new Date();
-  const diff = CONTEST_END.getTime() - now.getTime();
-  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
-}
-
-function isContestOver(): boolean {
-  return new Date() > CONTEST_END;
-}
 
 export const Leaderboard: React.FC<LeaderboardProps> = ({
   userStatus,
@@ -150,16 +141,16 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
         <div
           style={{
             display: 'flex',
+            flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'center',
-            gap: 10,
+            gap: 6,
             padding: '0 0 6px',
           }}
         >
           <img
             src="/logo.svg"
             alt="Логотип"
-            style={{ width: 36, height: 36, borderRadius: 8, flexShrink: 0 }}
+            style={{ width: 44, height: 44, borderRadius: 10, flexShrink: 0 }}
           />
           <span
             style={{
@@ -177,12 +168,13 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
         <h1
           style={{
             textAlign: 'center',
-            fontSize: 15,
-            fontWeight: 600,
-            color: 'rgba(255,255,255,0.85)',
+            fontSize: 18,
+            fontWeight: 800,
+            color: '#fff',
             padding: '0 0 4px',
-            letterSpacing: '0.3px',
-            textTransform: 'uppercase',
+            letterSpacing: '-0.3px',
+            textShadow: '0 1px 3px rgba(0,0,0,0.2)',
+            textTransform: 'none',
           }}
         >
           Торговый Турнир

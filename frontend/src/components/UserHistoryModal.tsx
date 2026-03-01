@@ -51,13 +51,43 @@ export const UserHistoryModal: React.FC<UserHistoryModalProps> = ({ entry, onClo
     return () => { cancelled = true; };
   }, [entry?.telegramId]);
 
-  // Trap scroll — prevent body scroll when modal is open
+  // Scroll lock + Escape key + Tab focus trap
   useEffect(() => {
     if (!entry) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = prev; };
-  }, [entry]);
+
+    const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        onClose();
+        return;
+      }
+      if (e.key === 'Tab' && sheetRef.current) {
+        const focusable = Array.from(sheetRef.current.querySelectorAll<HTMLElement>(FOCUSABLE));
+        if (focusable.length === 0) { e.preventDefault(); return; }
+        const first = focusable[0]!;
+        const last = focusable[focusable.length - 1]!;
+        if (e.shiftKey) {
+          if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+        } else {
+          if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+        }
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    // Move focus into the sheet on open
+    const firstFocusable = sheetRef.current?.querySelector<HTMLElement>(FOCUSABLE);
+    firstFocusable?.focus();
+
+    return () => {
+      document.body.style.overflow = prev;
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [entry, onClose]);
 
   if (!entry) return null;
 

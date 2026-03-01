@@ -120,6 +120,9 @@ export const Step5Review: React.FC<Step5ReviewProps> = ({ data, onEdit, onConfir
                 </span>
                 <span style={{ fontSize: 13, color: 'var(--text-2)' }}>{CAT_RANGES[category]}</span>
               </div>
+              <p style={{ fontSize: 11, color: 'var(--text-3)', margin: '2px 0 0', textAlign: 'right' }}>
+                ≈ по курсу ЦБ РФ на момент регистрации
+              </p>
             </ReviewRow>
           )}
         </div>

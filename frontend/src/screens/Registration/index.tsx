@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import type { RegistrationData, UserStatus } from '../../types';
-import { register, uploadAvatar, updateProfile } from '../../api/client';
+import { register, uploadAvatar } from '../../api/client';
 import { useTelegram } from '../../hooks/useTelegram';
 import { Step1Profile } from './Step1Profile';
 import { Step2Market } from './Step2Market';
@@ -99,12 +99,13 @@ export const RegistrationContainer: React.FC<RegistrationContainerProps> = ({
       market: data.market,
       instruments: data.instruments,
       initialDeposit: depositNum,
+      consentedPd: data.pdConsent,
+      consentedRules: data.rulesConsent,
     });
 
     if (data.avatarFile) {
       try {
         const serverUrl = await uploadAvatar(status.telegramId, data.avatarFile);
-        await updateProfile(status.telegramId, status.displayName, serverUrl);
         onComplete({ ...status, avatarUrl: serverUrl });
       } catch {
         // Avatar upload failed — registration succeeded, continue without avatar

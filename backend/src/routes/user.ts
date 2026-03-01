@@ -7,6 +7,7 @@ import { toRub, depositCategory } from '../services/exchangeRate.js';
 import type { UserRow, DepositUpdateRow } from '../types.js';
 import { getMoscowDateStr } from '../utils/time.js';
 import { CONTEST_START_MOSCOW } from '../config.js';
+import { cacheDelPattern } from '../services/cache.js';
 
 interface UserRoutesOpts {
   bot?: Bot;
@@ -29,6 +30,8 @@ const RegisterBodySchema = z.object({
   market: z.enum(['crypto', 'moex', 'forex']),
   instruments: z.array(z.string().min(1).max(200)).min(1).max(20),
   initialDeposit: z.number().positive().max(10_000_000).multipleOf(0.01),
+  consentedPd: z.boolean(),
+  consentedRules: z.boolean(),
 });
 
 const UpdateProfileBodySchema = z.object({
@@ -185,8 +188,8 @@ export async function userRoutes(fastify: FastifyInstance, opts: UserRoutesOpts)
             JSON.stringify(body.instruments),
             body.initialDeposit,
             currency,
-            true, // implicit consent
-            true,
+            body.consentedPd,
+            body.consentedRules,
             initialDepositRub,
             category,
           ],
@@ -208,6 +211,7 @@ export async function userRoutes(fastify: FastifyInstance, opts: UserRoutesOpts)
         );
 
         await client.query('COMMIT');
+        cacheDelPattern('leaderboard:*').catch((e) => fastify.log.warn({ e }, 'Cache invalidation failed'));
 
         // Send welcome message via bot (fire-and-forget)
         if (bot && miniAppUrl) {
@@ -310,6 +314,7 @@ export async function userRoutes(fastify: FastifyInstance, opts: UserRoutesOpts)
         }
 
         const user = result.rows[0]!;
+        cacheDelPattern('leaderboard:*').catch((e) => request.log.warn({ e }, 'Cache invalidation failed'));
         return reply.code(200).send({
           registered: true,
           telegramId: parseInt(user.telegram_id),
@@ -374,6 +379,7 @@ export async function userRoutes(fastify: FastifyInstance, opts: UserRoutesOpts)
           });
         }
 
+        cacheDelPattern('leaderboard:*').catch((e) => request.log.warn({ e }, 'Cache invalidation failed'));
         return reply.code(204).send();
       } catch (err) {
         request.log.error({ err }, 'Failed to delete user');

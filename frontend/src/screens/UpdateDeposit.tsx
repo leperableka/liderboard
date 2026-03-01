@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type { UserStatus } from '../types';
 import { MARKET_CURRENCY } from '../types';
 import { updateDeposit } from '../api/client';
@@ -48,9 +48,13 @@ function stripFormatting(value: string): string {
 }
 
 // 6 марта 00:00 МСК = 5 марта 21:00:00 UTC
-const CONTEST_START = new Date('2026-03-05T21:00:00Z');
-// 30 марта 00:00 МСК = 29 марта 21:00:00 UTC
-const CONTEST_END = new Date('2026-03-29T21:00:00Z');
+const CONTEST_START = new Date(
+  (import.meta.env.VITE_CONTEST_START as string | undefined) ?? '2026-03-05T21:00:00Z',
+);
+// 30 марта 00:00 МСК = 29 марта 21:00:00 UTC (same value as Leaderboard fallback)
+const CONTEST_END = new Date(
+  (import.meta.env.VITE_CONTEST_END as string | undefined) ?? '2026-03-29T23:59:59+03:00',
+);
 
 export const UpdateDeposit: React.FC<UpdateDepositProps> = ({
   userStatus,
@@ -64,9 +68,14 @@ export const UpdateDeposit: React.FC<UpdateDepositProps> = ({
   const [showStartHint, setShowStartHint] = useState(false);
   const startHintTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const now = new Date();
-  const isBeforeStart = now < CONTEST_START;
-  const isContestOver = now > CONTEST_END;
+  // Tick every 60 s so isBeforeStart/isContestOver stay fresh across time boundaries
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(timer);
+  }, []);
+  const isBeforeStart = useMemo(() => now < CONTEST_START, [now]);
+  const isContestOver = useMemo(() => now > CONTEST_END, [now]);
   const { showBackButton, hideBackButton, onBackButtonClicked, hapticFeedback } = useTelegram();
 
   const currency = userStatus.market ? MARKET_CURRENCY[userStatus.market] : 'USDT';

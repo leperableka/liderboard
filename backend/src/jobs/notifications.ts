@@ -2,7 +2,7 @@ import cron from 'node-cron';
 import { Bot } from 'grammy';
 import pool from '../db/pool.js';
 import { getMoscowDateStr, isWeekdayMoscow } from '../utils/time.js';
-import { CONTEST_START_MOSCOW } from '../config.js';
+import { CONTEST_START_MOSCOW, CONTEST_END_MOSCOW } from '../config.js';
 
 function makeKeyboard(text: string, url: string) {
   return { inline_keyboard: [[{ text, web_app: { url } }]] };
@@ -169,6 +169,10 @@ async function sendChampionshipStartNotification(bot: Bot, miniAppUrl: string): 
  */
 async function sendPreCloseReminders(bot: Bot, miniAppUrl: string): Promise<void> {
   const todayStr = getMoscowDateStr();
+  if (todayStr > CONTEST_END_MOSCOW) {
+    console.log(`[notifications] Pre-close skipped: contest ended ${CONTEST_END_MOSCOW}`);
+    return;
+  }
   console.log(`[notifications] Pre-close reminder — ${todayStr} (Moscow)`);
 
   try {
@@ -198,6 +202,10 @@ async function sendPreCloseReminders(bot: Bot, miniAppUrl: string): Promise<void
  */
 async function sendEveningReminders(bot: Bot, miniAppUrl: string): Promise<void> {
   const todayStr = getMoscowDateStr();
+  if (todayStr > CONTEST_END_MOSCOW) {
+    console.log(`[notifications] Evening skipped: contest ended ${CONTEST_END_MOSCOW}`);
+    return;
+  }
   console.log(`[notifications] Evening reminder — ${todayStr} (Moscow)`);
 
   try {
@@ -228,6 +236,10 @@ async function sendEveningReminders(bot: Bot, miniAppUrl: string): Promise<void>
  */
 async function sendDisqualificationWarnings(bot: Bot, miniAppUrl: string): Promise<void> {
   const todayStr = getMoscowDateStr();
+  if (todayStr > CONTEST_END_MOSCOW) {
+    console.log(`[notifications] Disqualification skipped: contest ended ${CONTEST_END_MOSCOW}`);
+    return;
+  }
   console.log(`[notifications] Disqualification warning — ${todayStr} (Moscow)`);
 
   try {
