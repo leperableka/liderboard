@@ -91,6 +91,21 @@ export const Welcome: React.FC<WelcomeProps> = ({
       <p
         style={{
           fontSize: 15,
+          fontWeight: 700,
+          color: 'rgba(255,255,255,0.75)',
+          marginTop: 6,
+          letterSpacing: '0.2px',
+          fontFamily: 'var(--font)',
+          animation: 'fadeUp 0.5s ease both',
+          animationDelay: '0.15s',
+        }}
+      >
+        Vesperfin&amp;Co.Trading
+      </p>
+
+      <p
+        style={{
+          fontSize: 15,
           color: 'rgba(255,255,255,0.85)',
           marginTop: 12,
           lineHeight: 1.5,
