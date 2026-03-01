@@ -14,10 +14,10 @@ interface LeaderboardProps {
 }
 
 const CATEGORY_OPTIONS: { key: LeaderboardCategory; label: string; subtitle: string }[] = [
-  { key: 'all',  label: 'Все',   subtitle: 'Общий рейтинг' },
-  { key: '1',    label: 'Кат. 1', subtitle: 'до 69 999 ₽' },
-  { key: '2',    label: 'Кат. 2', subtitle: '70 000–249 999 ₽' },
-  { key: '3',    label: 'Кат. 3', subtitle: 'от 250 000 ₽' },
+  { key: 'all',  label: 'Все',    subtitle: 'Общий рейтинг' },
+  { key: '1',    label: 'Кат. 1', subtitle: 'до 69\u202F999\u00A0₽ · по курсу ЦБ РФ' },
+  { key: '2',    label: 'Кат. 2', subtitle: '70\u202F000–249\u202F999\u00A0₽ · по курсу ЦБ РФ' },
+  { key: '3',    label: 'Кат. 3', subtitle: 'от 250\u202F000\u00A0₽ · по курсу ЦБ РФ' },
 ];
 
 // 6 марта 00:00 МСК = 5 марта 21:00:00 UTC
