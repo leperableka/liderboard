@@ -18,9 +18,10 @@ interface Milestone {
 function buildRoadmap(): Milestone[] {
   const now = new Date();
   const milestones = [
-    { label: 'Приём заявок',        date: 'до 5 марта 2026',  deadline: new Date('2026-03-05T23:59:59') },
-    { label: 'Закрытие лидерборда', date: '29 марта 2026',    deadline: new Date('2026-03-29T23:59:59') },
-    { label: 'Финиш',               date: '5 апреля 2026',    deadline: new Date('2026-04-05T23:59:59') },
+    { label: 'Объявление',   date: '2 марта',       deadline: new Date('2026-03-02T23:59:59') },
+    { label: 'Приём заявок', date: '2–5 марта',     deadline: new Date('2026-03-05T23:59:59') },
+    { label: 'Турнир',       date: '6–29 марта',    deadline: new Date('2026-03-29T23:59:59') },
+    { label: 'Итоги',        date: '30–31 марта',   deadline: new Date('2026-03-31T23:59:59') },
   ];
 
   let activeSet = false;
@@ -77,10 +78,10 @@ const Roadmap: React.FC = () => {
     return () => clearInterval(id);
   }, []);
 
-  // Calculate progress % along the timeline
+  // Calculate progress % along the timeline (2 Mar → 31 Mar)
   const now = new Date();
-  const start = new Date('2026-03-05T00:00:00');
-  const end   = new Date('2026-04-05T23:59:59');
+  const start = new Date('2026-03-02T00:00:00');
+  const end   = new Date('2026-03-31T23:59:59');
   const rawProgress = (now.getTime() - start.getTime()) / (end.getTime() - start.getTime());
   const progress = Math.min(1, Math.max(0, rawProgress));
 
@@ -118,8 +119,8 @@ const Roadmap: React.FC = () => {
             }} />
           </div>
 
-          {/* Dots on the bar at 0%, 50%, 100% */}
-          {[0, 50, 100].map((pct, i) => {
+          {/* Dots on the bar at 0%, 33%, 67%, 100% */}
+          {[0, 33, 67, 100].map((pct, i) => {
             const m = milestones[i]!;
             const isDone   = m.status === 'done';
             const isActive = m.status === 'active';
@@ -157,9 +158,9 @@ const Roadmap: React.FC = () => {
                 key={i}
                 style={{
                   flex: 1,
-                  textAlign: i === 0 ? 'left' : i === 2 ? 'right' : 'center',
-                  paddingLeft: i === 1 ? 8 : 0,
-                  paddingRight: i === 1 ? 8 : 0,
+                  textAlign: i === 0 ? 'left' : i === 3 ? 'right' : 'center',
+                  paddingLeft: i === 1 ? 4 : 0,
+                  paddingRight: i === 2 ? 4 : 0,
                 }}
               >
                 <div style={{
