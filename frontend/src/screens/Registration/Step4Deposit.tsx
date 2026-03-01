@@ -7,9 +7,9 @@ import { MARKET_CURRENCY } from '../../types';
 const APPROX_RATE = 90; // approximate USD/RUB for display only
 
 const CATEGORY_INFO: Record<1 | 2 | 3, { label: string; range: string; color: string; bg: string }> = {
-  1: { label: 'Категория 1', range: 'до 69\u202F999 ₽', color: '#2563EB', bg: '#EFF6FF' },
-  2: { label: 'Категория 2', range: '70\u202F000–249\u202F999 ₽', color: '#D97706', bg: '#FFFBEB' },
-  3: { label: 'Категория 3', range: 'от 250\u202F000 ₽',  color: '#7C3AED', bg: '#F5F3FF' },
+  1: { label: 'Вы будете соревноваться в категории\u00A01 с участниками со схожим депозитом', range: 'до 69\u202F999 ₽', color: '#2563EB', bg: '#EFF6FF' },
+  2: { label: 'Вы будете соревноваться в категории\u00A02 с участниками со схожим депозитом', range: '70\u202F000–249\u202F999 ₽', color: '#D97706', bg: '#FFFBEB' },
+  3: { label: 'Вы будете соревноваться в категории\u00A03 с участниками со схожим депозитом', range: 'от 250\u202F000 ₽',  color: '#7C3AED', bg: '#F5F3FF' },
 };
 
 function computeCategory(amount: number, currency: string): { cat: 1 | 2 | 3; approximate: boolean } | null {
@@ -166,13 +166,13 @@ export const Step4Deposit: React.FC<Step4DepositProps> = ({ data, onChange, onNe
           <div
             style={{
               marginTop: 14,
-              padding: '10px 16px',
+              padding: '12px 16px',
               borderRadius: 12,
               background: CATEGORY_INFO[catResult.cat].bg,
-              border: `1px solid ${CATEGORY_INFO[catResult.cat].color}22`,
+              border: `1px solid ${CATEGORY_INFO[catResult.cat].color}33`,
               display: 'flex',
-              alignItems: 'center',
-              gap: 10,
+              alignItems: 'flex-start',
+              gap: 12,
             }}
           >
             <span
@@ -180,25 +180,26 @@ export const Step4Deposit: React.FC<Step4DepositProps> = ({ data, onChange, onNe
                 display: 'inline-flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                width: 32,
-                height: 32,
+                width: 36,
+                height: 36,
                 borderRadius: '50%',
                 background: CATEGORY_INFO[catResult.cat].color,
                 color: '#fff',
-                fontSize: 15,
+                fontSize: 16,
                 fontWeight: 700,
                 flexShrink: 0,
+                marginTop: 1,
               }}
             >
               {catResult.cat}
             </span>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: CATEGORY_INFO[catResult.cat].color }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: CATEGORY_INFO[catResult.cat].color, lineHeight: 1.4 }}>
                 {CATEGORY_INFO[catResult.cat].label}
               </div>
-              <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 1 }}>
+              <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 4 }}>
                 {CATEGORY_INFO[catResult.cat].range}
-                {catResult.approximate && ' · примерно, по курсу ЦБ РФ'}
+                {catResult.approximate && '\u00A0· примерно, по курсу ЦБ РФ'}
               </div>
             </div>
           </div>
