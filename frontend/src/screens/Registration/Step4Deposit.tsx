@@ -2,6 +2,23 @@ import React, { useState } from 'react';
 import type { RegistrationData } from '../../types';
 import { MARKET_CURRENCY } from '../../types';
 
+// ── Category helpers ────────────────────────────────────────────────────────
+
+const APPROX_RATE = 90; // approximate USD/RUB for display only
+
+const CATEGORY_INFO: Record<1 | 2 | 3, { label: string; range: string; color: string; bg: string }> = {
+  1: { label: 'Категория 1', range: 'до 69\u202F999 ₽', color: '#2563EB', bg: '#EFF6FF' },
+  2: { label: 'Категория 2', range: '70\u202F000–249\u202F999 ₽', color: '#D97706', bg: '#FFFBEB' },
+  3: { label: 'Категория 3', range: 'от 250\u202F000 ₽',  color: '#7C3AED', bg: '#F5F3FF' },
+};
+
+function computeCategory(amount: number, currency: string): { cat: 1 | 2 | 3; approximate: boolean } | null {
+  if (!amount || amount < 1) return null;
+  let rub = currency === 'RUB' ? amount : amount * APPROX_RATE;
+  const cat: 1 | 2 | 3 = rub < 70_000 ? 1 : rub < 250_000 ? 2 : 3;
+  return { cat, approximate: currency !== 'RUB' };
+}
+
 interface Step4DepositProps {
   data: RegistrationData;
   onChange: (patch: Partial<RegistrationData>) => void;
@@ -39,6 +56,7 @@ export const Step4Deposit: React.FC<Step4DepositProps> = ({ data, onChange, onNe
   const currency = data.market ? MARKET_CURRENCY[data.market] : 'USDT';
   const numValue = parseFloat(data.initialDeposit);
   const isValid = !isNaN(numValue) && numValue >= 1;
+  const catResult = isValid ? computeCategory(numValue, currency) : null;
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const raw = stripFormatting(e.target.value);
@@ -142,6 +160,48 @@ export const Step4Deposit: React.FC<Step4DepositProps> = ({ data, onChange, onNe
           >
             {error}
           </p>
+        )}
+
+        {catResult && !error && (
+          <div
+            style={{
+              marginTop: 14,
+              padding: '10px 16px',
+              borderRadius: 12,
+              background: CATEGORY_INFO[catResult.cat].bg,
+              border: `1px solid ${CATEGORY_INFO[catResult.cat].color}22`,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+            }}
+          >
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: 32,
+                height: 32,
+                borderRadius: '50%',
+                background: CATEGORY_INFO[catResult.cat].color,
+                color: '#fff',
+                fontSize: 15,
+                fontWeight: 700,
+                flexShrink: 0,
+              }}
+            >
+              {catResult.cat}
+            </span>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: CATEGORY_INFO[catResult.cat].color }}>
+                {CATEGORY_INFO[catResult.cat].label}
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 1 }}>
+                {CATEGORY_INFO[catResult.cat].range}
+                {catResult.approximate && ' · примерно, по курсу ЦБ РФ'}
+              </div>
+            </div>
+          </div>
         )}
 
         <p style={{ fontSize: 13, color: 'var(--text-3)', textAlign: 'center', marginTop: 12 }}>
