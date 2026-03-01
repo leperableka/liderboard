@@ -2,15 +2,10 @@ import cron from 'node-cron';
 import { Bot } from 'grammy';
 import pool from '../db/pool.js';
 import { getMoscowDateStr, isWeekdayMoscow } from '../utils/time.js';
-
-/** Bot API 9.4: inline button with primary (blue) style */
-function blueWebAppButton(text: string, url: string) {
-  return { text, web_app: { url }, style: 'primary' } as const;
-}
+import { CONTEST_START_MOSCOW } from '../config.js';
 
 function makeKeyboard(text: string, url: string) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return { inline_keyboard: [[blueWebAppButton(text, url) as any]] };
+  return { inline_keyboard: [[{ text, web_app: { url } }]] };
 }
 
 interface PendingUser {
@@ -20,9 +15,6 @@ interface PendingUser {
 }
 
 // ─── Shared helpers ──────────────────────────────────────────────────────────
-
-/** Contest opens 6 March 2026 00:00 МСК — notifications are sent only from this date. */
-const CONTEST_START_MOSCOW = '2026-03-06';
 
 /**
  * Sends a batch of messages to users.
@@ -97,7 +89,7 @@ async function getPendingUsers(): Promise<PendingUser[]> {
     [weekday, todayStr, CONTEST_START_MOSCOW],
   );
 
-  return result.rows.filter((u) => u.market === 'crypto' || weekday);
+  return result.rows;
 }
 
 /**
@@ -217,7 +209,7 @@ async function sendEveningReminders(bot: Bot, miniAppUrl: string): Promise<void>
       bot,
       users,
       () =>
-        `Вы не заполнили данные торгового турнира Vesperfin&Co.Trading,` +
+        `Вы не заполнили данные торгового турнира Vesperfin&Co.Trading, ` +
         `пожалуйста, зайдите в приложение и внесите информацию.\n\n` +
         `Возможно, вы уже лидируете в турнире 🏆`,
       makeKeyboard('Открыть приложение', miniAppUrl),
@@ -248,7 +240,7 @@ async function sendDisqualificationWarnings(bot: Bot, miniAppUrl: string): Promi
       users,
       () =>
         `Добрый день!\n\n` +
-        `К сожалению, вы не вносите данные торгового турнира Vesperfin&Co.Trading.` +
+        `К сожалению, вы не вносите данные торгового турнира Vesperfin&Co.Trading. ` +
         `Мы будем вынуждены дисквалифицировать ваш профиль из турнирной таблицы.`,
       makeKeyboard('Внести данные', miniAppUrl),
     );

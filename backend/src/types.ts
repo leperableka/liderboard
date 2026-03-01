@@ -57,5 +57,4 @@ export interface LeaderboardEntry {
   depositCategory: number | null;
 }
 
-export type LeaderboardPeriod = 'day' | 'week' | 'month';
 export type LeaderboardCategory = 'all' | '1' | '2' | '3';

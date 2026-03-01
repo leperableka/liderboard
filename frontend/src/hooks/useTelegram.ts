@@ -35,8 +35,10 @@ export interface UseTelegramReturn {
 export function useTelegram(): UseTelegramReturn {
   const backHandlerRef = useRef<(() => void) | null>(null);
 
+  // Call once per render — Telegram.WebApp is a stable singleton global
+  const webApp = getWebApp();
+
   useEffect(() => {
-    const webApp = getWebApp();
     if (webApp) {
       try {
         webApp.ready();
@@ -45,10 +47,9 @@ export function useTelegram(): UseTelegramReturn {
         // ignore SDK errors in non-Telegram environment
       }
     }
-  }, []);
+  }, []); // webApp is a stable singleton — intentionally omitted from deps
 
   const user: TelegramUser | null = (() => {
-    const webApp = getWebApp();
     if (webApp) {
       try {
         const tgUser = webApp.initDataUnsafe?.user;
@@ -71,7 +72,6 @@ export function useTelegram(): UseTelegramReturn {
   })();
 
   const initData = (() => {
-    const webApp = getWebApp();
     if (webApp) {
       try {
         return webApp.initData || '';
@@ -85,14 +85,13 @@ export function useTelegram(): UseTelegramReturn {
   // isReady is true only when actually running inside Telegram (initData is non-empty)
   // or in dev mode. The WebApp object always exists after script load even in regular browsers,
   // so checking initData is the reliable way to detect real Telegram context.
-  const webAppObj = getWebApp();
-  const isReady = Boolean((webAppObj?.initData) || IS_DEV);
+  const isReady = Boolean(webApp?.initData || IS_DEV);
 
   const showBackButton = useCallback(() => {
-    const webApp = getWebApp();
-    if (webApp) {
+    const wa = getWebApp();
+    if (wa) {
       try {
-        webApp.BackButton.show();
+        wa.BackButton.show();
       } catch {
         // ignore
       }
@@ -100,10 +99,10 @@ export function useTelegram(): UseTelegramReturn {
   }, []);
 
   const hideBackButton = useCallback(() => {
-    const webApp = getWebApp();
-    if (webApp) {
+    const wa = getWebApp();
+    if (wa) {
       try {
-        webApp.BackButton.hide();
+        wa.BackButton.hide();
       } catch {
         // ignore
       }
@@ -111,19 +110,19 @@ export function useTelegram(): UseTelegramReturn {
   }, []);
 
   const onBackButtonClicked = useCallback((handler: () => void) => {
-    const webApp = getWebApp();
-    if (webApp) {
+    const wa = getWebApp();
+    if (wa) {
       try {
         if (backHandlerRef.current) {
-          webApp.BackButton.offClick(backHandlerRef.current);
+          wa.BackButton.offClick(backHandlerRef.current);
         }
         backHandlerRef.current = handler;
-        webApp.BackButton.onClick(handler);
+        wa.BackButton.onClick(handler);
         return () => {
-          const wa = getWebApp();
-          if (wa && backHandlerRef.current) {
+          const wa2 = getWebApp();
+          if (wa2 && backHandlerRef.current) {
             try {
-              wa.BackButton.offClick(backHandlerRef.current);
+              wa2.BackButton.offClick(backHandlerRef.current);
             } catch {
               // ignore
             }
@@ -138,13 +137,13 @@ export function useTelegram(): UseTelegramReturn {
 
   const hapticFeedback = useCallback(
     (type: 'light' | 'medium' | 'heavy' | 'error' | 'success') => {
-      const webApp = getWebApp();
-      if (webApp) {
+      const wa = getWebApp();
+      if (wa) {
         try {
           if (type === 'error' || type === 'success') {
-            webApp.HapticFeedback.notificationOccurred(type);
+            wa.HapticFeedback.notificationOccurred(type);
           } else {
-            webApp.HapticFeedback.impactOccurred(type);
+            wa.HapticFeedback.impactOccurred(type);
           }
         } catch {
           // ignore
@@ -155,10 +154,10 @@ export function useTelegram(): UseTelegramReturn {
   );
 
   const expand = useCallback(() => {
-    const webApp = getWebApp();
-    if (webApp) {
+    const wa = getWebApp();
+    if (wa) {
       try {
-        webApp.expand();
+        wa.expand();
       } catch {
         // ignore
       }
@@ -166,10 +165,10 @@ export function useTelegram(): UseTelegramReturn {
   }, []);
 
   const close = useCallback(() => {
-    const webApp = getWebApp();
-    if (webApp) {
+    const wa = getWebApp();
+    if (wa) {
       try {
-        webApp.close();
+        wa.close();
       } catch {
         // ignore
       }

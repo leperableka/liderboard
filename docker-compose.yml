@@ -15,6 +15,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
 
   redis:
     image: redis:7-alpine
@@ -29,6 +34,11 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
 
   backend:
     build:
@@ -53,11 +63,18 @@ services:
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
       CORS_ORIGIN: ${CORS_ORIGIN}
       REGISTRATION_DEADLINE: ${REGISTRATION_DEADLINE:-2026-03-06}
+      CONTEST_START: ${CONTEST_START:-2026-03-06}
+      CONTEST_END: ${CONTEST_END:-2026-03-29}
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.liderboard-backend.rule=Host(`leader.vesperfin.com`) && (PathPrefix(`/api`) || PathPrefix(`/health`))"
@@ -79,6 +96,11 @@ services:
       - uploads_data:/usr/share/nginx/html/uploads:ro
     depends_on:
       - backend
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 64M
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.liderboard-frontend.rule=Host(`leader.vesperfin.com`)"
@@ -91,10 +113,42 @@ services:
       - "traefik.http.routers.liderboard-frontend-http.entrypoints=web"
       - "traefik.http.routers.liderboard-frontend-http.middlewares=redirect-to-https@file"
 
+  # PostgreSQL backup — runs pg_dump daily at 03:00 UTC, keeps last 7 dumps
+  pg_backup:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    networks:
+      - internal
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: ${POSTGRES_DB:-liderboard}
+      POSTGRES_USER: ${POSTGRES_USER:-liderboard}
+      PGPASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pg_backups:/backups
+    depends_on:
+      postgres:
+        condition: service_healthy
+    entrypoint: >
+      sh -c "
+        while true; do
+          sleep $$(( 86400 - ($(date +%s) % 86400) + 3 * 3600 % 86400 ));
+          pg_dump -h $$POSTGRES_HOST -U $$POSTGRES_USER $$POSTGRES_DB
+            | gzip > /backups/dump_$$(date +%Y%m%d_%H%M%S).sql.gz;
+          ls -t /backups/dump_*.sql.gz | tail -n +8 | xargs -r rm;
+        done
+      "
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 64M
+
 volumes:
   postgres_data:
   redis_data:
   uploads_data:
+  pg_backups:
 
 networks:
   internal:

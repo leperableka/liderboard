@@ -7,7 +7,7 @@ import pool from '../db/pool.js';
 import { authPreHandler } from '../middleware/auth.js';
 
 const UPLOADS_DIR = process.env.UPLOADS_DIR ?? '/app/uploads';
-const MAX_RAW_BYTES = 5 * 1024 * 1024; // 5 MB — matches global multipart limit in index.ts
+const MAX_RAW_BYTES = 10 * 1024 * 1024; // 10 MB — matches frontend limit; sharp compresses before storage
 const AVATAR_SIZE = 400; // max width/height in pixels
 
 const AvatarParamSchema = z.object({

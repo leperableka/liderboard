@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { Screen, UserStatus } from '../types';
 import { MARKET_LABELS } from '../types';
 import { Avatar } from '../components/Avatar';
@@ -30,8 +30,41 @@ export const Profile: React.FC<ProfileProps> = ({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const deleteDialogRef = useRef<HTMLDivElement>(null);
   // Track the object URL so we can revoke it after upload
   const previewUrlRef = useRef<string | null>(null);
+
+  // Escape closes delete confirm modal; Tab is trapped inside it
+  useEffect(() => {
+    if (!showDeleteConfirm) return;
+    const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        if (!deleting) setShowDeleteConfirm(false);
+        return;
+      }
+      if (e.key === 'Tab' && deleteDialogRef.current) {
+        const focusable = Array.from(
+          deleteDialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE),
+        );
+        if (focusable.length === 0) { e.preventDefault(); return; }
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey) {
+          if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+        } else {
+          if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+        }
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown);
+    // Move focus to first focusable element
+    const firstFocusable = deleteDialogRef.current?.querySelector<HTMLElement>(FOCUSABLE);
+    firstFocusable?.focus();
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showDeleteConfirm, deleting]);
 
   const marketLabel = userStatus.market ? MARKET_LABELS[userStatus.market] : '—';
   const nameChanged = displayName.trim() !== userStatus.displayName;
@@ -82,9 +115,8 @@ export const Profile: React.FC<ProfileProps> = ({
     }
     setSaving(true);
     setError('');
+    let savedAvatarUrl: string | undefined;
     try {
-      let savedAvatarUrl: string | undefined;
-
       // Upload new avatar first (server compresses to WebP 400×400)
       if (avatarFile) {
         const serverUrl = await uploadAvatar(userStatus.telegramId, avatarFile);
@@ -96,6 +128,8 @@ export const Profile: React.FC<ProfileProps> = ({
         setAvatarUrl(serverUrl);
         setAvatarFile(null);
         savedAvatarUrl = serverUrl;
+        // Notify parent immediately so avatar is reflected even if name update fails below
+        onProfileUpdated(trimmed, savedAvatarUrl);
       }
 
       // Update display name if changed
@@ -103,7 +137,10 @@ export const Profile: React.FC<ProfileProps> = ({
         await updateProfile(userStatus.telegramId, trimmed);
       }
 
-      onProfileUpdated(trimmed, savedAvatarUrl);
+      // If avatar was not uploaded above, still notify parent (name-only change)
+      if (!savedAvatarUrl) {
+        onProfileUpdated(trimmed, undefined);
+      }
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (err: unknown) {
@@ -435,6 +472,10 @@ export const Profile: React.FC<ProfileProps> = ({
           onClick={() => { if (!deleting) setShowDeleteConfirm(false); }}
         >
           <div
+            ref={deleteDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Удалить аккаунт"
             onClick={(e) => e.stopPropagation()}
             style={{
               width: '100%',

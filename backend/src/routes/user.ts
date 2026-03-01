@@ -6,6 +6,7 @@ import { authPreHandler } from '../middleware/auth.js';
 import { toRub, depositCategory } from '../services/exchangeRate.js';
 import type { UserRow, DepositUpdateRow } from '../types.js';
 import { getMoscowDateStr } from '../utils/time.js';
+import { CONTEST_START_MOSCOW } from '../config.js';
 
 interface UserRoutesOpts {
   bot?: Bot;
@@ -218,7 +219,7 @@ export async function userRoutes(fastify: FastifyInstance, opts: UserRoutesOpts)
             '— Выберите «Закрепить» 📌';
           bot.api.sendMessage(telegramId, welcomeText, {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            reply_markup: { inline_keyboard: [[{ text: '🏆 Открыть приложение', web_app: { url: miniAppUrl }, style: 'primary' } as any]] },
+            reply_markup: { inline_keyboard: [[{ text: '🏆 Открыть приложение', web_app: { url: miniAppUrl } }]] },
           }).catch((err) => {
             fastify.log.warn({ err, telegramId }, 'Failed to send welcome message');
           });
@@ -358,7 +359,7 @@ export async function userRoutes(fastify: FastifyInstance, opts: UserRoutesOpts)
 
         // Send farewell message via bot (fire-and-forget)
         if (bot && miniAppUrl) {
-          const afterStart = getMoscowDateStr() >= '2026-03-06';
+          const afterStart = getMoscowDateStr() >= CONTEST_START_MOSCOW;
           const farewellText = afterStart
             ? 'Нам очень жаль, что вы решили завершить соревнование. Будем ждать вас снова!\n\n' +
               'Вы можете продолжать смотреть за соревнованиями. До нового турнира вы сможете повторно зарегистрироваться и принять участие вновь.'
@@ -367,7 +368,7 @@ export async function userRoutes(fastify: FastifyInstance, opts: UserRoutesOpts)
 
           bot.api.sendMessage(telegramId, farewellText, {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            reply_markup: { inline_keyboard: [[{ text: 'Открыть приложение', web_app: { url: miniAppUrl }, style: 'primary' } as any]] },
+            reply_markup: { inline_keyboard: [[{ text: 'Открыть приложение', web_app: { url: miniAppUrl } }]] },
           }).catch((err) => {
             fastify.log.warn({ err, telegramId }, 'Failed to send farewell message');
           });

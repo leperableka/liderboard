@@ -69,7 +69,7 @@ async function bootstrap(): Promise<void> {
   // ── Multipart (file uploads) ───────────────────────────────────────────────
   await fastify.register(multipart, {
     limits: {
-      fileSize: 5 * 1024 * 1024, // 5 MB
+      fileSize: 10 * 1024 * 1024, // 10 MB — matches avatar upload limit in avatar.ts
     },
   });
 
@@ -93,11 +93,9 @@ async function bootstrap(): Promise<void> {
 
     bot = new Bot(botToken);
 
-    // Inline keyboard button with primary (blue) style — Bot API 9.4+
     const appButton = {
       text: '🏆 Открыть приложение',
       web_app: { url: miniAppUrl },
-      style: 'primary',
     };
 
     // Basic /start handler

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 interface ModalProps {
   visible: boolean;
@@ -13,6 +13,8 @@ interface ModalProps {
   loading?: boolean;
 }
 
+const FOCUSABLE = 'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 export const Modal: React.FC<ModalProps> = ({
   visible,
   title,
@@ -24,22 +26,51 @@ export const Modal: React.FC<ModalProps> = ({
   confirmLabel = 'Подтвердить',
   loading = false,
 }) => {
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  // Lock body scroll + Escape key + focus trap
   useEffect(() => {
-    if (visible) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
+    if (!visible) return;
+    document.body.style.overflow = 'hidden';
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        onCancel();
+        return;
+      }
+      if (e.key === 'Tab' && dialogRef.current) {
+        const focusable = Array.from(
+          dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE),
+        );
+        if (focusable.length === 0) { e.preventDefault(); return; }
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey) {
+          if (document.activeElement === first) { e.preventDefault(); last.focus(); }
+        } else {
+          if (document.activeElement === last) { e.preventDefault(); first.focus(); }
+        }
+      }
     }
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    // Move focus into dialog
+    const firstFocusable = dialogRef.current?.querySelector<HTMLElement>(FOCUSABLE);
+    firstFocusable?.focus();
+
     return () => {
+      document.removeEventListener('keydown', handleKeyDown);
       document.body.style.overflow = '';
     };
-  }, [visible]);
+  }, [visible, onCancel]);
 
   return (
     <div
       role="dialog"
       aria-modal="true"
       aria-label={title}
+      ref={dialogRef}
       onClick={onCancel}
       style={{
         position: 'fixed',

@@ -4,6 +4,7 @@ import pool from '../db/pool.js';
 import { authPreHandler } from '../middleware/auth.js';
 import { cacheDelPattern } from '../services/cache.js';
 import { getMoscowDateStr } from '../utils/time.js';
+import { CONTEST_END_MOSCOW } from '../config.js';
 
 // ─── Zod schema ─────────────────────────────────────────────────────────────
 
@@ -37,8 +38,8 @@ export async function depositRoutes(fastify: FastifyInstance): Promise<void> {
       const telegramId = request.telegramUser.id;
       const depositDate = getMoscowDateStr();
 
-      // Block deposit submissions after tournament end (30 March 2026 00:00 MSK)
-      if (depositDate > '2026-03-29') {
+      // Block deposit submissions after tournament end
+      if (depositDate > CONTEST_END_MOSCOW) {
         return reply.code(403).send({ error: 'Турнир завершён. Внесение данных недоступно.' });
       }
 

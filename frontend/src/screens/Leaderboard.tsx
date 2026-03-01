@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import type { LeaderboardEntry, LeaderboardCategory, Screen, UserStatus } from '../types';
 import { useLeaderboard } from '../hooks/useLeaderboard';
 import { Podium } from '../components/Podium';
@@ -20,10 +20,19 @@ const CATEGORY_OPTIONS: { key: LeaderboardCategory; label: string; subtitle: str
   { key: '3',    label: 'Кат. 3', subtitle: 'от 250\u202F000\u00A0₽ · по курсу ЦБ РФ' },
 ];
 
-// 6 марта 00:00 МСК = 5 марта 21:00:00 UTC
-const CONTEST_START = new Date('2026-03-05T21:00:00Z');
-// 29 марта 23:59:59 МСК (UTC+3), явный offset чтобы парсилось корректно на любом устройстве
-const CONTEST_END = new Date('2026-03-29T23:59:59+03:00');
+// Dates configurable via VITE_CONTEST_START / VITE_CONTEST_END (ISO with timezone offset)
+const CONTEST_START = new Date(
+  (import.meta.env.VITE_CONTEST_START as string | undefined) ?? '2026-03-05T21:00:00Z',
+);
+const CONTEST_END = new Date(
+  (import.meta.env.VITE_CONTEST_END as string | undefined) ?? '2026-03-29T23:59:59+03:00',
+);
+// Human-readable label derived from CONTEST_START (e.g. "6 марта")
+const CONTEST_START_LABEL = CONTEST_START.toLocaleDateString('ru-RU', {
+  day: 'numeric',
+  month: 'long',
+  timeZone: 'Europe/Moscow',
+});
 
 function getDaysRemaining(): number {
   const now = new Date();
@@ -47,9 +56,21 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
   const [toastVisible, setToastVisible] = useState(false);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [selectedEntry, setSelectedEntry] = useState<LeaderboardEntry | null>(null);
-  const daysLeft = getDaysRemaining();
-  const contestOver = isContestOver();
-  const isBeforeStart = new Date() < CONTEST_START;
+
+  // Tick every 60 s so time-dependent values (isBeforeStart, contestOver, daysLeft)
+  // stay fresh if the app is left open across a boundary (e.g. contest start moment).
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 60_000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const daysLeft = useMemo(
+    () => Math.max(0, Math.ceil((CONTEST_END.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))),
+    [now],
+  );
+  const contestOver = useMemo(() => now > CONTEST_END, [now]);
+  const isBeforeStart = useMemo(() => now < CONTEST_START, [now]);
 
   const handleDepositClick = useCallback(() => {
     if (isBeforeStart) {
@@ -405,7 +426,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
             }}
           >
             {isBeforeStart
-              ? 'Старт 6 марта 00:00'
+              ? `Старт ${CONTEST_START_LABEL} 00:00`
               : userStatus.depositUpdatedToday
               ? 'Данные на сегодня внесены ✓'
               : 'Внести данные'}
@@ -454,7 +475,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
         >
           <span style={{ fontSize: 16 }}>{isBeforeStart ? '🔒' : '🕛'}</span>
           {isBeforeStart
-            ? 'Турнир начнётся 6 марта в 00:00 МСК'
+            ? `Турнир начнётся ${CONTEST_START_LABEL} в 00:00 МСК`
             : 'Внести данные можно после 00:00'}
         </div>
       )}
