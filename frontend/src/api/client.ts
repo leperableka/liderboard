@@ -4,7 +4,7 @@ import type {
   HistoryResponse,
   RegisterPayload,
   UpdateDepositPayload,
-  Period,
+  LeaderboardCategory,
   Market,
   Currency,
 } from '../types';
@@ -74,23 +74,23 @@ const mockStatus: UserStatus = {
 };
 
 const mockLeaderboard: LeaderboardResponse = {
-  period: 'week',
+  category: 'all',
   totalParticipants: 247,
   entries: [
-    { position: 1, telegramId: 1, displayName: 'Александр К.', avatarUrl: null, market: 'crypto', instruments: ['Спот', 'Фьючерсы'], pnlPercent: 32.5, isCurrentUser: false },
-    { position: 2, telegramId: 2, displayName: 'Дмитрий К.', avatarUrl: null, market: 'moex', instruments: ['Акции'], pnlPercent: 28.1, isCurrentUser: false },
-    { position: 3, telegramId: 3, displayName: 'Елена В.', avatarUrl: null, market: 'forex', instruments: ['Валютные пары'], pnlPercent: 21.7, isCurrentUser: false },
-    { position: 4, telegramId: 4, displayName: 'Мария С.', avatarUrl: null, market: 'crypto', instruments: ['Опционы'], pnlPercent: 19.3, isCurrentUser: false },
-    { position: 5, telegramId: 5, displayName: 'Игорь П.', avatarUrl: null, market: 'moex', instruments: ['Фьючерсы'], pnlPercent: 15.8, isCurrentUser: false },
-    { position: 6, telegramId: 6, displayName: 'Анна Р.', avatarUrl: null, market: 'forex', instruments: ['CFD'], pnlPercent: 12.4, isCurrentUser: false },
-    { position: 7, telegramId: 7, displayName: 'Артём Н.', avatarUrl: null, market: 'crypto', instruments: ['Спот'], pnlPercent: 10.1, isCurrentUser: false },
-    { position: 8, telegramId: 8, displayName: 'Ольга П.', avatarUrl: null, market: 'moex', instruments: ['Акции', 'Облигации'], pnlPercent: 8.7, isCurrentUser: false },
-    { position: 9, telegramId: 9, displayName: 'Сергей М.', avatarUrl: null, market: 'crypto', instruments: ['Фьючерсы'], pnlPercent: 5.2, isCurrentUser: false },
-    { position: 10, telegramId: 10, displayName: 'Наталья Д.', avatarUrl: null, market: 'forex', instruments: ['Валютные пары', 'CFD'], pnlPercent: 3.1, isCurrentUser: false },
-    { position: 11, telegramId: 11, displayName: 'Игорь Л.', avatarUrl: null, market: 'moex', instruments: ['Акции'], pnlPercent: -1.4, isCurrentUser: false },
-    { position: 23, telegramId: 123456789, displayName: 'Вы', avatarUrl: null, market: 'crypto', instruments: ['Спот', 'Фьючерсы'], pnlPercent: 7.3, isCurrentUser: true },
+    { position: 1, telegramId: 1, displayName: 'Александр К.', avatarUrl: null, market: 'crypto', instruments: ['Спот', 'Фьючерсы'], pnlPercent: 32.5, isCurrentUser: false, depositCategory: 1 },
+    { position: 2, telegramId: 2, displayName: 'Дмитрий К.', avatarUrl: null, market: 'moex', instruments: ['Акции'], pnlPercent: 28.1, isCurrentUser: false, depositCategory: 2 },
+    { position: 3, telegramId: 3, displayName: 'Елена В.', avatarUrl: null, market: 'forex', instruments: ['Валютные пары'], pnlPercent: 21.7, isCurrentUser: false, depositCategory: 3 },
+    { position: 4, telegramId: 4, displayName: 'Мария С.', avatarUrl: null, market: 'crypto', instruments: ['Опционы'], pnlPercent: 19.3, isCurrentUser: false, depositCategory: 1 },
+    { position: 5, telegramId: 5, displayName: 'Игорь П.', avatarUrl: null, market: 'moex', instruments: ['Фьючерсы'], pnlPercent: 15.8, isCurrentUser: false, depositCategory: 2 },
+    { position: 6, telegramId: 6, displayName: 'Анна Р.', avatarUrl: null, market: 'forex', instruments: ['CFD'], pnlPercent: 12.4, isCurrentUser: false, depositCategory: 3 },
+    { position: 7, telegramId: 7, displayName: 'Артём Н.', avatarUrl: null, market: 'crypto', instruments: ['Спот'], pnlPercent: 10.1, isCurrentUser: false, depositCategory: 1 },
+    { position: 8, telegramId: 8, displayName: 'Ольга П.', avatarUrl: null, market: 'moex', instruments: ['Акции', 'Облигации'], pnlPercent: 8.7, isCurrentUser: false, depositCategory: 2 },
+    { position: 9, telegramId: 9, displayName: 'Сергей М.', avatarUrl: null, market: 'crypto', instruments: ['Фьючерсы'], pnlPercent: 5.2, isCurrentUser: false, depositCategory: 1 },
+    { position: 10, telegramId: 10, displayName: 'Наталья Д.', avatarUrl: null, market: 'forex', instruments: ['Валютные пары', 'CFD'], pnlPercent: 3.1, isCurrentUser: false, depositCategory: 3 },
+    { position: 11, telegramId: 11, displayName: 'Игорь Л.', avatarUrl: null, market: 'moex', instruments: ['Акции'], pnlPercent: -1.4, isCurrentUser: false, depositCategory: 2 },
+    { position: 23, telegramId: 123456789, displayName: 'Вы', avatarUrl: null, market: 'crypto', instruments: ['Спот', 'Фьючерсы'], pnlPercent: 7.3, isCurrentUser: true, depositCategory: 1 },
   ],
-  currentUser: { position: 23, telegramId: 123456789, displayName: 'Вы', avatarUrl: null, market: 'crypto', instruments: ['Спот', 'Фьючерсы'], pnlPercent: 7.3, isCurrentUser: true },
+  currentUser: { position: 23, telegramId: 123456789, displayName: 'Вы', avatarUrl: null, market: 'crypto', instruments: ['Спот', 'Фьючерсы'], pnlPercent: 7.3, isCurrentUser: true, depositCategory: 1 },
 };
 
 const mockHistory: HistoryResponse = {
@@ -149,7 +149,7 @@ export async function register(payload: RegisterPayload): Promise<UserStatus> {
   return request<UserStatus>('POST', '/api/user/register', payload);
 }
 
-export async function getLeaderboard(period: Period, telegramId?: number): Promise<LeaderboardResponse> {
+export async function getLeaderboard(category: LeaderboardCategory, telegramId?: number): Promise<LeaderboardResponse> {
   if (IS_DEV) {
     await mockDelay(700);
     const currentId = telegramId ?? mockStatus.telegramId;
@@ -158,16 +158,15 @@ export async function getLeaderboard(period: Period, telegramId?: number): Promi
       isCurrentUser: e.telegramId === currentId,
     }));
     const currentUser = entries.find((e) => e.isCurrentUser) ?? null;
-    return { ...mockLeaderboard, period, entries, currentUser };
+    return { ...mockLeaderboard, category, entries, currentUser };
   }
-  const raw = await request<LeaderboardResponse>('GET', `/api/leaderboard?period=${period}`);
-  // Mark isCurrentUser based on telegramId
+  const raw = await request<LeaderboardResponse>('GET', `/api/leaderboard?category=${category}`);
   const entries = raw.entries.map((e) => ({
     ...e,
     isCurrentUser: telegramId ? e.telegramId === telegramId : false,
   }));
   const currentUser = entries.find((e) => e.isCurrentUser) ?? null;
-  return { ...raw, period, entries, currentUser };
+  return { ...raw, category, entries, currentUser };
 }
 
 export async function updateDeposit(payload: UpdateDepositPayload): Promise<void> {

@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
 import pool from '../db/pool.js';
 import { authPreHandler } from '../middleware/auth.js';
+import { toRub, depositCategory } from '../services/exchangeRate.js';
 import type { UserRow, DepositUpdateRow } from '../types.js';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -131,6 +132,10 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
       const { id: telegramId, username } = request.telegramUser;
       const currency = MARKET_CURRENCY[body.market] ?? 'USDT';
 
+      // Convert deposit to RUB and determine category
+      const initialDepositRub = await toRub(body.initialDeposit, currency);
+      const category = depositCategory(initialDepositRub);
+
       const client = await pool.connect();
       try {
         await client.query('BEGIN');
@@ -147,11 +152,12 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
         const insertUser = await client.query<UserRow>(
           `INSERT INTO users
              (telegram_id, username, display_name, photo_url, market, instruments,
-              initial_deposit, currency, consented_pd, consented_rules)
-           VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10)
+              initial_deposit, currency, consented_pd, consented_rules,
+              initial_deposit_rub, deposit_category)
+           VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10, $11, $12)
            RETURNING id, telegram_id, username, display_name, photo_url, market,
                      instruments, initial_deposit, currency, registered_at,
-                     consented_pd, consented_rules`,
+                     consented_pd, consented_rules, initial_deposit_rub, deposit_category`,
           [
             telegramId,
             username ?? null,
@@ -163,6 +169,8 @@ export async function userRoutes(fastify: FastifyInstance): Promise<void> {
             currency,
             true, // implicit consent
             true,
+            initialDepositRub,
+            category,
           ],
         );
 

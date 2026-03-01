@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import type { LeaderboardEntry, Period, Screen, UserStatus } from '../types';
+import type { LeaderboardEntry, LeaderboardCategory, Screen, UserStatus } from '../types';
 import { useLeaderboard } from '../hooks/useLeaderboard';
 import { Podium } from '../components/Podium';
 import { LeaderboardRow } from '../components/LeaderboardRow';
@@ -13,10 +13,11 @@ interface LeaderboardProps {
   onUpdateDeposit: () => void;
 }
 
-const PERIOD_OPTIONS: { key: Period; label: string; subtitle: string }[] = [
-  { key: 'day', label: 'День', subtitle: 'Сегодня' },
-  { key: 'week', label: 'Неделя', subtitle: 'На этой неделе' },
-  { key: 'month', label: 'Месяц', subtitle: 'За месяц' },
+const CATEGORY_OPTIONS: { key: LeaderboardCategory; label: string; subtitle: string }[] = [
+  { key: 'all',  label: 'Все',   subtitle: 'Общий рейтинг' },
+  { key: '1',    label: 'Кат. 1', subtitle: 'до 69 999 ₽' },
+  { key: '2',    label: 'Кат. 2', subtitle: '70 000–249 999 ₽' },
+  { key: '3',    label: 'Кат. 3', subtitle: 'от 250 000 ₽' },
 ];
 
 // 6 марта 00:00 МСК = 5 марта 21:00:00 UTC
@@ -38,7 +39,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
   onNavigate,
   onUpdateDeposit,
 }) => {
-  const { data, loading, error, period, setPeriod, refresh } = useLeaderboard(userStatus.telegramId);
+  const { data, loading, error, category, setCategory, refresh } = useLeaderboard(userStatus.telegramId);
   const currentUserRowRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const [stickyCurrentUser, setStickyCurrentUser] = useState(false);
@@ -78,7 +79,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const activePeriod = PERIOD_OPTIONS.find((p) => p.key === period) ?? PERIOD_OPTIONS[1];
+  const activeCategory = CATEGORY_OPTIONS.find((c) => c.key === category) ?? CATEGORY_OPTIONS[0];
 
   // Determine if current user row is visible; if not, show sticky row
   useEffect(() => {
@@ -190,24 +191,24 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
           </p>
         ) : null}
 
-        {/* Period tabs */}
-        <nav aria-label="Период" style={{ display: 'flex', justifyContent: 'center', gap: 4, padding: '10px 20px 14px' }}>
-          {PERIOD_OPTIONS.map((opt) => (
+        {/* Category tabs */}
+        <nav aria-label="Категория" style={{ display: 'flex', justifyContent: 'center', gap: 4, padding: '10px 20px 14px' }}>
+          {CATEGORY_OPTIONS.map((opt) => (
             <button
               key={opt.key}
-              onClick={() => setPeriod(opt.key)}
-              aria-pressed={period === opt.key}
+              onClick={() => setCategory(opt.key)}
+              aria-pressed={category === opt.key}
               style={{
-                padding: '8px 20px',
+                padding: '8px 14px',
                 borderRadius: 40,
-                fontSize: 14,
+                fontSize: 13,
                 fontWeight: 600,
-                color: period === opt.key ? 'var(--gold-3)' : 'rgba(255,255,255,0.7)',
+                color: category === opt.key ? 'var(--gold-3)' : 'rgba(255,255,255,0.7)',
                 cursor: 'pointer',
                 border: 'none',
-                background: period === opt.key ? 'rgba(255,255,255,0.95)' : 'transparent',
+                background: category === opt.key ? 'rgba(255,255,255,0.95)' : 'transparent',
                 fontFamily: 'var(--font)',
-                boxShadow: period === opt.key ? '0 2px 8px rgba(0,0,0,0.1)' : 'none',
+                boxShadow: category === opt.key ? '0 2px 8px rgba(0,0,0,0.1)' : 'none',
                 transition: 'all 0.25s',
                 minHeight: 44,
               }}
@@ -252,7 +253,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
               Лидерборд
             </span>
             <span style={{ fontSize: 12, color: 'var(--text-3)', fontWeight: 500, marginLeft: 6 }}>
-              {activePeriod.subtitle}
+              {activeCategory.subtitle}
             </span>
           </div>
         </div>

@@ -59,3 +59,4 @@ export interface LeaderboardEntry {
 }
 
 export type LeaderboardPeriod = 'day' | 'week' | 'month';
+export type LeaderboardCategory = 'all' | '1' | '2' | '3';

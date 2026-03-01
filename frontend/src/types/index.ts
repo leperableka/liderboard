@@ -62,7 +62,7 @@ export interface UserStatus {
 
 // ─── Leaderboard ──────────────────────────────────────────────────────────────
 
-export type Period = 'day' | 'week' | 'month';
+export type LeaderboardCategory = 'all' | '1' | '2' | '3';
 
 export interface LeaderboardEntry {
   position: number;
@@ -73,10 +73,11 @@ export interface LeaderboardEntry {
   instruments: string[];
   pnlPercent: number;
   isCurrentUser: boolean;
+  depositCategory: number | null;
 }
 
 export interface LeaderboardResponse {
-  period: Period;
+  category: LeaderboardCategory;
   totalParticipants: number;
   entries: LeaderboardEntry[];
   currentUser: LeaderboardEntry | null;
