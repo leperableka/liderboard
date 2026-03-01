@@ -85,7 +85,7 @@ export const Welcome: React.FC<WelcomeProps> = ({
           animationDelay: '0.1s',
         }}
       >
-        Торговый<br />Чемпионат
+        Торговый<br />Турнир
       </h1>
 
       <p
@@ -115,7 +115,7 @@ export const Welcome: React.FC<WelcomeProps> = ({
           animationDelay: '0.2s',
         }}
       >
-        Покажи свои результаты в трейдинге. Соревнуйся с лучшими трейдерами и выиграй главный приз.
+        Покажи свои результаты в&nbsp;трейдинге. Соревнуйся с&nbsp;лучшими трейдерами и&nbsp;выиграй главный приз.
       </p>
 
       <div
@@ -141,7 +141,7 @@ export const Welcome: React.FC<WelcomeProps> = ({
                   lineHeight: 1.4,
                 }}
               >
-                Регистрация закрыта, чемпионат начался. Вы&nbsp;можете следить за&nbsp;лидербордом.
+                Регистрация закрыта, турнир начался. Вы&nbsp;можете следить за&nbsp;лидербордом.
               </p>
             )}
             <button

@@ -177,7 +177,7 @@ export const App: React.FC = () => {
                 fontFamily: 'var(--font)',
               }}
             >
-              Торговый Чемпионат
+              Торговый Турнир
             </div>
             <div
               style={{
@@ -208,7 +208,7 @@ export const App: React.FC = () => {
                   fontFamily: 'var(--font)',
                 }}
               >
-                Откройте бот в Telegram, чтобы участвовать в чемпионате
+                Откройте бот в Telegram, чтобы участвовать в турнире
               </p>
             </div>
             <a

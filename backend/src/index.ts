@@ -103,7 +103,7 @@ async function bootstrap(): Promise<void> {
     // Basic /start handler
     bot.command('start', async (ctx) => {
       await ctx.reply(
-        'Добро пожаловать в Торговый Чемпионат! Откройте приложение, чтобы участвовать.',
+        'Добро пожаловать в Торговый Турнир! Откройте приложение, чтобы участвовать.',
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         { reply_markup: { inline_keyboard: [[appButton as any]] } },
       );
@@ -112,7 +112,7 @@ async function bootstrap(): Promise<void> {
     // Fallback: any unknown command or message
     bot.on('message', async (ctx) => {
       await ctx.reply(
-        'Используйте кнопку ниже, чтобы открыть Торговый Чемпионат.',
+        'Используйте кнопку ниже, чтобы открыть Торговый Турнир.',
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         { reply_markup: { inline_keyboard: [[appButton as any]] } },
       );

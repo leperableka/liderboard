@@ -201,7 +201,7 @@ export const Step1Profile: React.FC<Step1ProfileProps> = ({ data, onChange, onNe
                 style={{ color: 'var(--gold-3)', textDecoration: 'underline' }}
                 onClick={(e) => e.stopPropagation()}
               >
-                правила чемпионата
+                правила турнира
               </a>
             </>
           }

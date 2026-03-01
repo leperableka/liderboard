@@ -4,6 +4,19 @@ import { MARKET_LABELS, MARKET_CURRENCY } from '../../types';
 import { Avatar } from '../../components/Avatar';
 import { InstrumentBadge } from '../../components/Badge';
 
+const APPROX_RATE = 90;
+const CAT_COLORS: Record<1 | 2 | 3, string> = { 1: '#2563EB', 2: '#D97706', 3: '#7C3AED' };
+const CAT_RANGES: Record<1 | 2 | 3, string> = {
+  1: 'до 69\u202F999\u00A0₽',
+  2: '70\u202F000–249\u202F999\u00A0₽',
+  3: 'от 250\u202F000\u00A0₽',
+};
+function computeCategory(amount: number, currency: string): 1 | 2 | 3 | null {
+  if (!amount || amount < 1) return null;
+  const rub = currency === 'RUB' ? amount : amount * APPROX_RATE;
+  return rub < 70_000 ? 1 : rub < 250_000 ? 2 : 3;
+}
+
 interface Step5ReviewProps {
   data: RegistrationData;
   onEdit: () => void;
@@ -17,6 +30,7 @@ export const Step5Review: React.FC<Step5ReviewProps> = ({ data, onEdit, onConfir
   const currency = data.market ? MARKET_CURRENCY[data.market] : 'USDT';
   const marketLabel = data.market ? MARKET_LABELS[data.market] : '—';
   const depositNum = parseFloat(data.initialDeposit) || 0;
+  const category = computeCategory(depositNum, currency);
 
   async function handleConfirm() {
     setLoading(true);
@@ -77,11 +91,37 @@ export const Step5Review: React.FC<Step5ReviewProps> = ({ data, onEdit, onConfir
           </ReviewRow>
 
           {/* Deposit */}
-          <ReviewRow label="Депозит" last>
+          <ReviewRow label="Депозит" last={!category}>
             <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text)' }}>
               {depositNum.toLocaleString('ru-RU')} {currency}
             </span>
           </ReviewRow>
+
+          {/* Category */}
+          {category && (
+            <ReviewRow label="Категория" last>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 28,
+                    height: 28,
+                    borderRadius: '50%',
+                    background: CAT_COLORS[category],
+                    color: '#fff',
+                    fontSize: 14,
+                    fontWeight: 700,
+                    flexShrink: 0,
+                  }}
+                >
+                  {category}
+                </span>
+                <span style={{ fontSize: 13, color: 'var(--text-2)' }}>{CAT_RANGES[category]}</span>
+              </div>
+            </ReviewRow>
+          )}
         </div>
 
         {error && (

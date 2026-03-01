@@ -163,7 +163,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
             textTransform: 'uppercase',
           }}
         >
-          Торговый Чемпионат
+          Торговый Турнир
         </h1>
         {contestOver ? (
           <p
@@ -176,7 +176,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
               letterSpacing: '0.2px',
             }}
           >
-            🏆 Чемпионат завершён
+            🏆 Турнир завершён
           </p>
         ) : daysLeft > 0 ? (
           <p
@@ -375,10 +375,10 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
           >
             <div style={{ fontSize: 20, marginBottom: 2 }}>🏆</div>
             <div style={{ fontSize: 15, fontWeight: 700, fontFamily: 'var(--font)', lineHeight: 1.3 }}>
-              Чемпионат завершён. Поздравляем победителей!
+              Турнир завершён. Поздравляем победителей!
             </div>
             <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.85)', marginTop: 4, fontFamily: 'var(--font)' }}>
-              До встречи на следующем чемпионате
+              До встречи на следующем турнире
             </div>
           </div>
         ) : (
@@ -450,7 +450,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
         >
           <span style={{ fontSize: 16 }}>{isBeforeStart ? '🔒' : '🕛'}</span>
           {isBeforeStart
-            ? 'Чемпионат начнётся 6 марта в 00:00 МСК'
+            ? 'Турнир начнётся 6 марта в 00:00 МСК'
             : 'Внести данные можно после 00:00'}
         </div>
       )}

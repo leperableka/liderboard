@@ -113,7 +113,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
             animation: 'splashSubIn 0.5s ease 0.7s both',
           }}
         >
-          Торговый Чемпионат
+          Торговый Турнир
         </div>
       </div>
 

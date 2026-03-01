@@ -206,7 +206,7 @@ export const Step4Deposit: React.FC<Step4DepositProps> = ({ data, onChange, onNe
         )}
 
         <p style={{ fontSize: 13, color: 'var(--text-3)', textAlign: 'center', marginTop: 12 }}>
-          Укажите реальный размер вашего торгового счёта
+          Укажите реальный размер вашего торгового счёта, с&nbsp;которым вы будете участвовать в&nbsp;турнире
         </p>
       </div>
 

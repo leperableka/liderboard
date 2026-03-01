@@ -22,6 +22,11 @@ export async function avatarRoutes(app: FastifyInstance) {
     async (request, reply) => {
       const { telegramId } = request.params;
 
+      // Authorization: only the owner can update their own avatar
+      if (request.telegramUser.id !== parseInt(telegramId, 10)) {
+        return reply.status(403).send({ error: 'Forbidden' });
+      }
+
       // Consume multipart file (already registered globally in index.ts)
       const data = await request.file({ limits: { fileSize: MAX_RAW_BYTES } });
 

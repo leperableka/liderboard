@@ -204,11 +204,11 @@ export const UpdateDeposit: React.FC<UpdateDepositProps> = ({
           <main style={{ padding: '0 20px', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
             <div style={{ fontSize: 48, lineHeight: 1 }} aria-hidden="true">🔒</div>
             <p style={{ fontSize: 15, color: 'var(--text)', fontWeight: 600, textAlign: 'center', margin: 0 }}>
-              Чемпионат стартует 6 марта в 00:00 МСК
+              Турнир стартует 6 марта в 00:00 МСК
             </p>
             <p style={{ fontSize: 13, color: 'var(--text-2)', textAlign: 'center', lineHeight: 1.5, margin: 0, maxWidth: 280 }}>
               До старта доступна только регистрация с&nbsp;начальным депозитом.
-              Вносить обновления можно с&nbsp;момента начала чемпионата.
+              Вносить обновления можно с&nbsp;момента начала турнира.
             </p>
           </main>
         ) : (
@@ -395,7 +395,7 @@ export const UpdateDeposit: React.FC<UpdateDepositProps> = ({
                     boxShadow: '0 4px 16px rgba(0,0,0,0.2)',
                   }}
                 >
-                  Внести новые данные можно только когда начинается чемпионат
+                  Внести новые данные можно только когда начинается турнир
                 </div>
               )}
               <button
