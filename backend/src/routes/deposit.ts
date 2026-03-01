@@ -8,7 +8,7 @@ import { getMoscowDateStr } from '../utils/time.js';
 // ─── Zod schema ─────────────────────────────────────────────────────────────
 
 const DepositUpdateBodySchema = z.object({
-  deposit_value: z.number().positive().max(100_000_000).multipleOf(0.01),
+  deposit_value: z.number().positive().max(10_000_000).multipleOf(0.01),
 });
 
 // ─── Route plugin ─────────────────────────────────────────────────────────────
