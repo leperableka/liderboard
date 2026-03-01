@@ -327,7 +327,7 @@ export async function userRoutes(fastify: FastifyInstance, opts: UserRoutesOpts)
       const { telegramId } = paramParse.data;
 
       // Authorization: only the owner can read their own history
-      if (request.telegramUser.id !== telegramId) {
+      if (request.telegramUser.id !== parseInt(telegramId, 10)) {
         return reply.code(403).send({ error: 'Forbidden' });
       }
 
