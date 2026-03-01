@@ -80,6 +80,8 @@ const mockStatus: UserStatus = {
 const mockLeaderboard: LeaderboardResponse = {
   category: 'all',
   totalParticipants: 247,
+  page: 1,
+  limit: 50,
   entries: [
     { position: 1, telegramId: 1, displayName: 'Александр К.', avatarUrl: null, market: 'crypto', instruments: ['Спот', 'Фьючерсы'], pnlPercent: 32.5, isCurrentUser: false, depositCategory: 1 },
     { position: 2, telegramId: 2, displayName: 'Дмитрий К.', avatarUrl: null, market: 'moex', instruments: ['Акции'], pnlPercent: 28.1, isCurrentUser: false, depositCategory: 2 },
@@ -153,19 +155,34 @@ export async function register(payload: RegisterPayload): Promise<UserStatus> {
   return request<UserStatus>('POST', '/api/user/register', payload);
 }
 
-export async function getLeaderboard(category: LeaderboardCategory, telegramId?: number, signal?: AbortSignal): Promise<LeaderboardResponse> {
+export async function getLeaderboard(
+  category: LeaderboardCategory,
+  telegramId?: number,
+  signal?: AbortSignal,
+  page = 1,
+  limit = 50,
+): Promise<LeaderboardResponse> {
   if (IS_DEV) {
     await mockDelay(700);
     const currentId = telegramId ?? mockStatus.telegramId;
+    if (page > 1) {
+      // Mock only has one page of data
+      return { category, totalParticipants: mockLeaderboard.entries.length, entries: [], currentUser: null, page, limit };
+    }
     const entries = mockLeaderboard.entries.map((e) => ({
       ...e,
       isCurrentUser: e.telegramId === currentId,
     }));
     const currentUser = entries.find((e) => e.isCurrentUser) ?? null;
-    return { ...mockLeaderboard, category, entries, currentUser };
+    return { ...mockLeaderboard, totalParticipants: mockLeaderboard.entries.length, category, entries, currentUser, page, limit };
   }
   const userParam = telegramId != null ? `&userId=${telegramId}` : '';
-  const raw = await request<LeaderboardResponse>('GET', `/api/leaderboard?category=${category}${userParam}`, undefined, signal);
+  const raw = await request<LeaderboardResponse>(
+    'GET',
+    `/api/leaderboard?category=${category}${userParam}&page=${page}&limit=${limit}`,
+    undefined,
+    signal,
+  );
   const entries = raw.entries.map((e) => ({
     ...e,
     isCurrentUser: telegramId ? e.telegramId === telegramId : false,

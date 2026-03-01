@@ -40,9 +40,10 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
   onNavigate,
   onUpdateDeposit,
 }) => {
-  const { data, loading, error, category, setCategory, refresh } = useLeaderboard(userStatus.telegramId);
+  const { data, loading, loadingMore, error, hasMore, category, setCategory, refresh, loadMore } = useLeaderboard(userStatus.telegramId);
   const currentUserRowRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
   const [stickyCurrentUser, setStickyCurrentUser] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -110,6 +111,23 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
     observer.observe(rowEl);
     return () => observer.disconnect();
   }, [data]);
+
+  // Infinite scroll: load next page when sentinel enters the list viewport
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    const list = listRef.current;
+    if (!sentinel || !list || !hasMore) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) loadMore();
+      },
+      { root: list, rootMargin: '0px 0px 120px 0px', threshold: 0 },
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, loadMore]);
 
   const topEntries = data?.entries.slice(0, 3) ?? [];
   const listEntries = data?.entries.slice(3) ?? [];
@@ -339,6 +357,19 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
                   onUserClick={setSelectedEntry}
                 />
               ))}
+              {/* Infinite scroll sentinel */}
+              {hasMore && <div ref={sentinelRef} style={{ height: 1 }} aria-hidden="true" />}
+              {loadingMore && (
+                <div style={{
+                  textAlign: 'center',
+                  padding: '14px 0',
+                  fontSize: 13,
+                  color: 'var(--text-3)',
+                  fontFamily: 'var(--font)',
+                }}>
+                  Загрузка...
+                </div>
+              )}
               {!isCurrentUserInTop3 && !currentUserInList && currentUser && (
                 <LeaderboardRow
                   entry={currentUser}

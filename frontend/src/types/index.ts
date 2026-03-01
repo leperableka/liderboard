@@ -82,6 +82,8 @@ export interface LeaderboardResponse {
   totalParticipants: number;
   entries: LeaderboardEntry[];
   currentUser: LeaderboardEntry | null;
+  page: number;
+  limit: number;
 }
 
 // ─── History ─────────────────────────────────────────────────────────────────
