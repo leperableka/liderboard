@@ -18,7 +18,6 @@ interface Milestone {
 function buildRoadmap(): Milestone[] {
   const now = new Date();
   const milestones = [
-    { label: 'Объявление',   date: '2 марта',       deadline: new Date('2026-03-02T23:59:59') },
     { label: 'Приём заявок', date: '2–5 марта',     deadline: new Date('2026-03-05T23:59:59') },
     { label: 'Турнир',       date: '6–29 марта',    deadline: new Date('2026-03-29T23:59:59') },
     { label: 'Итоги',        date: '30–31 марта',   deadline: new Date('2026-03-31T23:59:59') },
@@ -114,7 +113,7 @@ const Roadmap: React.FC = () => {
             }} />
           </div>
 
-          {[0, 33, 67, 100].map((pct, i) => {
+          {[0, 50, 100].map((pct, i) => {
             const m = milestones[i]!;
             const isDone   = m.status === 'done';
             const isActive = m.status === 'active';
@@ -151,9 +150,9 @@ const Roadmap: React.FC = () => {
                 key={i}
                 style={{
                   flex: 1,
-                  textAlign: i === 0 ? 'left' : i === 3 ? 'right' : 'center',
+                  textAlign: i === 0 ? 'left' : i === 2 ? 'right' : 'center',
                   paddingLeft: i === 1 ? 4 : 0,
-                  paddingRight: i === 2 ? 4 : 0,
+                  paddingRight: i === 1 ? 4 : 0,
                 }}
               >
                 <div style={{
