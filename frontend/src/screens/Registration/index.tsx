@@ -92,10 +92,17 @@ export const RegistrationContainer: React.FC<RegistrationContainerProps> = ({
     const depositNum = parseFloat(data.initialDeposit);
     if (isNaN(depositNum) || depositNum < 1) throw new Error('Некорректный депозит');
 
-    // avatarUrl intentionally omitted: blob: URLs are invalid after reload.
-    // Custom avatar is uploaded to the server separately after registration.
+    // Pass Telegram photo_url to backend so it's stored during registration.
+    // Blob URLs (from file picker preview) are excluded — they're invalid after reload.
+    // Custom avatar files are uploaded separately after registration succeeds.
+    const telegramAvatarUrl =
+      !data.avatarFile && data.avatarUrl && !data.avatarUrl.startsWith('blob:')
+        ? data.avatarUrl
+        : undefined;
+
     const status = await register({
       displayName: data.displayName.trim(),
+      avatarUrl: telegramAvatarUrl,
       market: data.market,
       instruments: data.instruments,
       initialDeposit: depositNum,
