@@ -117,10 +117,9 @@ export const Profile: React.FC<ProfileProps> = ({
     setError('');
     let savedAvatarUrl: string | undefined;
     try {
-      // Upload new avatar first (server compresses to WebP 400×400)
+      // 1. Upload new avatar (server compresses to WebP 400×400, persists immediately)
       if (avatarFile) {
         const serverUrl = await uploadAvatar(userStatus.telegramId, avatarFile);
-        // Revoke local preview and switch to server URL
         if (previewUrlRef.current) {
           URL.revokeObjectURL(previewUrlRef.current);
           previewUrlRef.current = null;
@@ -128,20 +127,23 @@ export const Profile: React.FC<ProfileProps> = ({
         setAvatarUrl(serverUrl);
         setAvatarFile(null);
         savedAvatarUrl = serverUrl;
-        // Propagate avatar change immediately — it's already persisted in DB
-        onProfileUpdated(trimmed, savedAvatarUrl);
       }
 
-      // Update display name if changed
+      // 2. Update display name if changed
       if (nameChanged) {
         await updateProfile(userStatus.telegramId, trimmed);
       }
 
-      // Notify parent (covers name-only change or final confirmation)
+      // 3. Both succeeded — sync parent state once
       onProfileUpdated(trimmed, savedAvatarUrl);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (err: unknown) {
+      // Avatar uploaded OK but name PATCH failed → propagate avatar, revert name
+      if (savedAvatarUrl) {
+        onProfileUpdated(userStatus.displayName, savedAvatarUrl);
+        setDisplayName(userStatus.displayName);
+      }
       setError(err instanceof Error ? err.message : 'Ошибка сохранения');
     } finally {
       setSaving(false);
