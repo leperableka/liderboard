@@ -68,10 +68,12 @@ export function useLeaderboard(telegramId?: number): UseLeaderboardReturn {
         if (!append) setError(err.message || 'Ошибка загрузки');
       }
     } finally {
-      if (append) {
-        setLoadingMore(false);
-      } else {
-        setLoading(false);
+      if (!controller.signal.aborted) {
+        if (append) {
+          setLoadingMore(false);
+        } else {
+          setLoading(false);
+        }
       }
     }
   }, [telegramId]);

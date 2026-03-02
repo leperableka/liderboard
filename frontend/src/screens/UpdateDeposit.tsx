@@ -47,9 +47,9 @@ function stripFormatting(value: string): string {
   return value.replace(/[\u202F\u00A0\s]/g, '');
 }
 
-// 6 марта 00:00 МСК = 5 марта 21:00:00 UTC
+// 2 марта 00:00 МСК = 1 марта 21:00:00 UTC
 const CONTEST_START = new Date(
-  (import.meta.env.VITE_CONTEST_START as string | undefined) ?? '2026-03-05T21:00:00Z',
+  (import.meta.env.VITE_CONTEST_START as string | undefined) ?? '2026-03-01T21:00:00Z',
 );
 // 30 марта 00:00 МСК = 29 марта 21:00:00 UTC (same value as Leaderboard fallback)
 const CONTEST_END = new Date(
@@ -81,7 +81,7 @@ export const UpdateDeposit: React.FC<UpdateDepositProps> = ({
   const currency = userStatus.market ? MARKET_CURRENCY[userStatus.market] : 'USDT';
   const today = new Date();
   const numValue = parseFloat(value);
-  const isValid = !isNaN(numValue) && numValue > 0;
+  const isValid = !isNaN(numValue) && numValue > 0 && numValue <= 10_000_000;
   const prevDeposit = userStatus.currentDeposit ?? userStatus.initialDeposit;
 
   useEffect(() => {
@@ -100,6 +100,8 @@ export const UpdateDeposit: React.FC<UpdateDepositProps> = ({
     const num = parseFloat(sanitized);
     if (sanitized && isNaN(num)) {
       setError('Введите корректное число');
+    } else if (sanitized && num > 10_000_000) {
+      setError('Максимальный депозит: 10 000 000');
     } else {
       setError('');
     }

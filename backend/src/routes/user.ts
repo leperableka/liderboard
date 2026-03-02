@@ -30,8 +30,8 @@ const RegisterBodySchema = z.object({
   market: z.enum(['crypto', 'moex', 'forex']),
   instruments: z.array(z.string().min(1).max(200)).min(1).max(20),
   initialDeposit: z.number().positive().max(10_000_000).multipleOf(0.01),
-  consentedPd: z.boolean(),
-  consentedRules: z.boolean(),
+  consentedPd: z.literal(true),
+  consentedRules: z.literal(true),
 });
 
 const UpdateProfileBodySchema = z.object({

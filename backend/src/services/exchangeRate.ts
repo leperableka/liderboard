@@ -11,7 +11,7 @@ const CACHE_TTL = 24 * 60 * 60; // 24 hours
 const CBR_URL = 'https://www.cbr-xml-daily.ru/daily_json.js';
 
 /** Fallback rate used when API is unavailable and no cached value exists. */
-const FALLBACK_RATE = 90;
+const FALLBACK_RATE = 80;
 
 export async function fetchUsdRubFromCBR(): Promise<number> {
   const res = await fetch(CBR_URL, {

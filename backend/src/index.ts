@@ -120,7 +120,7 @@ async function bootstrap(): Promise<void> {
       fastify.log.error({ err }, 'Grammy bot error');
     });
 
-    cronTask = scheduleNotifications(bot, miniAppUrl);
+    cronTask = scheduleNotifications(bot, miniAppUrl, fastify.log);
   } else {
     fastify.log.info('Development mode: Grammy bot and cron disabled');
   }
@@ -132,7 +132,7 @@ async function bootstrap(): Promise<void> {
   await fastify.register(avatarRoutes);
 
   // ── Redis ─────────────────────────────────────────────────────────────────
-  const redisUrl = process.env['REDIS_URL'] ?? 'redis://localhost:6379';
+  const redisUrl = requireEnv('REDIS_URL');
   const redis = createRedisClient(redisUrl);
 
   // ── Start server ──────────────────────────────────────────────────────────

@@ -3,12 +3,18 @@ import 'dotenv/config';
 
 const { Pool } = pg;
 
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) throw new Error(`Required environment variable "${name}" is not set`);
+  return value;
+}
+
 const pool = new Pool({
-  host: process.env['POSTGRES_HOST'] ?? 'localhost',
+  host: requireEnv('POSTGRES_HOST'),
   port: parseInt(process.env['POSTGRES_PORT'] ?? '5432', 10),
-  database: process.env['POSTGRES_DB'] ?? 'liderboard',
-  user: process.env['POSTGRES_USER'] ?? 'liderboard',
-  password: process.env['POSTGRES_PASSWORD'],
+  database: requireEnv('POSTGRES_DB'),
+  user: requireEnv('POSTGRES_USER'),
+  password: requireEnv('POSTGRES_PASSWORD'),
   max: 20,
   idleTimeoutMillis: 30_000,
   connectionTimeoutMillis: 5_000,

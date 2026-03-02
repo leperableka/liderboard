@@ -1,5 +1,6 @@
 import cron from 'node-cron';
 import { Bot, InlineKeyboard } from 'grammy';
+import type { FastifyBaseLogger } from 'fastify';
 import pool from '../db/pool.js';
 import { getMoscowDateStr, isWeekdayMoscow } from '../utils/time.js';
 import { CONTEST_START_MOSCOW, CONTEST_END_MOSCOW } from '../config.js';
@@ -26,6 +27,7 @@ async function sendBatch(
   getText: (u: PendingUser) => string,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   keyboard: any,
+  log: FastifyBaseLogger,
 ): Promise<void> {
   for (const user of users) {
     try {
@@ -33,7 +35,7 @@ async function sendBatch(
         reply_markup: keyboard,
       });
     } catch (err) {
-      console.error(`[notifications] Failed to send to ${user.telegram_id}:`, err);
+      log.error({ err, telegramId: user.telegram_id }, '[notifications] Failed to send message');
     }
     await new Promise((resolve) => setTimeout(resolve, 50));
   }
@@ -119,17 +121,17 @@ async function getDisqualificationWarningUsers(): Promise<PendingUser[]> {
  * 1st reminder — 15:55 UTC (18:55 МСК)
  * ~5 minutes before market close. Standard nudge.
  */
-async function sendPreCloseReminders(bot: Bot, miniAppUrl: string): Promise<void> {
+async function sendPreCloseReminders(bot: Bot, miniAppUrl: string, log: FastifyBaseLogger): Promise<void> {
   const todayStr = getMoscowDateStr();
   if (todayStr > CONTEST_END_MOSCOW) {
-    console.log(`[notifications] Pre-close skipped: contest ended ${CONTEST_END_MOSCOW}`);
+    log.info(`[notifications] Pre-close skipped: contest ended ${CONTEST_END_MOSCOW}`);
     return;
   }
-  console.log(`[notifications] Pre-close reminder — ${todayStr} (Moscow)`);
+  log.info(`[notifications] Pre-close reminder — ${todayStr} (Moscow)`);
 
   try {
     const users = await getPendingUsers();
-    console.log(`[notifications] Pre-close: ${users.length} users to notify`);
+    log.info(`[notifications] Pre-close: ${users.length} users to notify`);
     if (users.length === 0) return;
 
     await sendBatch(
@@ -140,11 +142,12 @@ async function sendPreCloseReminders(bot: Bot, miniAppUrl: string): Promise<void
         `Не забудьте обновить ваш депозит сегодня!\n` +
         `Внесите данные о вашем текущем депозите, чтобы сохранить позицию в лидерборде.`,
       makeKeyboard(miniAppUrl),
+      log,
     );
 
-    console.log('[notifications] Pre-close batch complete');
+    log.info('[notifications] Pre-close batch complete');
   } catch (err) {
-    console.error('[notifications] Pre-close error:', err);
+    log.error({ err }, '[notifications] Pre-close error');
   }
 }
 
@@ -152,17 +155,17 @@ async function sendPreCloseReminders(bot: Bot, miniAppUrl: string): Promise<void
  * 2nd reminder — 17:00 UTC (20:00 МСК)
  * Evening nudge for those who still haven't submitted.
  */
-async function sendEveningReminders(bot: Bot, miniAppUrl: string): Promise<void> {
+async function sendEveningReminders(bot: Bot, miniAppUrl: string, log: FastifyBaseLogger): Promise<void> {
   const todayStr = getMoscowDateStr();
   if (todayStr > CONTEST_END_MOSCOW) {
-    console.log(`[notifications] Evening skipped: contest ended ${CONTEST_END_MOSCOW}`);
+    log.info(`[notifications] Evening skipped: contest ended ${CONTEST_END_MOSCOW}`);
     return;
   }
-  console.log(`[notifications] Evening reminder — ${todayStr} (Moscow)`);
+  log.info(`[notifications] Evening reminder — ${todayStr} (Moscow)`);
 
   try {
     const users = await getPendingUsers();
-    console.log(`[notifications] Evening: ${users.length} users to notify`);
+    log.info(`[notifications] Evening: ${users.length} users to notify`);
     if (users.length === 0) return;
 
     await sendBatch(
@@ -173,11 +176,12 @@ async function sendEveningReminders(bot: Bot, miniAppUrl: string): Promise<void>
         `пожалуйста, зайдите в приложение и внесите информацию.\n\n` +
         `Возможно, вы уже лидируете в турнире 🏆`,
       makeKeyboard(miniAppUrl),
+      log,
     );
 
-    console.log('[notifications] Evening batch complete');
+    log.info('[notifications] Evening batch complete');
   } catch (err) {
-    console.error('[notifications] Evening error:', err);
+    log.error({ err }, '[notifications] Evening error');
   }
 }
 
@@ -186,17 +190,17 @@ async function sendEveningReminders(bot: Bot, miniAppUrl: string): Promise<void>
  * Sent to users inactive for exactly 4 calendar days.
  * On day 5+ they are silently excluded from all reminders.
  */
-async function sendDisqualificationWarnings(bot: Bot, miniAppUrl: string): Promise<void> {
+async function sendDisqualificationWarnings(bot: Bot, miniAppUrl: string, log: FastifyBaseLogger): Promise<void> {
   const todayStr = getMoscowDateStr();
   if (todayStr > CONTEST_END_MOSCOW) {
-    console.log(`[notifications] Disqualification skipped: contest ended ${CONTEST_END_MOSCOW}`);
+    log.info(`[notifications] Disqualification skipped: contest ended ${CONTEST_END_MOSCOW}`);
     return;
   }
-  console.log(`[notifications] Disqualification warning — ${todayStr} (Moscow)`);
+  log.info(`[notifications] Disqualification warning — ${todayStr} (Moscow)`);
 
   try {
     const users = await getDisqualificationWarningUsers();
-    console.log(`[notifications] Disqualification warning: ${users.length} users`);
+    log.info(`[notifications] Disqualification warning: ${users.length} users`);
     if (users.length === 0) return;
 
     await sendBatch(
@@ -207,11 +211,12 @@ async function sendDisqualificationWarnings(bot: Bot, miniAppUrl: string): Promi
         `К сожалению, вы не вносите данные торгового турнира Vesperfin&Co.Trading. ` +
         `Мы будем вынуждены дисквалифицировать ваш профиль из турнирной таблицы.`,
       makeKeyboard(miniAppUrl),
+      log,
     );
 
-    console.log('[notifications] Disqualification warning batch complete');
+    log.info('[notifications] Disqualification warning batch complete');
   } catch (err) {
-    console.error('[notifications] Disqualification warning error:', err);
+    log.error({ err }, '[notifications] Disqualification warning error');
   }
 }
 
@@ -226,26 +231,27 @@ async function sendDisqualificationWarnings(bot: Bot, miniAppUrl: string): Promi
 export function scheduleNotifications(
   bot: Bot,
   miniAppUrl: string,
+  log: FastifyBaseLogger,
 ): { stop: () => void } {
   const disqualTask = cron.schedule(
     '0 9 * * *',
-    () => sendDisqualificationWarnings(bot, miniAppUrl).catch(console.error),
+    () => sendDisqualificationWarnings(bot, miniAppUrl, log).catch((err) => log.error({ err }, '[notifications] Disqualification cron error')),
     { timezone: 'UTC' },
   );
 
   const preCloseTask = cron.schedule(
     '55 15 * * *',
-    () => sendPreCloseReminders(bot, miniAppUrl).catch(console.error),
+    () => sendPreCloseReminders(bot, miniAppUrl, log).catch((err) => log.error({ err }, '[notifications] Pre-close cron error')),
     { timezone: 'UTC' },
   );
 
   const eveningTask = cron.schedule(
     '0 17 * * *',
-    () => sendEveningReminders(bot, miniAppUrl).catch(console.error),
+    () => sendEveningReminders(bot, miniAppUrl, log).catch((err) => log.error({ err }, '[notifications] Evening cron error')),
     { timezone: 'UTC' },
   );
 
-  console.log(
+  log.info(
     '[notifications] Cron jobs scheduled: ' +
     '09:00 UTC (disqualification warning) + ' +
     '15:55 UTC (pre-close) + ' +

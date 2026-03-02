@@ -1,7 +1,8 @@
 import React from 'react';
 
-// 6 марта 00:00 МСК = 5 марта 21:00:00 UTC
-const REGISTRATION_DEADLINE = new Date('2026-03-05T21:00:00Z');
+const REGISTRATION_DEADLINE = new Date(
+  (import.meta.env.VITE_REGISTRATION_DEADLINE as string | undefined) ?? '2026-03-05T21:00:00Z',
+);
 
 interface WelcomeProps {
   onRegister: () => void;

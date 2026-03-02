@@ -14,9 +14,9 @@ function getWebApp(): TelegramWebApp | null {
 
 const MOCK_USER: TelegramUser = {
   id: 123456789,
-  first_name: 'Александр',
-  last_name: 'Кольцов',
-  username: 'akoltsov',
+  first_name: 'Dev',
+  last_name: 'User',
+  username: 'dev_user',
   language_code: 'ru',
 };
 

@@ -128,8 +128,6 @@ export const Profile: React.FC<ProfileProps> = ({
         setAvatarUrl(serverUrl);
         setAvatarFile(null);
         savedAvatarUrl = serverUrl;
-        // Notify parent immediately so avatar is reflected even if name update fails below
-        onProfileUpdated(trimmed, savedAvatarUrl);
       }
 
       // Update display name if changed
@@ -137,10 +135,8 @@ export const Profile: React.FC<ProfileProps> = ({
         await updateProfile(userStatus.telegramId, trimmed);
       }
 
-      // If avatar was not uploaded above, still notify parent (name-only change)
-      if (!savedAvatarUrl) {
-        onProfileUpdated(trimmed, undefined);
-      }
+      // Notify parent only after all operations succeed
+      onProfileUpdated(trimmed, savedAvatarUrl);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (err: unknown) {

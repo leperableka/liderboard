@@ -55,7 +55,7 @@ export const Step4Deposit: React.FC<Step4DepositProps> = ({ data, onChange, onNe
   const [error, setError] = useState('');
   const currency = data.market ? MARKET_CURRENCY[data.market] : 'USDT';
   const numValue = parseFloat(data.initialDeposit);
-  const isValid = !isNaN(numValue) && numValue >= 1;
+  const isValid = !isNaN(numValue) && numValue >= 1 && numValue <= 10_000_000;
   const catResult = isValid ? computeCategory(numValue, currency) : null;
   const isLargeDeposit = isValid && numValue > 1_000_000;
 
@@ -68,6 +68,8 @@ export const Step4Deposit: React.FC<Step4DepositProps> = ({ data, onChange, onNe
       setError('Введите корректное число');
     } else if (sanitized && num < 1) {
       setError('Минимальный депозит: 1');
+    } else if (sanitized && num > 10_000_000) {
+      setError('Максимальный депозит: 10 000 000');
     } else {
       setError('');
     }
@@ -92,7 +94,7 @@ export const Step4Deposit: React.FC<Step4DepositProps> = ({ data, onChange, onNe
 
   function handleNext() {
     if (!isValid) {
-      setError('Введите сумму депозита (минимум 1)');
+      setError('Введите корректную сумму депозита (1 – 10 000 000)');
       return;
     }
     onNext();
