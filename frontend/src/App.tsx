@@ -19,9 +19,9 @@ const REGISTRATION_DEADLINE = new Date(
   (import.meta.env.VITE_REGISTRATION_DEADLINE as string | undefined) ?? '2026-03-05T21:00:00Z',
 );
 
-// Moscow = UTC+3; returns "YYYY-MM-DD" in МСК local time
+// Returns "YYYY-MM-DD" in Moscow timezone (Europe/Moscow).
 function getMoscowDateStr(): string {
-  return new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Moscow' }).format(new Date());
 }
 
 type AppState =
