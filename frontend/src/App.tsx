@@ -202,7 +202,7 @@ export const App: React.FC = () => {
               }}
             >
               <img
-                src="/logo.svg"
+                src="/logo.webp"
                 alt="Логотип"
                 style={{ width: 88, height: 88, display: 'block' }}
               />

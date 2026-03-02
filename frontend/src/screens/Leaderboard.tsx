@@ -167,7 +167,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
           }}
         >
           <img
-            src="/logo.svg"
+            src="/logo.webp"
             alt="Логотип"
             style={{ width: 44, height: 44, borderRadius: 10, flexShrink: 0 }}
           />

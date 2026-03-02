@@ -81,7 +81,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
           }}
         >
           <img
-            src="/logo.svg"
+            src="/logo.webp"
             alt="Логотип"
             style={{ width: 108, height: 108, display: 'block' }}
           />
