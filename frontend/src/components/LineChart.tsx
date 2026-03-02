@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import type { DepositEntry } from '../types';
 
 interface LineChartProps {
@@ -75,7 +75,30 @@ export const LineChart: React.FC<LineChartProps> = ({ entries, currency }) => {
 
   const count = entries.length;
 
-  if (count === 0) {
+  const chartData = useMemo(() => {
+    if (count === 0) return null;
+    const vals = entries.map((e) => e.amount);
+    const minV = Math.min(...vals) * 0.98;
+    const maxV = Math.max(...vals) * 1.02;
+    const points = entries.map((e, i) => ({
+      x: count === 1 ? W / 2 : px(i, count),
+      y: py(e.amount, minV, maxV),
+    }));
+    const linePath = count === 1
+      ? `M ${points[0].x} ${points[0].y}`
+      : buildSmoothPath(points);
+    const fillPath =
+      count >= 2
+        ? `${linePath} L ${points[count - 1].x.toFixed(1)} ${(H - PAD_BOT).toFixed(1)} L ${points[0].x.toFixed(1)} ${(H - PAD_BOT).toFixed(1)} Z`
+        : '';
+    const labelIndices = pickLabelIndices(count);
+    const gridYValues = [0.25, 0.5, 0.75].map((ratio) =>
+      PAD_TOP + PLOT_H - ratio * PLOT_H
+    );
+    return { points, linePath, fillPath, labelIndices, gridYValues };
+  }, [entries, count]);
+
+  if (!chartData) {
     return (
       <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--text-3)' }}>
         Нет данных
@@ -83,29 +106,7 @@ export const LineChart: React.FC<LineChartProps> = ({ entries, currency }) => {
     );
   }
 
-  const vals = entries.map((e) => e.amount);
-  const minV = Math.min(...vals) * 0.98;
-  const maxV = Math.max(...vals) * 1.02;
-
-  const points = entries.map((e, i) => ({
-    x: count === 1 ? W / 2 : px(i, count),
-    y: py(e.amount, minV, maxV),
-  }));
-
-  const linePath = count === 1
-    ? `M ${points[0].x} ${points[0].y}`
-    : buildSmoothPath(points);
-
-  const fillPath =
-    count >= 2
-      ? `${linePath} L ${points[count - 1].x.toFixed(1)} ${(H - PAD_BOT).toFixed(1)} L ${points[0].x.toFixed(1)} ${(H - PAD_BOT).toFixed(1)} Z`
-      : '';
-
-  const labelIndices = pickLabelIndices(count);
-
-  const gridYValues = [0.25, 0.5, 0.75].map((ratio) =>
-    PAD_TOP + PLOT_H - ratio * PLOT_H
-  );
+  const { points, linePath, fillPath, labelIndices, gridYValues } = chartData;
 
   const findClosestIndex = useCallback(
     (svgX: number): number => {

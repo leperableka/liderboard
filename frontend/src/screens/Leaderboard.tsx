@@ -130,11 +130,11 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
     return () => observer.disconnect();
   }, [hasMore, loadMore]);
 
-  const topEntries = data?.entries.slice(0, 3) ?? [];
-  const listEntries = data?.entries.slice(3) ?? [];
+  const topEntries = useMemo(() => data?.entries.slice(0, 3) ?? [], [data?.entries]);
+  const listEntries = useMemo(() => data?.entries.slice(3) ?? [], [data?.entries]);
   const currentUser = data?.currentUser;
-  const currentUserInList = listEntries.find((e) => e.isCurrentUser);
-  const isCurrentUserInTop3 = topEntries.some((e) => e.isCurrentUser);
+  const currentUserInList = useMemo(() => listEntries.find((e) => e.isCurrentUser), [listEntries]);
+  const isCurrentUserInTop3 = useMemo(() => topEntries.some((e) => e.isCurrentUser), [topEntries]);
 
   return (
     <div

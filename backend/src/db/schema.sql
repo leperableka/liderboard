@@ -36,3 +36,4 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS deposit_category SMALLINT CHECK (depo
 CREATE INDEX IF NOT EXISTS idx_users_category ON users(deposit_category);
 CREATE INDEX IF NOT EXISTS idx_deposit_updates_user_date ON deposit_updates(user_id, deposit_date);
 CREATE INDEX IF NOT EXISTS idx_deposit_updates_date ON deposit_updates(deposit_date);
+CREATE INDEX IF NOT EXISTS idx_users_registered_at ON users(registered_at);

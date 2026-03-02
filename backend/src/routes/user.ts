@@ -115,6 +115,7 @@ export async function userRoutes(fastify: FastifyInstance, opts: UserRoutesOpts)
           ? parseFloat(currentDepositRaw)
           : parseFloat(user.initial_deposit);
 
+        reply.header('Cache-Control', 'private, max-age=15, stale-while-revalidate=30');
         return reply.code(200).send({
           registered: true,
           depositUpdatedToday,
@@ -481,6 +482,7 @@ export async function userRoutes(fastify: FastifyInstance, opts: UserRoutesOpts)
               )
             : 0;
 
+        reply.header('Cache-Control', 'private, max-age=30, stale-while-revalidate=60');
         return reply.code(200).send({
           daysParticipated,
           initialDeposit,

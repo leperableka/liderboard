@@ -74,7 +74,7 @@ interface LeaderboardRowProps {
   onUserClick?: (entry: LeaderboardEntry) => void;
 }
 
-export const LeaderboardRow: React.FC<LeaderboardRowProps> = ({
+export const LeaderboardRow: React.FC<LeaderboardRowProps> = React.memo(({
   entry,
   isCurrentUser = false,
   innerRef,
@@ -162,4 +162,4 @@ export const LeaderboardRow: React.FC<LeaderboardRowProps> = ({
       </span>
     </div>
   );
-};
+});

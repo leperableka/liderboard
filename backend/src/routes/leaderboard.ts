@@ -261,14 +261,18 @@ export async function leaderboardRoutes(fastify: FastifyInstance): Promise<void>
               LEFT JOIN current_deposits cd ON cd.user_id = u.id
               WHERE ($3::integer IS NULL OR u.deposit_category = $3::integer)
             ),
-            ranked AS (
-              SELECT *,
-                ROW_NUMBER() OVER (
-                  ORDER BY change_percent DESC NULLS LAST, registered_at ASC
-                ) AS row_pos
-              FROM scored
+            target AS (
+              SELECT * FROM scored WHERE telegram_id = $2
             )
-            SELECT * FROM ranked WHERE telegram_id = $2
+            SELECT
+              t.*,
+              (
+                SELECT COUNT(*) + 1 FROM scored s
+                WHERE (s.change_percent > t.change_percent)
+                   OR (s.change_percent = t.change_percent AND s.registered_at < t.registered_at)
+                   OR (s.change_percent = t.change_percent AND s.registered_at = t.registered_at AND s.user_id < t.user_id)
+              ) AS row_pos
+            FROM target t
           `;
 
           const userResult = await pool.query<CurrentUserRow>(
@@ -296,6 +300,7 @@ export async function leaderboardRoutes(fastify: FastifyInstance): Promise<void>
         }
       }
 
+      reply.header('Cache-Control', 'public, max-age=30, stale-while-revalidate=60');
       return reply.code(200).send({ ...mainData, currentUser });
     },
   );

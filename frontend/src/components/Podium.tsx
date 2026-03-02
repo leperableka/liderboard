@@ -131,7 +131,7 @@ const PodiumItem: React.FC<PodiumItemProps> = ({ entry, rank, onUserClick }) => 
   );
 };
 
-export const Podium: React.FC<PodiumProps> = ({ entries, onUserClick }) => {
+export const Podium: React.FC<PodiumProps> = React.memo(({ entries, onUserClick }) => {
   const top3 = entries.slice(0, 3);
   const first = top3[0];
   const second = top3[1];
@@ -165,4 +165,4 @@ export const Podium: React.FC<PodiumProps> = ({ entries, onUserClick }) => {
       )}
     </div>
   );
-};
+});
