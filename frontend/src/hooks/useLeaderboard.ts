@@ -83,6 +83,7 @@ export function useLeaderboard(telegramId?: number): UseLeaderboardReturn {
     setAllEntries([]);
     setTotalParticipants(0);
     setDataLoaded(false);
+    setLoadingMore(false); // abort may have left loadingMore=true if a loadMore was in flight
     void fetchPage(c, 1, false);
   }, [fetchPage]);
 
@@ -90,6 +91,7 @@ export function useLeaderboard(telegramId?: number): UseLeaderboardReturn {
     setAllEntries([]);
     setTotalParticipants(0);
     setDataLoaded(false);
+    setLoadingMore(false); // abort may have left loadingMore=true if a loadMore was in flight
     void fetchPage(category, 1, false);
   }, [fetchPage, category]);
 
