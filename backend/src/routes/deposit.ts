@@ -43,21 +43,25 @@ export async function depositRoutes(fastify: FastifyInstance): Promise<void> {
         return reply.code(403).send({ error: 'Турнир завершён. Внесение данных недоступно.' });
       }
 
+      const client = await pool.connect();
       try {
+        await client.query('BEGIN');
+
         // Resolve internal user id
-        const userResult = await pool.query<{ id: number }>(
+        const userResult = await client.query<{ id: number }>(
           'SELECT id FROM users WHERE telegram_id = $1',
           [telegramId],
         );
 
         if (userResult.rowCount === 0) {
+          await client.query('ROLLBACK');
           return reply.code(404).send({ error: 'User not found. Please register first.' });
         }
 
         const userId = userResult.rows[0]!.id;
 
         // UPSERT: insert or update deposit for (user_id, deposit_date)
-        await pool.query(
+        await client.query(
           `INSERT INTO deposit_updates (user_id, deposit_date, deposit_value, updated_at)
            VALUES ($1, $2, $3, NOW())
            ON CONFLICT (user_id, deposit_date)
@@ -66,6 +70,8 @@ export async function depositRoutes(fastify: FastifyInstance): Promise<void> {
              updated_at    = NOW()`,
           [userId, depositDate, deposit_value],
         );
+
+        await client.query('COMMIT');
 
         // Invalidate leaderboard cache for all periods and pages
         try {
@@ -81,8 +87,11 @@ export async function depositRoutes(fastify: FastifyInstance): Promise<void> {
           deposit_value,
         });
       } catch (err) {
+        await client.query('ROLLBACK').catch(() => {});
         request.log.error({ err }, 'Failed to update deposit');
         return reply.code(500).send({ error: 'Internal server error' });
+      } finally {
+        client.release();
       }
     },
   );

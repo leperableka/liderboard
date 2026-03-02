@@ -38,7 +38,7 @@ export async function fetchUsdRubFromCBR(): Promise<number> {
  *   1. Redis cache (valid for 24h)
  *   2. Live CBR API → store in cache
  *   3. Stale cached value (if exists, regardless of TTL)
- *   4. Hard-coded fallback (90 ₽)
+ *   4. Hard-coded fallback (80 ₽)
  */
 export async function getUsdRubRate(): Promise<number> {
   // 1. Try fresh cache

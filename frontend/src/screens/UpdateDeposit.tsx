@@ -55,6 +55,11 @@ const CONTEST_START = moscowDateToUtc(
 const CONTEST_END = moscowDateToUtc(
   (import.meta.env.VITE_CONTEST_END as string | undefined) ?? '2026-03-29',
 );
+const CONTEST_START_LABEL = CONTEST_START.toLocaleDateString('ru-RU', {
+  day: 'numeric',
+  month: 'long',
+  timeZone: 'Europe/Moscow',
+});
 
 export const UpdateDeposit: React.FC<UpdateDepositProps> = ({
   userStatus,
@@ -235,7 +240,7 @@ export const UpdateDeposit: React.FC<UpdateDepositProps> = ({
           <main style={{ padding: '0 20px', flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
             <div style={{ fontSize: 48, lineHeight: 1 }} aria-hidden="true">🔒</div>
             <p style={{ fontSize: 15, color: 'var(--text)', fontWeight: 600, textAlign: 'center', margin: 0 }}>
-              Турнир стартует 6 марта в 00:00 МСК
+              Турнир стартует {CONTEST_START_LABEL} в 00:00 МСК
             </p>
             <p style={{ fontSize: 13, color: 'var(--text-2)', textAlign: 'center', lineHeight: 1.5, margin: 0, maxWidth: 280 }}>
               До старта доступна только регистрация с&nbsp;начальным депозитом.
@@ -493,7 +498,7 @@ export const UpdateDeposit: React.FC<UpdateDepositProps> = ({
                   transition: 'all 0.2s',
                 }}
               >
-                Старт 6 марта 00:00
+                Старт {CONTEST_START_LABEL} 00:00
               </button>
             </>
           ) : (
