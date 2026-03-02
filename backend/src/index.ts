@@ -93,7 +93,7 @@ async function bootstrap(): Promise<void> {
 
     bot = new Bot(botToken);
 
-    const appKeyboard = new InlineKeyboard().webApp('🏆 Открыть приложение', miniAppUrl);
+    const appKeyboard = new InlineKeyboard().webApp('🏆 Открыть приложение', miniAppUrl).primary();
 
     // Basic /start handler
     bot.command('start', async (ctx) => {

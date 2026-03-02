@@ -5,7 +5,7 @@ import { getMoscowDateStr, isWeekdayMoscow } from '../utils/time.js';
 import { CONTEST_START_MOSCOW, CONTEST_END_MOSCOW } from '../config.js';
 
 function makeKeyboard(url: string) {
-  return new InlineKeyboard().webApp('🏆 Открыть приложение', url);
+  return new InlineKeyboard().webApp('🏆 Открыть приложение', url).primary();
 }
 
 interface PendingUser {

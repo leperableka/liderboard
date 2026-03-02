@@ -222,7 +222,7 @@ export async function userRoutes(fastify: FastifyInstance, opts: UserRoutesOpts)
             '— Нажмите и удерживайте канал\n' +
             '— Выберите «Закрепить» 📌';
           bot.api.sendMessage(telegramId, welcomeText, {
-            reply_markup: new InlineKeyboard().webApp('🏆 Открыть приложение', miniAppUrl),
+            reply_markup: new InlineKeyboard().webApp('🏆 Открыть приложение', miniAppUrl).primary(),
           }).catch((err) => {
             fastify.log.warn({ err, telegramId }, 'Failed to send welcome message');
           });
@@ -371,7 +371,7 @@ export async function userRoutes(fastify: FastifyInstance, opts: UserRoutesOpts)
               'Вы сможете повторно пройти регистрацию и принять участие в турнире.';
 
           bot.api.sendMessage(telegramId, farewellText, {
-            reply_markup: new InlineKeyboard().webApp('🏆 Открыть приложение', miniAppUrl),
+            reply_markup: new InlineKeyboard().webApp('🏆 Открыть приложение', miniAppUrl).primary(),
           }).catch((err) => {
             fastify.log.warn({ err, telegramId }, 'Failed to send farewell message');
           });
