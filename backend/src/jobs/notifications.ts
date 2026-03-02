@@ -4,8 +4,8 @@ import pool from '../db/pool.js';
 import { getMoscowDateStr, isWeekdayMoscow } from '../utils/time.js';
 import { CONTEST_START_MOSCOW, CONTEST_END_MOSCOW } from '../config.js';
 
-function makeKeyboard(text: string, url: string) {
-  return { inline_keyboard: [[{ text, web_app: { url } }]] };
+function makeKeyboard(url: string) {
+  return { inline_keyboard: [[{ text: '🏆 Открыть приложение', web_app: { url } }]] };
 }
 
 interface PendingUser {
@@ -41,14 +41,6 @@ async function sendBatch(
 
 // ─── Query helpers ───────────────────────────────────────────────────────────
 
-/** Returns ALL registered users (for the championship-start blast). */
-async function getAllUsers(): Promise<PendingUser[]> {
-  const result = await pool.query<PendingUser>(
-    `SELECT telegram_id, display_name, market FROM users`,
-  );
-  return result.rows;
-}
-
 /**
  * Returns users who have NOT submitted today AND are still within the
  * active window (< 5 days since last submission / registration).
@@ -66,7 +58,7 @@ async function getPendingUsers(): Promise<PendingUser[]> {
     `SELECT u.telegram_id, u.display_name, u.market
      FROM users u
      WHERE
-       -- only after contest start (6 March 2026 00:00 МСК)
+       -- only after contest start (2 March 2026 00:00 МСК)
        (NOW() AT TIME ZONE 'Europe/Moscow')::date >= $3::date
        -- market filter: crypto always, moex/forex on weekdays only
        AND (u.market = 'crypto' OR $1 = TRUE)
@@ -124,46 +116,6 @@ async function getDisqualificationWarningUsers(): Promise<PendingUser[]> {
 // ─── Reminder jobs ───────────────────────────────────────────────────────────
 
 /**
- * Championship-start blast — 07:00 UTC (10:00 МСК) on 6 March 2026 only.
- * Fires once via cron `0 7 6 3 *`.
- * Sends to ALL registered participants.
- */
-async function sendChampionshipStartNotification(bot: Bot, miniAppUrl: string): Promise<void> {
-  // Guard against annual cron replay: only run on the actual contest start date
-  const today = getMoscowDateStr();
-  if (today !== CONTEST_START_MOSCOW) {
-    console.log(`[notifications] Championship-start skipped: today=${today}, expected=${CONTEST_START_MOSCOW}`);
-    return;
-  }
-
-  console.log('[notifications] Championship-start notification — sending to all users');
-
-  try {
-    const users = await getAllUsers();
-    console.log(`[notifications] Championship-start: ${users.length} users`);
-    if (users.length === 0) return;
-
-    await sendBatch(
-      bot,
-      users,
-      (u) =>
-        `Добро пожаловать на турнир! 🎉\n\n` +
-        `${u.display_name}, Торговый Турнир Vesperfin&Co.Trading начался!\n\n` +
-        `Чтобы не\u00A0потерять доступ к\u00A0турниру, закрепите его у\u00A0себя в\u00A0Telegram:\n` +
-        `— Нажмите и\u00A0удерживайте чат с\u00A0ботом\n` +
-        `— Выберите «Закрепить» 📌\n\n` +
-        `Сегодня можно внести первые данные по\u00A0движению вашего счёта.\n` +
-        `Удачи в\u00A0соревновании!`,
-      makeKeyboard('Внести данные', miniAppUrl),
-    );
-
-    console.log('[notifications] Championship-start batch complete');
-  } catch (err) {
-    console.error('[notifications] Championship-start error:', err);
-  }
-}
-
-/**
  * 1st reminder — 15:55 UTC (18:55 МСК)
  * ~5 minutes before market close. Standard nudge.
  */
@@ -187,7 +139,7 @@ async function sendPreCloseReminders(bot: Bot, miniAppUrl: string): Promise<void
         `Привет, ${u.display_name}!\n\n` +
         `Не забудьте обновить ваш депозит сегодня!\n` +
         `Внесите данные о вашем текущем депозите, чтобы сохранить позицию в лидерборде.`,
-      makeKeyboard('Внести данные', miniAppUrl),
+      makeKeyboard(miniAppUrl),
     );
 
     console.log('[notifications] Pre-close batch complete');
@@ -220,7 +172,7 @@ async function sendEveningReminders(bot: Bot, miniAppUrl: string): Promise<void>
         `Вы не заполнили данные торгового турнира Vesperfin&Co.Trading, ` +
         `пожалуйста, зайдите в приложение и внесите информацию.\n\n` +
         `Возможно, вы уже лидируете в турнире 🏆`,
-      makeKeyboard('🏆 Открыть приложение', miniAppUrl),
+      makeKeyboard(miniAppUrl),
     );
 
     console.log('[notifications] Evening batch complete');
@@ -254,7 +206,7 @@ async function sendDisqualificationWarnings(bot: Bot, miniAppUrl: string): Promi
         `Добрый день!\n\n` +
         `К сожалению, вы не вносите данные торгового турнира Vesperfin&Co.Trading. ` +
         `Мы будем вынуждены дисквалифицировать ваш профиль из турнирной таблицы.`,
-      makeKeyboard('Внести данные', miniAppUrl),
+      makeKeyboard(miniAppUrl),
     );
 
     console.log('[notifications] Disqualification warning batch complete');
@@ -275,13 +227,6 @@ export function scheduleNotifications(
   bot: Bot,
   miniAppUrl: string,
 ): { stop: () => void } {
-  // One-time blast on 6 March 2026 at 07:00 UTC (10:00 МСК)
-  const startBlastTask = cron.schedule(
-    '0 7 6 3 *',
-    () => sendChampionshipStartNotification(bot, miniAppUrl).catch(console.error),
-    { timezone: 'UTC' },
-  );
-
   const disqualTask = cron.schedule(
     '0 9 * * *',
     () => sendDisqualificationWarnings(bot, miniAppUrl).catch(console.error),
@@ -302,7 +247,6 @@ export function scheduleNotifications(
 
   console.log(
     '[notifications] Cron jobs scheduled: ' +
-    '07:00 UTC 6 Mar (championship start blast) + ' +
     '09:00 UTC (disqualification warning) + ' +
     '15:55 UTC (pre-close) + ' +
     '17:00 UTC (evening)',
@@ -310,7 +254,6 @@ export function scheduleNotifications(
 
   return {
     stop: () => {
-      startBlastTask.stop();
       disqualTask.stop();
       preCloseTask.stop();
       eveningTask.stop();

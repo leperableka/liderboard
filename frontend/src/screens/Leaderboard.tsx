@@ -22,7 +22,7 @@ const CATEGORY_OPTIONS: { key: LeaderboardCategory; label: string; subtitle: str
 
 // Dates configurable via VITE_CONTEST_START / VITE_CONTEST_END (ISO with timezone offset)
 const CONTEST_START = new Date(
-  (import.meta.env.VITE_CONTEST_START as string | undefined) ?? '2026-03-05T21:00:00Z',
+  (import.meta.env.VITE_CONTEST_START as string | undefined) ?? '2026-03-01T21:00:00Z',
 );
 const CONTEST_END = new Date(
   (import.meta.env.VITE_CONTEST_END as string | undefined) ?? '2026-03-29T23:59:59+03:00',

@@ -13,6 +13,9 @@ import { SplashScreen } from './components/SplashScreen';
 
 const IS_DEV = import.meta.env.DEV;
 
+// Registration closes at 6 March 00:00 МСК = 5 March 21:00:00 UTC
+const REGISTRATION_DEADLINE = new Date('2026-03-05T21:00:00Z');
+
 type AppState =
   | { phase: 'loading' }
   | { phase: 'error'; message: string }
@@ -58,7 +61,10 @@ export const App: React.FC = () => {
 
     getStatus(telegramId)
       .then((status) => {
-        const initialScreen: Screen = status.registered ? 'leaderboard' : 'welcome';
+        const registrationOpen = new Date() < REGISTRATION_DEADLINE;
+        const initialScreen: Screen = status.registered
+          ? 'leaderboard'
+          : registrationOpen ? 'welcome' : 'leaderboard';
         setState({ phase: 'ready', screen: initialScreen, userStatus: status });
       })
       .catch((err: unknown) => {

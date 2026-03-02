@@ -19,7 +19,7 @@ function buildRoadmap(): Milestone[] {
   const now = new Date();
   const milestones = [
     { label: 'Приём заявок', date: '2–5 марта',     deadline: new Date('2026-03-05T23:59:59+03:00') },
-    { label: 'Турнир',       date: '6–29 марта',    deadline: new Date('2026-03-29T23:59:59+03:00') },
+    { label: 'Турнир',       date: '2–29 марта',    deadline: new Date('2026-03-29T23:59:59+03:00') },
     { label: 'Итоги',        date: '30–31 марта',   deadline: new Date('2026-03-31T23:59:59+03:00') },
   ];
 
