@@ -29,7 +29,7 @@ const RegisterBodySchema = z.object({
   avatarUrl: z.string().url().max(500).optional().nullable(),
   market: z.enum(['crypto', 'moex', 'forex']),
   instruments: z.array(z.string().min(1).max(200)).min(1).max(20),
-  initialDeposit: z.number().positive().max(10_000_000).multipleOf(0.01),
+  initialDeposit: z.number().positive().max(10_000_000).transform((v) => Math.round(v * 100) / 100),
   consentedPd: z.literal(true),
   consentedRules: z.literal(true),
 });
