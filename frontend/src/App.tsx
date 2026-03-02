@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { Screen, UserStatus, RegistrationData } from './types';
 import { getStatus } from './api/client';
 import { useTelegram } from './hooks/useTelegram';
@@ -16,6 +16,11 @@ const IS_DEV = import.meta.env.DEV;
 
 // Registration closes at 6 March 00:00 МСК = 5 March 21:00:00 UTC
 const REGISTRATION_DEADLINE = new Date('2026-03-05T21:00:00Z');
+
+// Moscow = UTC+3; returns "YYYY-MM-DD" in МСК local time
+function getMoscowDateStr(): string {
+  return new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
 
 type AppState =
   | { phase: 'loading' }
@@ -42,6 +47,29 @@ export const App: React.FC = () => {
   const [registrationSeedData, setRegistrationSeedData] = useState<Partial<RegistrationData>>({});
   const [splashDone, setSplashDone] = useState(false);
   const handleSplashComplete = useCallback(() => setSplashDone(true), []);
+  const moscowDateRef = useRef<string>(getMoscowDateStr());
+
+  // Midnight refresh: when the Moscow calendar day rolls over, re-fetch userStatus
+  // so that depositUpdatedToday and currentDeposit are never stale in a long-running SPA.
+  useEffect(() => {
+    const telegramId = user?.id;
+    if (!telegramId) return;
+    const timer = setInterval(() => {
+      const newDate = getMoscowDateStr();
+      if (newDate === moscowDateRef.current) return;
+      moscowDateRef.current = newDate;
+      getStatus(telegramId)
+        .then((status) => {
+          setState((prev) => {
+            if (prev.phase !== 'ready') return prev;
+            return { ...prev, userStatus: status };
+          });
+        })
+        .catch(() => { /* non-fatal — user will see fresh data on next manual reload */ });
+    }, 60_000);
+    return () => clearInterval(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     expand();
