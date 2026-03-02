@@ -24,7 +24,7 @@ const tabStyle = (active: boolean): React.CSSProperties => ({
   flex: 1,
 });
 
-export const BottomNav: React.FC<BottomNavProps> = React.memo(({ current, onNavigate }) => (
+const BottomNavInner: React.FC<BottomNavProps> = ({ current, onNavigate }) => (
   <div
     style={{
       display: 'flex',
@@ -89,4 +89,6 @@ export const BottomNav: React.FC<BottomNavProps> = React.memo(({ current, onNavi
       Профиль
     </button>
   </div>
-));
+);
+
+export const BottomNav = React.memo(BottomNavInner);

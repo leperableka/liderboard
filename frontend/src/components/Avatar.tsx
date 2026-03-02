@@ -39,7 +39,7 @@ function getColorIndex(name: string): number {
   return Math.abs(hash) % GRADIENTS.length;
 }
 
-export const Avatar: React.FC<AvatarProps> = React.memo(({
+const AvatarInner: React.FC<AvatarProps> = ({
   name,
   avatarUrl,
   size = 40,
@@ -95,4 +95,6 @@ export const Avatar: React.FC<AvatarProps> = React.memo(({
       </span>
     </div>
   );
-});
+};
+
+export const Avatar = React.memo(AvatarInner);
