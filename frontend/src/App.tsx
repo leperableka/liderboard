@@ -216,7 +216,7 @@ export const App: React.FC = () => {
                   fontFamily: 'var(--font)',
                 }}
               >
-                Это приложение доступно только через Telegram
+                Это приложение доступно только через&nbsp;Telegram
               </p>
               <p
                 style={{
@@ -227,7 +227,7 @@ export const App: React.FC = () => {
                   fontFamily: 'var(--font)',
                 }}
               >
-                Откройте бот в Telegram, чтобы участвовать в турнире
+                Откройте бот в&nbsp;Telegram, чтобы участвовать в&nbsp;турнире
               </p>
             </div>
             <a
