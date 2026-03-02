@@ -67,6 +67,12 @@ services:
       REGISTRATION_DEADLINE: ${REGISTRATION_DEADLINE:-2026-03-06}
       CONTEST_START: ${CONTEST_START:-2026-03-02}
       CONTEST_END: ${CONTEST_END:-2026-03-29}
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:3000/health']
+      interval: 10s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
     depends_on:
       postgres:
         condition: service_healthy
