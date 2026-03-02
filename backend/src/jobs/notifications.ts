@@ -1,11 +1,11 @@
 import cron from 'node-cron';
-import { Bot } from 'grammy';
+import { Bot, InlineKeyboard } from 'grammy';
 import pool from '../db/pool.js';
 import { getMoscowDateStr, isWeekdayMoscow } from '../utils/time.js';
 import { CONTEST_START_MOSCOW, CONTEST_END_MOSCOW } from '../config.js';
 
 function makeKeyboard(url: string) {
-  return { inline_keyboard: [[{ text: '🏆 Открыть приложение', web_app: { url } }]] };
+  return new InlineKeyboard().webApp('🏆 Открыть приложение', url);
 }
 
 interface PendingUser {

@@ -3,7 +3,7 @@ import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import multipart from '@fastify/multipart';
 import rateLimit from '@fastify/rate-limit';
-import { Bot } from 'grammy';
+import { Bot, InlineKeyboard } from 'grammy';
 
 import pool from './db/pool.js';
 import { createRedisClient } from './services/cache.js';
@@ -93,17 +93,13 @@ async function bootstrap(): Promise<void> {
 
     bot = new Bot(botToken);
 
-    const appButton = {
-      text: '🏆 Открыть приложение',
-      web_app: { url: miniAppUrl },
-    };
+    const appKeyboard = new InlineKeyboard().webApp('🏆 Открыть приложение', miniAppUrl);
 
     // Basic /start handler
     bot.command('start', async (ctx) => {
       await ctx.reply(
         'Добро пожаловать в Торговый Турнир! Откройте приложение, чтобы участвовать.',
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        { reply_markup: { inline_keyboard: [[appButton as any]] } },
+        { reply_markup: appKeyboard },
       );
     });
 
@@ -111,8 +107,7 @@ async function bootstrap(): Promise<void> {
     bot.on('message', async (ctx) => {
       await ctx.reply(
         'Используйте кнопку ниже, чтобы открыть Торговый Турнир.',
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        { reply_markup: { inline_keyboard: [[appButton as any]] } },
+        { reply_markup: appKeyboard },
       );
     });
 

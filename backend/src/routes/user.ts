@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
-import type { Bot } from 'grammy';
+import { type Bot, InlineKeyboard } from 'grammy';
 import pool from '../db/pool.js';
 import { authPreHandler } from '../middleware/auth.js';
 import { toRub, depositCategory } from '../services/exchangeRate.js';
@@ -222,8 +222,7 @@ export async function userRoutes(fastify: FastifyInstance, opts: UserRoutesOpts)
             '— Нажмите и удерживайте канал\n' +
             '— Выберите «Закрепить» 📌';
           bot.api.sendMessage(telegramId, welcomeText, {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            reply_markup: { inline_keyboard: [[{ text: '🏆 Открыть приложение', web_app: { url: miniAppUrl } }]] },
+            reply_markup: new InlineKeyboard().webApp('🏆 Открыть приложение', miniAppUrl),
           }).catch((err) => {
             fastify.log.warn({ err, telegramId }, 'Failed to send welcome message');
           });
@@ -372,8 +371,7 @@ export async function userRoutes(fastify: FastifyInstance, opts: UserRoutesOpts)
               'Вы сможете повторно пройти регистрацию и принять участие в турнире.';
 
           bot.api.sendMessage(telegramId, farewellText, {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            reply_markup: { inline_keyboard: [[{ text: '🏆 Открыть приложение', web_app: { url: miniAppUrl } }]] },
+            reply_markup: new InlineKeyboard().webApp('🏆 Открыть приложение', miniAppUrl),
           }).catch((err) => {
             fastify.log.warn({ err, telegramId }, 'Failed to send farewell message');
           });
