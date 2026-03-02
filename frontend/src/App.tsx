@@ -10,6 +10,7 @@ import { History } from './screens/History';
 import { Profile } from './screens/Profile';
 import { Rules } from './screens/Rules';
 import { SplashScreen } from './components/SplashScreen';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 const IS_DEV = import.meta.env.DEV;
 
@@ -336,59 +337,64 @@ export const App: React.FC = () => {
 
       {/* Ready */}
       {readyState && (
-        <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
-          {readyState.screen === 'welcome' && (
-            <Welcome
-              onRegister={handleStartRegistration}
-              onViewLeaderboard={() => navigateTo('leaderboard')}
-              isRegistered={readyState.userStatus?.registered ?? false}
-            />
-          )}
+        <ErrorBoundary
+          key={readyState.screen}
+          onReset={() => navigateTo('leaderboard')}
+        >
+          <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
+            {readyState.screen === 'welcome' && (
+              <Welcome
+                onRegister={handleStartRegistration}
+                onViewLeaderboard={() => navigateTo('leaderboard')}
+                isRegistered={readyState.userStatus?.registered ?? false}
+              />
+            )}
 
-          {readyState.screen === 'registration' && (
-            <RegistrationContainer
-              initialData={registrationSeedData}
-              onComplete={handleRegistrationComplete}
-              onBack={() => navigateTo('welcome')}
-            />
-          )}
+            {readyState.screen === 'registration' && (
+              <RegistrationContainer
+                initialData={registrationSeedData}
+                onComplete={handleRegistrationComplete}
+                onBack={() => navigateTo('welcome')}
+              />
+            )}
 
-          {readyState.screen === 'leaderboard' && readyState.userStatus && (
-            <Leaderboard
-              userStatus={readyState.userStatus}
-              onNavigate={navigateTo}
-              onUpdateDeposit={() => navigateTo('update-deposit')}
-            />
-          )}
+            {readyState.screen === 'leaderboard' && readyState.userStatus && (
+              <Leaderboard
+                userStatus={readyState.userStatus}
+                onNavigate={navigateTo}
+                onUpdateDeposit={() => navigateTo('update-deposit')}
+              />
+            )}
 
-          {readyState.screen === 'update-deposit' && readyState.userStatus && (
-            <UpdateDeposit
-              userStatus={readyState.userStatus}
-              onBack={() => navigateTo('leaderboard')}
-              onSuccess={handleDepositSuccess}
-            />
-          )}
+            {readyState.screen === 'update-deposit' && readyState.userStatus && (
+              <UpdateDeposit
+                userStatus={readyState.userStatus}
+                onBack={() => navigateTo('leaderboard')}
+                onSuccess={handleDepositSuccess}
+              />
+            )}
 
-          {readyState.screen === 'history' && readyState.userStatus && (
-            <History
-              userStatus={readyState.userStatus}
-              onNavigate={navigateTo}
-            />
-          )}
+            {readyState.screen === 'history' && readyState.userStatus && (
+              <History
+                userStatus={readyState.userStatus}
+                onNavigate={navigateTo}
+              />
+            )}
 
-          {readyState.screen === 'profile' && readyState.userStatus && (
-            <Profile
-              userStatus={readyState.userStatus}
-              onNavigate={navigateTo}
-              onProfileUpdated={handleProfileUpdated}
-              onDeleteAccount={handleAccountDeleted}
-            />
-          )}
+            {readyState.screen === 'profile' && readyState.userStatus && (
+              <Profile
+                userStatus={readyState.userStatus}
+                onNavigate={navigateTo}
+                onProfileUpdated={handleProfileUpdated}
+                onDeleteAccount={handleAccountDeleted}
+              />
+            )}
 
-          {readyState.screen === 'rules' && (
-            <Rules onNavigate={navigateTo} />
-          )}
-        </div>
+            {readyState.screen === 'rules' && (
+              <Rules onNavigate={navigateTo} />
+            )}
+          </div>
+        </ErrorBoundary>
       )}
     </>
   );
