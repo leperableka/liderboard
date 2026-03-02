@@ -47,9 +47,9 @@ function stripFormatting(value: string): string {
   return value.replace(/[\u202F\u00A0\s]/g, '');
 }
 
-// 6 марта 00:00 МСК = 5 марта 21:00:00 UTC
+// 2 марта 00:00 МСК = 1 марта 21:00:00 UTC
 const CONTEST_START = new Date(
-  (import.meta.env.VITE_CONTEST_START as string | undefined) ?? '2026-03-05T21:00:00Z',
+  (import.meta.env.VITE_CONTEST_START as string | undefined) ?? '2026-03-01T21:00:00Z',
 );
 // 30 марта 00:00 МСК = 29 марта 21:00:00 UTC
 const CONTEST_END = new Date(
