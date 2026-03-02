@@ -23,7 +23,7 @@ const MARKET_OPTIONS: MarketOption[] = [
 
 export const Step2Market: React.FC<Step2MarketProps> = ({ data, onChange, onNext }) => {
   function selectMarket(market: Market) {
-    onChange({ market, instruments: [] });
+    onChange({ market, instruments: [], currency: null });
   }
 
   return (

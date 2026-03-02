@@ -30,7 +30,7 @@ export const MARKET_CURRENCY: Record<Market, Currency> = {
 export const MARKET_INSTRUMENTS: Record<Market, string[]> = {
   crypto: ['Спот', 'Фьючерсы', 'Опционы'],
   moex: ['Акции', 'Фьючерсы', 'Облигации', 'Опционы', 'Валюта'],
-  forex: ['Валютные пары', 'CFD'],
+  forex: ['Валютные пары', 'CFD', 'Металлы', 'Индексы', 'Нефть/Энергоносители', 'Криптовалюта'],
 };
 
 // ─── Registration ─────────────────────────────────────────────────────────────
@@ -44,6 +44,7 @@ export interface RegistrationData {
   market: Market | null;
   instruments: string[];
   initialDeposit: string;
+  currency: Currency | null;
 }
 
 // ─── User ─────────────────────────────────────────────────────────────────────
@@ -112,6 +113,7 @@ export interface RegisterPayload {
   market: Market;
   instruments: string[];
   initialDeposit: number;
+  currency?: Currency;
   avatarUrl?: string | null;
   consentedPd: boolean;
   consentedRules: boolean;

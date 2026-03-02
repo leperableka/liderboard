@@ -27,7 +27,7 @@ export const Step5Review: React.FC<Step5ReviewProps> = ({ data, onEdit, onConfir
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const currency = data.market ? MARKET_CURRENCY[data.market] : 'USDT';
+  const currency = data.currency ?? (data.market ? MARKET_CURRENCY[data.market] : 'USDT');
   const marketLabel = data.market ? MARKET_LABELS[data.market] : '—';
   const depositNum = parseFloat(data.initialDeposit) || 0;
   const category = computeCategory(depositNum, currency);

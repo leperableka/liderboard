@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { RegistrationData } from '../../types';
+import type { Currency, RegistrationData } from '../../types';
 import { MARKET_CURRENCY } from '../../types';
 
 // ── Category helpers ────────────────────────────────────────────────────────
@@ -51,9 +51,12 @@ function stripFormatting(value: string): string {
   return value.replace(/[\u202F\u00A0\s]/g, '');
 }
 
+const FOREX_CURRENCIES: Currency[] = ['USD', 'RUB'];
+
 export const Step4Deposit: React.FC<Step4DepositProps> = ({ data, onChange, onNext }) => {
   const [error, setError] = useState('');
-  const currency = data.market ? MARKET_CURRENCY[data.market] : 'USDT';
+  const isForex = data.market === 'forex';
+  const currency = data.currency ?? (data.market ? MARKET_CURRENCY[data.market] : 'USDT');
   const numValue = parseFloat(data.initialDeposit);
   const isValid = !isNaN(numValue) && numValue >= 1 && numValue <= 10_000_000;
   const catResult = isValid ? computeCategory(numValue, currency) : null;
@@ -103,6 +106,38 @@ export const Step4Deposit: React.FC<Step4DepositProps> = ({ data, onChange, onNe
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100%' }}>
       <div style={{ padding: '24px 20px 0', flex: 1 }}>
+        {/* Currency selector for forex */}
+        {isForex && (
+          <div style={{ display: 'flex', gap: 8, marginBottom: 14, justifyContent: 'center' }}>
+            {FOREX_CURRENCIES.map((c) => {
+              const active = currency === c;
+              return (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => onChange({ currency: c })}
+                  style={{
+                    flex: 1,
+                    maxWidth: 140,
+                    height: 42,
+                    borderRadius: 12,
+                    border: active ? '2px solid var(--gold-2)' : '1.5px solid var(--border)',
+                    background: active ? 'rgba(245,166,35,0.10)' : 'var(--white)',
+                    color: active ? 'var(--gold-3)' : 'var(--text-2)',
+                    fontSize: 15,
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    fontFamily: 'var(--font)',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  {c === 'USD' ? '$ USD' : '₽ RUB'}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         <div style={{ position: 'relative' }}>
           <input
             id="initial-deposit"

@@ -42,6 +42,7 @@ function buildInitialData(partial: Partial<RegistrationData>): RegistrationData 
     market: partial.market ?? null,
     instruments: partial.instruments ?? [],
     initialDeposit: partial.initialDeposit ?? '',
+    currency: partial.currency ?? null,
   };
 }
 
@@ -106,6 +107,7 @@ export const RegistrationContainer: React.FC<RegistrationContainerProps> = ({
       market: data.market,
       instruments: data.instruments,
       initialDeposit: depositNum,
+      currency: data.currency ?? undefined,
       consentedPd: data.pdConsent,
       consentedRules: data.rulesConsent,
     });

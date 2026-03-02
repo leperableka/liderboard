@@ -30,6 +30,7 @@ const RegisterBodySchema = z.object({
   market: z.enum(['crypto', 'moex', 'forex']),
   instruments: z.array(z.string().min(1).max(200)).min(1).max(20),
   initialDeposit: z.number().positive().max(10_000_000).transform((v) => Math.round(v * 100) / 100),
+  currency: z.enum(['USDT', 'USD', 'RUB']).optional(),
   consentedPd: z.literal(true),
   consentedRules: z.literal(true),
 });
@@ -157,7 +158,7 @@ export async function userRoutes(fastify: FastifyInstance, opts: UserRoutesOpts)
 
       const body = bodyParse.data;
       const { id: telegramId, username } = request.telegramUser;
-      const currency = MARKET_CURRENCY[body.market] ?? 'USDT';
+      const currency = body.currency ?? MARKET_CURRENCY[body.market] ?? 'USDT';
 
       // Convert deposit to RUB and determine category
       const initialDepositRub = await toRub(body.initialDeposit, currency);
