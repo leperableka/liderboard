@@ -223,6 +223,29 @@ async function sendDisqualificationWarnings(bot: Bot, miniAppUrl: string, log: F
 // ─── Scheduler ───────────────────────────────────────────────────────────────
 
 /**
+ * Wraps an async cron handler with a mutex flag so that if the previous
+ * execution is still running when the next tick fires, the new tick is
+ * skipped and a warning is logged instead of running in parallel.
+ */
+function withMutex(
+  name: string,
+  fn: () => Promise<void>,
+  log: FastifyBaseLogger,
+): () => void {
+  let running = false;
+  return () => {
+    if (running) {
+      log.warn(`[notifications] ${name} skipped — previous run still in progress`);
+      return;
+    }
+    running = true;
+    fn()
+      .catch((err) => log.error({ err }, `[notifications] ${name} error`))
+      .finally(() => { running = false; });
+  };
+}
+
+/**
  * Cron schedule (all UTC):
  *  09:00 UTC (12:00 МСК) — disqualification warning for day-4 inactives
  *  15:55 UTC (18:55 МСК) — pre-close reminder
@@ -235,19 +258,19 @@ export function scheduleNotifications(
 ): { stop: () => void } {
   const disqualTask = cron.schedule(
     '0 9 * * *',
-    () => sendDisqualificationWarnings(bot, miniAppUrl, log).catch((err) => log.error({ err }, '[notifications] Disqualification cron error')),
+    withMutex('Disqualification', () => sendDisqualificationWarnings(bot, miniAppUrl, log), log),
     { timezone: 'UTC' },
   );
 
   const preCloseTask = cron.schedule(
     '55 15 * * *',
-    () => sendPreCloseReminders(bot, miniAppUrl, log).catch((err) => log.error({ err }, '[notifications] Pre-close cron error')),
+    withMutex('Pre-close', () => sendPreCloseReminders(bot, miniAppUrl, log), log),
     { timezone: 'UTC' },
   );
 
   const eveningTask = cron.schedule(
     '0 17 * * *',
-    () => sendEveningReminders(bot, miniAppUrl, log).catch((err) => log.error({ err }, '[notifications] Evening cron error')),
+    withMutex('Evening', () => sendEveningReminders(bot, miniAppUrl, log), log),
     { timezone: 'UTC' },
   );
 
