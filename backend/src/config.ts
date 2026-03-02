@@ -4,7 +4,7 @@
  * when dates change for future tournaments.
  */
 export const CONTEST_START_MOSCOW: string =
-  process.env['CONTEST_START'] ?? '2026-03-02';
+  process.env['CONTEST_START'] ?? '2026-03-06';
 
 export const CONTEST_END_MOSCOW: string =
   process.env['CONTEST_END'] ?? '2026-03-29';
