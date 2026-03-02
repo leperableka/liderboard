@@ -98,22 +98,13 @@ export const LineChart: React.FC<LineChartProps> = ({ entries, currency }) => {
     return { points, linePath, fillPath, labelIndices, gridYValues };
   }, [entries, count]);
 
-  if (!chartData) {
-    return (
-      <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--text-3)' }}>
-        Нет данных
-      </div>
-    );
-  }
-
-  const { points, linePath, fillPath, labelIndices, gridYValues } = chartData;
-
+  // All hooks MUST be called before any early return (Rules of Hooks).
   const findClosestIndex = useCallback(
     (svgX: number): number => {
-      if (count === 0) return -1;
+      if (!chartData) return -1;
       let closest = 0;
       let minDist = Infinity;
-      points.forEach((p, i) => {
+      chartData.points.forEach((p, i) => {
         const dist = Math.abs(p.x - svgX);
         if (dist < minDist) {
           minDist = dist;
@@ -122,11 +113,12 @@ export const LineChart: React.FC<LineChartProps> = ({ entries, currency }) => {
       });
       return closest;
     },
-    [points, count]
+    [chartData]
   );
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent<SVGSVGElement>) => {
+      if (!chartData) return;
       const svg = svgRef.current;
       if (!svg) return;
       const rect = svg.getBoundingClientRect();
@@ -137,19 +129,29 @@ export const LineChart: React.FC<LineChartProps> = ({ entries, currency }) => {
       setHintHidden(true);
       setTooltip({
         visible: true,
-        x: points[idx].x,
-        y: points[idx].y,
+        x: chartData.points[idx].x,
+        y: chartData.points[idx].y,
         entry: entries[idx],
-        pointX: points[idx].x,
-        pointY: points[idx].y,
+        pointX: chartData.points[idx].x,
+        pointY: chartData.points[idx].y,
       });
     },
-    [entries, findClosestIndex, points]
+    [entries, findClosestIndex, chartData]
   );
 
   const handlePointerLeave = useCallback(() => {
     setTooltip((prev) => ({ ...prev, visible: false }));
   }, []);
+
+  if (!chartData) {
+    return (
+      <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--text-3)' }}>
+        Нет данных
+      </div>
+    );
+  }
+
+  const { points, linePath, fillPath, labelIndices, gridYValues } = chartData;
 
   const activeIdx = tooltip.visible
     ? entries.findIndex((e) => e === tooltip.entry)

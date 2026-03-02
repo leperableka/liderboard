@@ -300,7 +300,12 @@ export async function leaderboardRoutes(fastify: FastifyInstance): Promise<void>
         }
       }
 
-      reply.header('Cache-Control', 'public, max-age=30, stale-while-revalidate=60');
+      reply.header(
+        'Cache-Control',
+        userId
+          ? 'private, max-age=15, stale-while-revalidate=30'
+          : 'public, max-age=30, stale-while-revalidate=60',
+      );
       return reply.code(200).send({ ...mainData, currentUser });
     },
   );

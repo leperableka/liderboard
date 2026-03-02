@@ -257,7 +257,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
         ) : topEntries.length > 0 ? (
           <Podium
             entries={topEntries}
-            onUserClick={(entry) => setSelectedEntry(entry)}
+            onUserClick={setSelectedEntry}
           />
         ) : (
           <div style={{ height: 28 }} />
