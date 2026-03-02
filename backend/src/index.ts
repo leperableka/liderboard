@@ -1,4 +1,5 @@
 import 'dotenv/config';
+import { randomUUID } from 'node:crypto';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import multipart from '@fastify/multipart';
@@ -34,6 +35,9 @@ async function bootstrap(): Promise<void> {
   // ── Fastify instance ──────────────────────────────────────────────────────
   const fastify = Fastify({
     trustProxy: true,
+    // Use X-Request-ID from client if present, otherwise generate a UUID.
+    // This ID is included automatically in every request.log.* call (reqId field).
+    genReqId: (req) => (req.headers['x-request-id'] as string) || randomUUID(),
     logger: {
       level: isDev ? 'debug' : 'info',
       ...(isDev
@@ -53,6 +57,13 @@ async function bootstrap(): Promise<void> {
     origin: corsOrigin || false,
     methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'X-Telegram-InitData'],
+  });
+
+  // ── Correlation ID ────────────────────────────────────────────────────────
+  // Echo the generated/received request ID back to the client.
+  // Every request.log.* call already includes reqId automatically via pino.
+  fastify.addHook('onSend', async (request, reply) => {
+    reply.header('X-Request-ID', request.id);
   });
 
   // ── Rate limiting (60 req / min per IP) ───────────────────────────────────

@@ -211,7 +211,7 @@ export async function userRoutes(fastify: FastifyInstance, opts: UserRoutesOpts)
         );
 
         await client.query('COMMIT');
-        cacheDelPattern('leaderboard:*').catch((e) => fastify.log.warn({ e }, 'Cache invalidation failed'));
+        cacheDelPattern('leaderboard:*').catch((e) => request.log.warn({ e }, 'Cache invalidation failed'));
 
         // Send welcome message via bot (fire-and-forget)
         if (bot && miniAppUrl) {

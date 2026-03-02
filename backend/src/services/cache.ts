@@ -8,6 +8,11 @@ export function createRedisClient(url: string, log: FastifyBaseLogger): Redis {
     maxRetriesPerRequest: 3,
     enableReadyCheck: true,
     lazyConnect: false,
+    // Cap reconnect delay at 5 s (200 ms * attempt, max 5000 ms)
+    retryStrategy: (times) => Math.min(times * 200, 5_000),
+    // Reconnect when the connection is reset or refused
+    reconnectOnError: (err) =>
+      err.message.includes('ECONNRESET') || err.message.includes('ECONNREFUSED'),
   });
 
   client.on('error', (err: Error) => {

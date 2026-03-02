@@ -102,7 +102,8 @@ services:
     volumes:
       - uploads_data:/usr/share/nginx/html/uploads:ro
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     deploy:
       resources:
         limits:
@@ -139,7 +140,7 @@ services:
     entrypoint: >
       sh -c "
         while true; do
-          sleep $$(( 86400 - ($(date +%s) % 86400) + 3 * 3600 % 86400 ));
+          sleep $$(( (10800 - $(date +%s) % 86400 + 86400) % 86400 ));
           pg_dump -h $$POSTGRES_HOST -U $$POSTGRES_USER $$POSTGRES_DB |
             gzip > /backups/dump_$$(date +%Y%m%d_%H%M%S).sql.gz;
           ls -t /backups/dump_*.sql.gz | tail -n +8 | xargs -r rm;
