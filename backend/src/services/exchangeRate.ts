@@ -4,7 +4,10 @@
  * Falls back to the last known cached value on fetch errors.
  */
 
+import { pino } from 'pino';
 import { cacheGet, cacheSet } from './cache.js';
+
+const log = pino({ name: 'exchangeRate' });
 
 const CACHE_KEY = 'exchange:usd_rub';
 const CACHE_TTL = 24 * 60 * 60; // 24 hours
@@ -58,7 +61,7 @@ export async function getUsdRubRate(): Promise<number> {
     }
     return rate;
   } catch (err) {
-    console.error('exchangeRate: CBR fetch failed:', err);
+    log.error({ err }, 'CBR fetch failed');
   }
 
   // 3. Stale cache (no TTL check)
@@ -72,7 +75,7 @@ export async function getUsdRubRate(): Promise<number> {
   }
 
   // 4. Hard-coded fallback
-  console.warn(`exchangeRate: using fallback rate ${FALLBACK_RATE}`);
+  log.warn({ rate: FALLBACK_RATE }, 'Using fallback USD/RUB rate');
   return FALLBACK_RATE;
 }
 

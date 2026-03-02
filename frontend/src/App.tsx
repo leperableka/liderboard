@@ -70,6 +70,7 @@ export const App: React.FC = () => {
       .catch((err: unknown) => {
         const msg = err instanceof Error ? err.message : 'Ошибка соединения';
         if (IS_DEV) {
+          console.error('[App] getStatus failed (dev fallback to welcome):', err);
           setState({
             phase: 'ready',
             screen: 'welcome',

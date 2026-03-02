@@ -1,8 +1,9 @@
 import { Redis } from 'ioredis';
+import type { FastifyBaseLogger } from 'fastify';
 
 let redisClient: Redis | null = null;
 
-export function createRedisClient(url: string): Redis {
+export function createRedisClient(url: string, log: FastifyBaseLogger): Redis {
   const client = new Redis(url, {
     maxRetriesPerRequest: 3,
     enableReadyCheck: true,
@@ -10,11 +11,11 @@ export function createRedisClient(url: string): Redis {
   });
 
   client.on('error', (err: Error) => {
-    console.error('Redis client error:', err);
+    log.error({ err }, 'Redis client error');
   });
 
   client.on('connect', () => {
-    console.log('Redis connected');
+    log.info('Redis connected');
   });
 
   redisClient = client;

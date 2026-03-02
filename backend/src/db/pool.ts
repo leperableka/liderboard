@@ -1,5 +1,8 @@
 import pg from 'pg';
 import 'dotenv/config';
+import { pino } from 'pino';
+
+const log = pino({ name: 'postgres-pool' });
 
 const { Pool } = pg;
 
@@ -21,7 +24,7 @@ const pool = new Pool({
 });
 
 pool.on('error', (err) => {
-  console.error('Unexpected PostgreSQL pool error', err);
+  log.error({ err }, 'Unexpected PostgreSQL pool error');
 });
 
 export default pool;

@@ -133,7 +133,7 @@ async function bootstrap(): Promise<void> {
 
   // ── Redis ─────────────────────────────────────────────────────────────────
   const redisUrl = requireEnv('REDIS_URL');
-  const redis = createRedisClient(redisUrl);
+  const redis = createRedisClient(redisUrl, fastify.log);
 
   // ── Start server ──────────────────────────────────────────────────────────
   await fastify.listen({ port, host });
