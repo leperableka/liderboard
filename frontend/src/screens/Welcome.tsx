@@ -1,7 +1,8 @@
 import React from 'react';
+import { moscowDateToUtc } from '../utils/time';
 
-const REGISTRATION_DEADLINE = new Date(
-  (import.meta.env.VITE_REGISTRATION_DEADLINE as string | undefined) ?? '2026-03-05T21:00:00Z',
+const REGISTRATION_DEADLINE = moscowDateToUtc(
+  (import.meta.env.VITE_REGISTRATION_DEADLINE as string | undefined) ?? '2026-03-06',
 );
 
 interface WelcomeProps {

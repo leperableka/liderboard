@@ -11,12 +11,13 @@ import { Profile } from './screens/Profile';
 import { Rules } from './screens/Rules';
 import { SplashScreen } from './components/SplashScreen';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { moscowDateToUtc } from './utils/time';
 
 const IS_DEV = import.meta.env.DEV;
 
-// Registration closes at 6 March 00:00 МСК = 5 March 21:00:00 UTC
-const REGISTRATION_DEADLINE = new Date(
-  (import.meta.env.VITE_REGISTRATION_DEADLINE as string | undefined) ?? '2026-03-05T21:00:00Z',
+// Registration closes at midnight MSK on the given date (e.g. "2026-03-06")
+const REGISTRATION_DEADLINE = moscowDateToUtc(
+  (import.meta.env.VITE_REGISTRATION_DEADLINE as string | undefined) ?? '2026-03-06',
 );
 
 // Returns "YYYY-MM-DD" in Moscow timezone (Europe/Moscow).

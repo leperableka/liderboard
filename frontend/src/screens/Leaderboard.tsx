@@ -6,6 +6,7 @@ import { LeaderboardRow } from '../components/LeaderboardRow';
 import { BottomNav } from '../components/BottomNav';
 import { LeaderboardSkeleton, PodiumSkeleton } from '../components/Skeleton';
 import { UserHistoryModal } from '../components/UserHistoryModal';
+import { moscowDateToUtc } from '../utils/time';
 
 interface LeaderboardProps {
   userStatus: UserStatus;
@@ -20,12 +21,12 @@ const CATEGORY_OPTIONS: { key: LeaderboardCategory; label: string; subtitle: str
   { key: '3',    label: 'Кат. 3', subtitle: 'от 250\u202F000\u00A0₽ · по курсу ЦБ РФ' },
 ];
 
-// Dates configurable via VITE_CONTEST_START / VITE_CONTEST_END (ISO with timezone offset)
-const CONTEST_START = new Date(
-  (import.meta.env.VITE_CONTEST_START as string | undefined) ?? '2026-03-01T21:00:00Z',
+// Dates come as Moscow YYYY-MM-DD (same format as backend env vars)
+const CONTEST_START = moscowDateToUtc(
+  (import.meta.env.VITE_CONTEST_START as string | undefined) ?? '2026-03-02',
 );
-const CONTEST_END = new Date(
-  (import.meta.env.VITE_CONTEST_END as string | undefined) ?? '2026-03-29T21:00:00Z',
+const CONTEST_END = moscowDateToUtc(
+  (import.meta.env.VITE_CONTEST_END as string | undefined) ?? '2026-03-29',
 );
 // Human-readable label derived from CONTEST_START (e.g. "6 марта")
 const CONTEST_START_LABEL = CONTEST_START.toLocaleDateString('ru-RU', {
