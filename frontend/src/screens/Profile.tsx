@@ -128,6 +128,8 @@ export const Profile: React.FC<ProfileProps> = ({
         setAvatarUrl(serverUrl);
         setAvatarFile(null);
         savedAvatarUrl = serverUrl;
+        // Propagate avatar change immediately — it's already persisted in DB
+        onProfileUpdated(trimmed, savedAvatarUrl);
       }
 
       // Update display name if changed
@@ -135,7 +137,7 @@ export const Profile: React.FC<ProfileProps> = ({
         await updateProfile(userStatus.telegramId, trimmed);
       }
 
-      // Notify parent only after all operations succeed
+      // Notify parent (covers name-only change or final confirmation)
       onProfileUpdated(trimmed, savedAvatarUrl);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
