@@ -107,7 +107,7 @@ services:
       resources:
         limits:
           cpus: '0.5'
-          memory: 64M
+          memory: 128M
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.liderboard-frontend.rule=Host(`leader.vesperfin.com`)"

@@ -436,9 +436,16 @@ export async function userRoutes(fastify: FastifyInstance, opts: UserRoutesOpts)
 
         const entries = rows.map((row, i) => {
           const amount = parseFloat(row.deposit_value);
-          const prevAmount = i > 0 ? parseFloat(rows[i - 1]!.deposit_value) : null;
+          const prevRow = i > 0 ? rows[i - 1]! : null;
+          // Only compute dailyChange when the previous entry is exactly 1 calendar day earlier.
+          // Gaps (e.g. Day 1 → Day 5) must not be reported as a "daily" change.
+          const isConsecutiveDay =
+            prevRow !== null &&
+            new Date(row.deposit_date).getTime() - new Date(prevRow.deposit_date).getTime() ===
+              86_400_000;
+          const prevAmount = prevRow !== null ? parseFloat(prevRow.deposit_value) : null;
           const dailyChange =
-            prevAmount !== null && prevAmount > 0
+            isConsecutiveDay && prevAmount !== null && prevAmount > 0
               ? parseFloat(((amount - prevAmount) / prevAmount * 100).toFixed(2))
               : null;
           const parts = row.deposit_date.split('-');

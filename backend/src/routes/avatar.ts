@@ -71,10 +71,17 @@ export async function avatarRoutes(app: FastifyInstance) {
 
       const avatarUrl = `/uploads/${filename}`;
 
-      await pool.query(
-        'UPDATE users SET photo_url = $1 WHERE telegram_id = $2',
-        [avatarUrl, telegramId],
-      );
+      try {
+        await pool.query(
+          'UPDATE users SET photo_url = $1 WHERE telegram_id = $2',
+          [avatarUrl, telegramId],
+        );
+      } catch (err) {
+        request.log.error({ err }, 'Failed to update photo_url in DB');
+        // Best-effort cleanup: remove the uploaded file so disk and DB stay in sync
+        fs.unlink(path.join(UPLOADS_DIR, filename)).catch(() => undefined);
+        return reply.status(500).send({ error: 'Не удалось сохранить аватар. Попробуйте ещё раз.' });
+      }
 
       cacheDelPattern('leaderboard:*').catch((e) => request.log.warn({ e }, 'Cache invalidation failed'));
       return reply.send({ avatarUrl });

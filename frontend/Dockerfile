@@ -27,4 +27,8 @@ RUN mkdir -p /var/cache/nginx/client_temp \
     && touch /var/run/nginx.pid \
     && chown nginx:nginx /var/run/nginx.pid
 EXPOSE 80
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+  CMD wget -qO- http://localhost/ || exit 1
+
 USER nginx

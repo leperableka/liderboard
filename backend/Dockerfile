@@ -27,4 +27,8 @@ EXPOSE 3000
 
 USER node
 
-CMD ["sh", "-c", "node dist/db/migrate.js && node dist/index.js"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget -qO- http://localhost:3000/health || exit 1
+
+# exec replaces the shell so SIGTERM is delivered directly to node (not swallowed by sh)
+CMD ["sh", "-c", "node dist/db/migrate.js && exec node dist/index.js"]
