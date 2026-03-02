@@ -6,7 +6,7 @@ import { authPreHandler } from '../middleware/auth.js';
 import { toRub, depositCategory } from '../services/exchangeRate.js';
 import type { UserRow, DepositUpdateRow } from '../types.js';
 import { getMoscowDateStr } from '../utils/time.js';
-import { CONTEST_START_MOSCOW } from '../config.js';
+
 import { cacheDelPattern } from '../services/cache.js';
 
 interface UserRoutesOpts {
@@ -374,12 +374,10 @@ export async function userRoutes(fastify: FastifyInstance, opts: UserRoutesOpts)
 
         // Send farewell message via bot (fire-and-forget)
         if (bot && miniAppUrl) {
-          const afterStart = getMoscowDateStr() >= CONTEST_START_MOSCOW;
-          const farewellText = afterStart
-            ? 'Нам очень жаль, что вы решили завершить соревнование. Будем ждать вас снова!\n\n' +
-              'Вы можете продолжать смотреть за соревнованиями. До нового турнира вы сможете повторно зарегистрироваться и принять участие вновь.'
-            : 'Нам очень жаль, что вы решили завершить соревнование. Будем ждать вас снова!\n\n' +
-              'Вы сможете повторно пройти регистрацию и принять участие в турнире.';
+          const farewellText =
+            'Жаль, что вы решили завершить участие в турнире. Будем рады видеть вас снова в следующий раз!\n\n' +
+            'Вы всё равно можете следить за ходом соревнования и смотреть результаты в турнирной таблице — для этого нажмите «Открыть приложение».\n\n' +
+            'Если захотите вернуться в турнир, вы можете пройти регистрацию заново и снова участвовать (регистрация доступна до 5 марта включительно).';
 
           bot.api.sendMessage(telegramId, farewellText, {
             reply_markup: new InlineKeyboard().webApp('🏆 Открыть приложение', miniAppUrl).primary(),
