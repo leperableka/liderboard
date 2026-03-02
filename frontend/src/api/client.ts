@@ -13,9 +13,9 @@ const BASE_URL = import.meta.env.VITE_API_URL ?? '';
 
 function getInitData(): string {
   try {
-    return window.Telegram?.WebApp?.initData ?? 'mock_init_data';
+    return window.Telegram?.WebApp?.initData || (import.meta.env.DEV ? 'mock_init_data' : '');
   } catch {
-    return 'mock_init_data';
+    return import.meta.env.DEV ? 'mock_init_data' : '';
   }
 }
 

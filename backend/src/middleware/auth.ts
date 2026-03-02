@@ -77,6 +77,10 @@ function verifyTelegramInitData(initData: string, botToken: string): TelegramUse
   };
 }
 
+// Mock bypass: requires ALLOW_MOCK_AUTH=true to be set explicitly.
+// NODE_ENV=development alone is NOT sufficient — prevents accidental auth bypass.
+const MOCK_AUTH_ENABLED = process.env['ALLOW_MOCK_AUTH'] === 'true';
+
 const MOCK_TELEGRAM_USER: TelegramUser = {
   id: 123456789,
   username: 'dev_trader',
@@ -89,9 +93,7 @@ export async function authPreHandler(
   request: FastifyRequest,
   reply: FastifyReply,
 ): Promise<void> {
-  const isDev = process.env['NODE_ENV'] === 'development';
-
-  if (isDev) {
+  if (MOCK_AUTH_ENABLED) {
     request.telegramUser = MOCK_TELEGRAM_USER;
     return;
   }
