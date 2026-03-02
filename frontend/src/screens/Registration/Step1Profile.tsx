@@ -228,7 +228,7 @@ export const Step1Profile: React.FC<Step1ProfileProps> = ({ data, onChange, onNe
             <>
               Я принимаю{' '}
               <a
-                href="https://vesperfin.com/upload/iblock/c4b/qy6xk5n5cf1v8iqdszp93k3qp9kp0gbq/pravila_konkursa.pdf"
+                href="https://vesperfin.com/upload/iblock/1f8/m8mz16zvynkrwodl9o2brzdkkkeb7717/pravila_konkursa.pdf"
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{ color: 'var(--gold-3)', textDecoration: 'underline' }}

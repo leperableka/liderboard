@@ -247,7 +247,7 @@ const TableRow: React.FC<{ cells: React.ReactNode[]; last?: boolean }> = ({ cell
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
 const PDF_RULES_URL =
-  'https://vesperfin.com/upload/iblock/c4b/qy6xk5n5cf1v8iqdszp93k3qp9kp0gbq/pravila_konkursa.pdf';
+  'https://vesperfin.com/upload/iblock/1f8/m8mz16zvynkrwodl9o2brzdkkkeb7717/pravila_konkursa.pdf';
 
 export const Rules: React.FC<RulesProps> = ({ onNavigate }) => (
   <div style={{ minHeight: '100vh', background: 'var(--bg)', display: 'flex', flexDirection: 'column' }}>
