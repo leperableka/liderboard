@@ -83,7 +83,7 @@ export const UpdateDeposit: React.FC<UpdateDepositProps> = ({
   const isContestOver = useMemo(() => now > CONTEST_END, [now]);
   const { showBackButton, hideBackButton, onBackButtonClicked, hapticFeedback } = useTelegram();
 
-  const currency = userStatus.market ? MARKET_CURRENCY[userStatus.market] : 'USDT';
+  const currency = userStatus.currency ?? (userStatus.market ? MARKET_CURRENCY[userStatus.market] : 'USDT');
   const today = new Date();
   const numValue = parseFloat(value);
   const isValid = !isNaN(numValue) && numValue > 0 && numValue <= 10_000_000;
