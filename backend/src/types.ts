@@ -54,6 +54,7 @@ export interface LeaderboardEntry {
   instruments: string[];
   pnlPercent: number;
   isCurrentUser: boolean;
+  inactive: boolean;
   depositCategory: number | null;
 }
 

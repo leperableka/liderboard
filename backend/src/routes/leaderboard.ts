@@ -7,6 +7,7 @@ import {
 } from '../services/cache.js';
 import type { LeaderboardEntry } from '../types.js';
 import { getMoscowDateStr } from '../utils/time.js';
+import { CONTEST_START_MOSCOW } from '../config.js';
 
 // ─── Zod schema ─────────────────────────────────────────────────────────────
 
@@ -43,6 +44,7 @@ interface CurrentUserRow {
   instruments: string[];
   deposit_category: number | null;
   change_percent: string | null;
+  is_inactive: boolean;
   row_pos: string;
 }
 
@@ -59,6 +61,7 @@ interface LeaderboardRow {
   has_today_update: boolean;
   total_count: string;
   deposit_category: number | null;
+  is_inactive: boolean;
 }
 
 // ─── Route plugin ─────────────────────────────────────────────────────────────
@@ -139,6 +142,18 @@ export async function leaderboardRoutes(fastify: FastifyInstance): Promise<void>
               FROM deposit_updates
               WHERE deposit_date = $1
             ),
+            last_activity AS (
+              SELECT
+                u.id AS user_id,
+                ($1::date - GREATEST(
+                  COALESCE(
+                    (SELECT MAX(du.deposit_date) FROM deposit_updates du WHERE du.user_id = u.id),
+                    u.registered_at::date
+                  ),
+                  $5::date
+                )) >= 7 AS is_inactive
+              FROM users u
+            ),
             ranked AS (
               SELECT
                 u.id                                         AS user_id,
@@ -152,11 +167,13 @@ export async function leaderboardRoutes(fastify: FastifyInstance): Promise<void>
                 u.deposit_category,
                 cd.current_value                             AS current_deposit,
                 COALESCE(tu.updated, FALSE)                  AS has_today_update,
+                COALESCE(la.is_inactive, FALSE)              AS is_inactive,
                 u.registered_at,
                 COUNT(*) OVER ()                             AS total_count
               FROM users u
               LEFT JOIN current_deposits  cd  ON cd.user_id = u.id
               LEFT JOIN today_updates     tu  ON tu.user_id = u.id
+              LEFT JOIN last_activity     la  ON la.user_id = u.id
               WHERE ($4::integer IS NULL OR u.deposit_category = $4::integer)
             )
             SELECT
@@ -171,6 +188,7 @@ export async function leaderboardRoutes(fastify: FastifyInstance): Promise<void>
               deposit_category,
               current_deposit::text,
               has_today_update,
+              is_inactive,
               total_count,
               ROUND(
                 (
@@ -180,13 +198,13 @@ export async function leaderboardRoutes(fastify: FastifyInstance): Promise<void>
                 2
               ) AS change_percent
             FROM ranked
-            ORDER BY change_percent DESC NULLS LAST, registered_at ASC
+            ORDER BY is_inactive ASC, change_percent DESC NULLS LAST, registered_at ASC
             LIMIT $2 OFFSET $3
           `;
 
           const result = await pool.query<LeaderboardRow & { change_percent: string }>(
             sql,
-            [today, limit, offset, categoryInt],
+            [today, limit, offset, categoryInt, CONTEST_START_MOSCOW],
           );
 
           const totalCount =
@@ -201,6 +219,7 @@ export async function leaderboardRoutes(fastify: FastifyInstance): Promise<void>
             instruments: row.instruments,
             pnlPercent: row.change_percent !== null ? parseFloat(row.change_percent) : 0,
             isCurrentUser: false,
+            inactive: row.is_inactive,
             depositCategory: row.deposit_category ?? null,
           }));
 
@@ -250,6 +269,13 @@ export async function leaderboardRoutes(fastify: FastifyInstance): Promise<void>
                 u.instruments,
                 u.deposit_category,
                 u.registered_at,
+                ($1::date - GREATEST(
+                  COALESCE(
+                    (SELECT MAX(du.deposit_date) FROM deposit_updates du WHERE du.user_id = u.id),
+                    u.registered_at::date
+                  ),
+                  $4::date
+                )) >= 7 AS is_inactive,
                 ROUND(
                   (
                     (COALESCE(cd.current_value, u.initial_deposit::numeric) - u.initial_deposit::numeric)
@@ -268,16 +294,18 @@ export async function leaderboardRoutes(fastify: FastifyInstance): Promise<void>
               t.*,
               (
                 SELECT COUNT(*) + 1 FROM scored s
-                WHERE (s.change_percent > t.change_percent)
-                   OR (s.change_percent = t.change_percent AND s.registered_at < t.registered_at)
-                   OR (s.change_percent = t.change_percent AND s.registered_at = t.registered_at AND s.user_id < t.user_id)
+                WHERE
+                  (s.is_inactive < t.is_inactive)
+                  OR (s.is_inactive = t.is_inactive AND s.change_percent > t.change_percent)
+                  OR (s.is_inactive = t.is_inactive AND s.change_percent = t.change_percent AND s.registered_at < t.registered_at)
+                  OR (s.is_inactive = t.is_inactive AND s.change_percent = t.change_percent AND s.registered_at = t.registered_at AND s.user_id < t.user_id)
               ) AS row_pos
             FROM target t
           `;
 
           const userResult = await pool.query<CurrentUserRow>(
             userSql,
-            [today, userId, categoryInt],
+            [today, userId, categoryInt, CONTEST_START_MOSCOW],
           );
 
           if (userResult.rows.length > 0) {
@@ -291,6 +319,7 @@ export async function leaderboardRoutes(fastify: FastifyInstance): Promise<void>
               instruments: row.instruments,
               pnlPercent: row.change_percent !== null ? parseFloat(row.change_percent) : 0,
               isCurrentUser: true,
+              inactive: row.is_inactive,
               depositCategory: row.deposit_category ?? null,
             };
           }

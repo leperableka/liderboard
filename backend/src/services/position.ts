@@ -1,4 +1,5 @@
 import pool from '../db/pool.js';
+import { CONTEST_START_MOSCOW } from '../config.js';
 
 interface PositionRow {
   row_pos: string;
@@ -7,6 +8,7 @@ interface PositionRow {
 
 /**
  * Returns the user's position (1-based) in the leaderboard.
+ * Inactive users (7+ days without updates) are ranked after all active users.
  *
  * @param telegramId  - Telegram user ID
  * @param categoryInt - null for overall ranking, 1/2/3 for category-specific
@@ -34,6 +36,13 @@ export async function getUserPosition(
         u.telegram_id,
         u.deposit_category,
         u.registered_at,
+        ($1::date - GREATEST(
+          COALESCE(
+            (SELECT MAX(du.deposit_date) FROM deposit_updates du WHERE du.user_id = u.id),
+            u.registered_at::date
+          ),
+          $4::date
+        )) >= 7 AS is_inactive,
         ROUND(
           (
             (COALESCE(cd.current_value, u.initial_deposit::numeric) - u.initial_deposit::numeric)
@@ -52,14 +61,16 @@ export async function getUserPosition(
       t.deposit_category,
       (
         SELECT COUNT(*) + 1 FROM scored s
-        WHERE (s.change_percent > t.change_percent)
-           OR (s.change_percent = t.change_percent AND s.registered_at < t.registered_at)
-           OR (s.change_percent = t.change_percent AND s.registered_at = t.registered_at AND s.user_id < t.user_id)
+        WHERE
+          (s.is_inactive < t.is_inactive)
+          OR (s.is_inactive = t.is_inactive AND s.change_percent > t.change_percent)
+          OR (s.is_inactive = t.is_inactive AND s.change_percent = t.change_percent AND s.registered_at < t.registered_at)
+          OR (s.is_inactive = t.is_inactive AND s.change_percent = t.change_percent AND s.registered_at = t.registered_at AND s.user_id < t.user_id)
       ) AS row_pos
     FROM target t
   `;
 
-  const result = await pool.query<PositionRow>(sql, [today, telegramId, categoryInt]);
+  const result = await pool.query<PositionRow>(sql, [today, telegramId, categoryInt, CONTEST_START_MOSCOW]);
 
   if (result.rows.length === 0) return null;
   return parseInt(result.rows[0]!.row_pos, 10);

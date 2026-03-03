@@ -220,6 +220,65 @@ async function sendDisqualificationWarnings(bot: Bot, miniAppUrl: string, log: F
   }
 }
 
+/**
+ * Returns users who have been inactive for EXACTLY 6 calendar days —
+ * meaning they will be deactivated tomorrow (day 7) if they don't submit.
+ */
+async function getDeactivationWarningUsers(): Promise<PendingUser[]> {
+  const result = await pool.query<PendingUser>(
+    `SELECT u.telegram_id, u.display_name, u.market
+     FROM users u
+     WHERE
+       (NOW() AT TIME ZONE 'Europe/Moscow')::date >= $1::date
+       AND (NOW() AT TIME ZONE 'Europe/Moscow')::date - GREATEST(
+         COALESCE(
+           (SELECT MAX(du.deposit_date) FROM deposit_updates du WHERE du.user_id = u.id),
+           u.registered_at::date
+         ),
+         $1::date
+       ) = 6`,
+    [CONTEST_START_MOSCOW],
+  );
+  return result.rows;
+}
+
+/**
+ * Deactivation warning — 10:00 UTC (13:00 МСК)
+ * Sent to users inactive for exactly 6 calendar days.
+ * On day 7+ their profile is deactivated (moved to bottom, input blocked).
+ */
+async function sendDeactivationWarnings(bot: Bot, miniAppUrl: string, log: FastifyBaseLogger): Promise<void> {
+  const todayStr = getMoscowDateStr();
+  if (todayStr > CONTEST_END_MOSCOW) {
+    log.info(`[notifications] Deactivation skipped: contest ended ${CONTEST_END_MOSCOW}`);
+    return;
+  }
+  log.info(`[notifications] Deactivation warning — ${todayStr} (Moscow)`);
+
+  try {
+    const users = await getDeactivationWarningUsers();
+    log.info(`[notifications] Deactivation warning: ${users.length} users`);
+    if (users.length === 0) return;
+
+    await sendBatch(
+      bot,
+      users,
+      () =>
+        `Добрый день!\n\n` +
+        `С момента последнего обновления ваших данных прошло 6 дней.\n` +
+        `Чтобы продолжить участие в турнире, пожалуйста, внесите актуальный депозит в турнирную таблицу.\n\n` +
+        `Если данные не будут обновлены, завтра профиль будет деактивирован, и вы выбываете из турнира.\n\n` +
+        `Надеемся увидеть вас снова в таблице участников!`,
+      makeKeyboard(miniAppUrl),
+      log,
+    );
+
+    log.info('[notifications] Deactivation warning batch complete');
+  } catch (err) {
+    log.error({ err }, '[notifications] Deactivation warning error');
+  }
+}
+
 // ─── Scheduler ───────────────────────────────────────────────────────────────
 
 /**
@@ -248,6 +307,7 @@ function withMutex(
 /**
  * Cron schedule (all UTC):
  *  09:00 UTC (12:00 МСК) — disqualification warning for day-4 inactives
+ *  10:00 UTC (13:00 МСК) — deactivation warning for day-6 inactives
  *  15:55 UTC (18:55 МСК) — pre-close reminder
  *  17:00 UTC (20:00 МСК) — evening reminder
  */
@@ -259,6 +319,12 @@ export function scheduleNotifications(
   const disqualTask = cron.schedule(
     '0 9 * * *',
     withMutex('Disqualification', () => sendDisqualificationWarnings(bot, miniAppUrl, log), log),
+    { timezone: 'UTC' },
+  );
+
+  const deactivateTask = cron.schedule(
+    '0 10 * * *',
+    withMutex('Deactivation', () => sendDeactivationWarnings(bot, miniAppUrl, log), log),
     { timezone: 'UTC' },
   );
 
@@ -277,6 +343,7 @@ export function scheduleNotifications(
   log.info(
     '[notifications] Cron jobs scheduled: ' +
     '09:00 UTC (disqualification warning) + ' +
+    '10:00 UTC (deactivation warning) + ' +
     '15:55 UTC (pre-close) + ' +
     '17:00 UTC (evening)',
   );
@@ -284,6 +351,7 @@ export function scheduleNotifications(
   return {
     stop: () => {
       disqualTask.stop();
+      deactivateTask.stop();
       preCloseTask.stop();
       eveningTask.stop();
     },

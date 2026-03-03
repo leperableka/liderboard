@@ -81,6 +81,7 @@ const LeaderboardRowInner: React.FC<LeaderboardRowProps> = ({
   onUserClick,
 }) => {
   const pnlUp = entry.pnlPercent >= 0;
+  const inactive = entry.inactive;
 
   return (
     <div
@@ -97,8 +98,9 @@ const LeaderboardRowInner: React.FC<LeaderboardRowProps> = ({
         background: isCurrentUser ? 'rgba(245,166,35,0.08)' : 'transparent',
         border: isCurrentUser ? '1.5px solid rgba(245,166,35,0.3)' : '1.5px solid transparent',
         marginBottom: 2,
-        transition: 'background 0.15s',
+        transition: 'background 0.15s, opacity 0.15s',
         cursor: onUserClick ? 'pointer' : 'default',
+        opacity: inactive ? 0.5 : 1,
       }}
     >
       <span
@@ -107,7 +109,7 @@ const LeaderboardRowInner: React.FC<LeaderboardRowProps> = ({
           textAlign: 'center',
           fontSize: 14,
           fontWeight: 700,
-          color: isCurrentUser ? 'var(--gold-3)' : 'var(--text-2)',
+          color: inactive ? 'var(--text-3)' : isCurrentUser ? 'var(--gold-3)' : 'var(--text-2)',
           flexShrink: 0,
         }}
         aria-label={`Позиция ${entry.position}`}
@@ -122,7 +124,7 @@ const LeaderboardRowInner: React.FC<LeaderboardRowProps> = ({
           style={{
             fontSize: 15,
             fontWeight: 600,
-            color: isCurrentUser ? 'var(--gold-3)' : 'var(--text)',
+            color: inactive ? 'var(--text-3)' : isCurrentUser ? 'var(--gold-3)' : 'var(--text)',
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
@@ -130,7 +132,7 @@ const LeaderboardRowInner: React.FC<LeaderboardRowProps> = ({
           }}
         >
           {entry.displayName}
-          {isCurrentUser && (
+          {isCurrentUser && !inactive && (
             <span
               style={{
                 marginLeft: 6,
@@ -145,6 +147,21 @@ const LeaderboardRowInner: React.FC<LeaderboardRowProps> = ({
               ВЫ
             </span>
           )}
+          {inactive && (
+            <span
+              style={{
+                marginLeft: 6,
+                fontSize: 10,
+                fontWeight: 600,
+                color: 'var(--text-3)',
+                background: 'rgba(107,114,128,0.12)',
+                padding: '1px 6px',
+                borderRadius: 4,
+              }}
+            >
+              Неактивен
+            </span>
+          )}
         </p>
         <InstrumentTags instruments={entry.instruments} market={entry.market} />
       </div>
@@ -154,7 +171,7 @@ const LeaderboardRowInner: React.FC<LeaderboardRowProps> = ({
           fontSize: 15,
           fontWeight: 700,
           flexShrink: 0,
-          color: pnlUp ? 'var(--green)' : 'var(--red)',
+          color: inactive ? 'var(--text-3)' : pnlUp ? 'var(--green)' : 'var(--red)',
         }}
         aria-label={`PnL ${entry.pnlPercent >= 0 ? 'плюс' : 'минус'} ${Math.abs(entry.pnlPercent).toFixed(1)} процентов`}
       >

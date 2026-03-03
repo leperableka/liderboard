@@ -6,7 +6,7 @@ import { authPreHandler } from '../middleware/auth.js';
 import { cacheDelPattern, cacheGet, cacheSet } from '../services/cache.js';
 import { getUserPosition, getUserCategory } from '../services/position.js';
 import { getMoscowDateStr } from '../utils/time.js';
-import { CONTEST_END_MOSCOW } from '../config.js';
+import { CONTEST_START_MOSCOW, CONTEST_END_MOSCOW } from '../config.js';
 
 // ─── Zod schema ─────────────────────────────────────────────────────────────
 
@@ -172,6 +172,24 @@ export async function depositRoutes(fastify: FastifyInstance, opts: DepositRoute
         }
 
         const userId = userResult.rows[0]!.id;
+
+        // Check if user is deactivated (7+ days inactive)
+        const inactiveCheck = await client.query<{ days_inactive: number }>(
+          `SELECT ($2::date - GREATEST(
+            COALESCE(
+              (SELECT MAX(du.deposit_date) FROM deposit_updates du WHERE du.user_id = $1),
+              (SELECT registered_at::date FROM users WHERE id = $1)
+            ),
+            $3::date
+          )) AS days_inactive`,
+          [userId, depositDate, CONTEST_START_MOSCOW],
+        );
+        if ((inactiveCheck.rows[0]?.days_inactive ?? 0) >= 7) {
+          await client.query('ROLLBACK');
+          return reply.code(403).send({
+            error: 'Ваш профиль деактивирован из-за длительного отсутствия обновлений. Вы можете наблюдать за турниром, но внесение данных недоступно.',
+          });
+        }
 
         // UPSERT: insert or update deposit for (user_id, deposit_date)
         await client.query(
