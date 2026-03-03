@@ -9,7 +9,7 @@ import { moscowDateToUtc } from '../utils/time';
 interface UpdateDepositProps {
   userStatus: UserStatus;
   onBack: () => void;
-  onSuccess: () => void;
+  onSuccess: (newAmount: number) => void;
 }
 
 function formatDate(date: Date): string {
@@ -144,11 +144,11 @@ export const UpdateDeposit: React.FC<UpdateDepositProps> = ({
         amount: numValue,
         date: formatISODate(today),
       });
-      hapticFeedback('success');
+      try { hapticFeedback('success'); } catch { /* non-critical */ }
       setModalVisible(false);
-      onSuccess();
+      onSuccess(numValue);
     } catch (err: unknown) {
-      hapticFeedback('error');
+      try { hapticFeedback('error'); } catch { /* non-critical */ }
       const msg = err instanceof Error ? err.message : 'Ошибка сохранения';
       setError(msg);
       setModalVisible(false);

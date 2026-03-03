@@ -137,15 +137,33 @@ export const App: React.FC = () => {
     setState({ phase: 'ready', screen: 'leaderboard', userStatus: newStatus });
   }
 
-  function handleDepositSuccess() {
+  function handleDepositSuccess(newAmount: number) {
+    // 1. Optimistic update — immediately reflect in UI
     setState((prev) => {
       if (prev.phase !== 'ready' || !prev.userStatus) return prev;
       return {
         ...prev,
         screen: 'leaderboard',
-        userStatus: { ...prev.userStatus, depositUpdatedToday: true },
+        userStatus: {
+          ...prev.userStatus,
+          depositUpdatedToday: true,
+          currentDeposit: newAmount,
+        },
       };
     });
+
+    // 2. Background refetch — sync with backend for guaranteed consistency
+    const telegramId = user?.id;
+    if (telegramId) {
+      getStatus(telegramId)
+        .then((freshStatus) => {
+          setState((prev) => {
+            if (prev.phase !== 'ready') return prev;
+            return { ...prev, userStatus: freshStatus };
+          });
+        })
+        .catch(() => { /* non-fatal — optimistic update already applied */ });
+    }
   }
 
   function handleProfileUpdated(displayName: string, avatarUrl?: string | null) {
