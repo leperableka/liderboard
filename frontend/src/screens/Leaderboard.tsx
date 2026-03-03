@@ -98,15 +98,14 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
 
   // Determine if current user row is visible; if not, show sticky row
   useEffect(() => {
-    const listEl = listRef.current;
     const rowEl = currentUserRowRef.current;
-    if (!listEl || !rowEl) return;
+    if (!rowEl) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
         setStickyCurrentUser(!entry.isIntersecting);
       },
-      { root: listEl, threshold: 0.5 }
+      { root: null, threshold: 0.5 }
     );
 
     observer.observe(rowEl);
@@ -116,14 +115,13 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
   // Infinite scroll: load next page when sentinel enters the list viewport
   useEffect(() => {
     const sentinel = sentinelRef.current;
-    const list = listRef.current;
-    if (!sentinel || !list || !hasMore) return;
+    if (!sentinel || !hasMore) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry?.isIntersecting) loadMore();
       },
-      { root: list, rootMargin: '0px 0px 120px 0px', threshold: 0 },
+      { root: null, rootMargin: '0px 0px 120px 0px', threshold: 0 },
     );
 
     observer.observe(sentinel);
@@ -141,8 +139,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
       style={{
         display: 'flex',
         flexDirection: 'column',
-        height: '100vh',
-        overflow: 'hidden',
+        minHeight: '100vh',
         background: 'var(--bg)',
       }}
     >
@@ -151,7 +148,6 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
         style={{
           background: 'var(--gold-grad-h)',
           paddingTop: 'calc(env(safe-area-inset-top, 0px) + 42px)',
-          flexShrink: 0,
           position: 'relative',
           overflow: 'visible',
         }}
@@ -273,9 +269,6 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
           position: 'relative',
           zIndex: 5,
           flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: 0,
         }}
       >
         <div
@@ -311,10 +304,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
           role="table"
           aria-label="Таблица лидеров"
           style={{
-            flex: 1,
-            overflowY: 'auto',
             padding: '0 12px 160px',
-            WebkitOverflowScrolling: 'touch',
           }}
         >
           {error && (
