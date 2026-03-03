@@ -139,7 +139,7 @@ async function bootstrap(): Promise<void> {
   // ── Routes ────────────────────────────────────────────────────────────────
   await fastify.register(userRoutes, { bot, miniAppUrl: process.env['MINI_APP_URL'] ?? '' });
   await fastify.register(leaderboardRoutes);
-  await fastify.register(depositRoutes);
+  await fastify.register(depositRoutes, { bot, miniAppUrl: process.env['MINI_APP_URL'] ?? '' });
   await fastify.register(avatarRoutes);
 
   // ── Redis ─────────────────────────────────────────────────────────────────

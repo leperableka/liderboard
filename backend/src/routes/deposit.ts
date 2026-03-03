@@ -1,8 +1,10 @@
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { z } from 'zod';
+import { Bot, InlineKeyboard } from 'grammy';
 import pool from '../db/pool.js';
 import { authPreHandler } from '../middleware/auth.js';
-import { cacheDelPattern } from '../services/cache.js';
+import { cacheDelPattern, cacheGet, cacheSet } from '../services/cache.js';
+import { getUserPosition, getUserCategory } from '../services/position.js';
 import { getMoscowDateStr } from '../utils/time.js';
 import { CONTEST_END_MOSCOW } from '../config.js';
 
@@ -12,9 +14,120 @@ const DepositUpdateBodySchema = z.object({
   deposit_value: z.number().positive().max(10_000_000).transform((v) => Math.round(v * 100) / 100),
 });
 
+// ─── Plugin options ─────────────────────────────────────────────────────────
+
+interface DepositRouteOpts {
+  bot?: Bot;
+  miniAppUrl?: string;
+}
+
+// ─── Top-3 congratulation messages ──────────────────────────────────────────
+
+const CATEGORY_MESSAGES: Record<number, string> = {
+  1: 'Поздравляем! 🎉 Вы заняли первое место в своей категории — отличный результат и сильная работа. Так держать!',
+  2: 'Поздравляем! 👏 Вы заняли второе место в своей категории — достойный результат и хорошая динамика. Продолжайте в том же духе!',
+  3: 'Поздравляем! 🔥 Вы заняли третье место в своей категории — уверенный финиш и заслуженное место в тройке лидеров!',
+};
+
+const OVERALL_MESSAGES: Record<number, string> = {
+  1: 'Поздравляем! 🚀 Вы заняли первое место в общей таблице турнира — лучший результат среди всех участников. Сильная стратегия и отличная дисциплина!',
+  2: 'Поздравляем! 💪 Вы заняли второе место в общей таблице турнира — выдающийся результат и высокий уровень конкуренции позади!',
+  3: 'Поздравляем! 🎯 Вы заняли третье место в общей таблице турнира — вы в числе лучших участников турнира!',
+};
+
+// ─── Notification logic (fire-and-forget) ───────────────────────────────────
+
+async function notifyAfterDeposit(
+  bot: Bot,
+  miniAppUrl: string,
+  telegramId: number,
+  log: FastifyRequest['log'],
+): Promise<void> {
+  const keyboard = new InlineKeyboard().webApp('🏆 Открыть приложение', miniAppUrl).primary();
+
+  // 1. Thank-you message (always)
+  try {
+    await bot.api.sendMessage(
+      telegramId,
+      'Спасибо, что внесли свои данные! 🙌\n' +
+      'Мы обновили вашу позицию в турнире — результаты уже учтены в таблице. Продолжайте в том же темпе 🚀',
+      { reply_markup: keyboard },
+    );
+  } catch (err) {
+    log.warn({ err, telegramId }, '[deposit-notify] Failed to send thank-you message');
+    return; // If we can't send basic message, skip top-3 check too
+  }
+
+  // 2. Check top-3 positions
+  const today = getMoscowDateStr();
+
+  try {
+    // 2a. Overall ranking
+    const overallPos = await getUserPosition(telegramId, null, today);
+    if (overallPos !== null && overallPos <= 3) {
+      await maybeSendCongrats(
+        bot, telegramId, keyboard,
+        `top3:overall:${telegramId}`, overallPos,
+        OVERALL_MESSAGES, log,
+      );
+    }
+
+    // 2b. Category ranking
+    const userCategory = await getUserCategory(telegramId);
+    if (userCategory !== null) {
+      const catPos = await getUserPosition(telegramId, userCategory, today);
+      if (catPos !== null && catPos <= 3) {
+        await maybeSendCongrats(
+          bot, telegramId, keyboard,
+          `top3:cat:${userCategory}:${telegramId}`, catPos,
+          CATEGORY_MESSAGES, log,
+        );
+      }
+    }
+  } catch (err) {
+    log.warn({ err, telegramId }, '[deposit-notify] Failed to check top-3 positions');
+  }
+}
+
+/**
+ * Sends a congratulation message only if the user hasn't been notified
+ * for this position yet (or has improved their position).
+ */
+async function maybeSendCongrats(
+  bot: Bot,
+  telegramId: number,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  keyboard: any,
+  redisKey: string,
+  position: number,
+  messages: Record<number, string>,
+  log: FastifyRequest['log'],
+): Promise<void> {
+  try {
+    const lastNotified = await cacheGet(redisKey);
+    const lastPos = lastNotified ? parseInt(lastNotified, 10) : null;
+
+    // Only send if never notified OR position improved (lower number = better)
+    if (lastPos !== null && lastPos <= position) return;
+
+    const text = messages[position];
+    if (!text) return;
+
+    await bot.api.sendMessage(telegramId, text, { reply_markup: keyboard });
+
+    // Store without TTL — persists for the duration of the tournament
+    await cacheSet(redisKey, String(position), 60 * 60 * 24 * 60); // 60 days TTL
+    log.info({ telegramId, position, scope: redisKey }, '[deposit-notify] Sent top-3 congrats');
+  } catch (err) {
+    log.warn({ err, telegramId, redisKey }, '[deposit-notify] Failed to send congrats');
+  }
+}
+
 // ─── Route plugin ─────────────────────────────────────────────────────────────
 
-export async function depositRoutes(fastify: FastifyInstance): Promise<void> {
+export async function depositRoutes(fastify: FastifyInstance, opts: DepositRouteOpts): Promise<void> {
+  const { bot, miniAppUrl } = opts;
+
   /**
    * POST /api/deposit/update
    *
@@ -79,6 +192,13 @@ export async function depositRoutes(fastify: FastifyInstance): Promise<void> {
         } catch (cacheErr) {
           // Non-fatal: stale cache is acceptable for up to the TTL period
           request.log.warn({ cacheErr }, 'Failed to invalidate leaderboard cache');
+        }
+
+        // Fire-and-forget: send Telegram notifications
+        if (bot && miniAppUrl) {
+          notifyAfterDeposit(bot, miniAppUrl, telegramId, request.log).catch((err) => {
+            request.log.warn({ err, telegramId }, '[deposit-notify] Notification error');
+          });
         }
 
         return reply.code(200).send({
