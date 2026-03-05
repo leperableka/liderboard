@@ -243,9 +243,67 @@ async function getDeactivationWarningUsers(): Promise<PendingUser[]> {
 }
 
 /**
+ * Returns users who have been inactive for EXACTLY 7 calendar days —
+ * meaning their profile becomes deactivated today.
+ */
+async function getDeactivatedUsers(): Promise<PendingUser[]> {
+  const result = await pool.query<PendingUser>(
+    `SELECT u.telegram_id, u.display_name, u.market
+     FROM users u
+     WHERE
+       (NOW() AT TIME ZONE 'Europe/Moscow')::date >= $1::date
+       AND (NOW() AT TIME ZONE 'Europe/Moscow')::date - GREATEST(
+         COALESCE(
+           (SELECT MAX(du.deposit_date) FROM deposit_updates du WHERE du.user_id = u.id),
+           u.registered_at::date
+         ),
+         $1::date
+       ) = 7`,
+    [CONTEST_START_MOSCOW],
+  );
+  return result.rows;
+}
+
+/**
+ * Deactivation notice — 10:00 UTC (13:00 МСК)
+ * Sent to users who just hit exactly 7 days inactive.
+ * Profile is moved to bottom of leaderboard, but user can return by submitting data.
+ */
+async function sendDeactivationNotices(bot: Bot, miniAppUrl: string, log: FastifyBaseLogger): Promise<void> {
+  const todayStr = getMoscowDateStr();
+  if (todayStr > CONTEST_END_MOSCOW) {
+    log.info(`[notifications] Deactivation notice skipped: contest ended ${CONTEST_END_MOSCOW}`);
+    return;
+  }
+  log.info(`[notifications] Deactivation notice — ${todayStr} (Moscow)`);
+
+  try {
+    const users = await getDeactivatedUsers();
+    log.info(`[notifications] Deactivation notice: ${users.length} users`);
+    if (users.length === 0) return;
+
+    await sendBatch(
+      bot,
+      users,
+      () =>
+        `Добрый день!\n\n` +
+        `Вы не обновляли данные по депозиту более 7 дней, поэтому мы временно скрыли ваш профиль из турнирной таблицы.\n\n` +
+        `Если захотите вернуться — просто внесите актуальные данные по депозиту в приложении, и ваш профиль снова станет активным и появится в таблице.\n\n` +
+        `Спасибо! 🙌`,
+      makeKeyboard(miniAppUrl),
+      log,
+    );
+
+    log.info('[notifications] Deactivation notice batch complete');
+  } catch (err) {
+    log.error({ err }, '[notifications] Deactivation notice error');
+  }
+}
+
+/**
  * Deactivation warning — 10:00 UTC (13:00 МСК)
  * Sent to users inactive for exactly 6 calendar days.
- * On day 7+ their profile is deactivated (moved to bottom, input blocked).
+ * On day 7 their profile is deactivated (moved to bottom).
  */
 async function sendDeactivationWarnings(bot: Bot, miniAppUrl: string, log: FastifyBaseLogger): Promise<void> {
   const todayStr = getMoscowDateStr();
@@ -322,9 +380,15 @@ export function scheduleNotifications(
     { timezone: 'UTC' },
   );
 
-  const deactivateTask = cron.schedule(
+  const deactivateWarnTask = cron.schedule(
     '0 10 * * *',
-    withMutex('Deactivation', () => sendDeactivationWarnings(bot, miniAppUrl, log), log),
+    withMutex('DeactivationWarning', () => sendDeactivationWarnings(bot, miniAppUrl, log), log),
+    { timezone: 'UTC' },
+  );
+
+  const deactivateNoticeTask = cron.schedule(
+    '5 10 * * *',
+    withMutex('DeactivationNotice', () => sendDeactivationNotices(bot, miniAppUrl, log), log),
     { timezone: 'UTC' },
   );
 
@@ -343,7 +407,8 @@ export function scheduleNotifications(
   log.info(
     '[notifications] Cron jobs scheduled: ' +
     '09:00 UTC (disqualification warning) + ' +
-    '10:00 UTC (deactivation warning) + ' +
+    '10:00 UTC (deactivation warning day-6) + ' +
+    '10:05 UTC (deactivation notice day-7) + ' +
     '15:55 UTC (pre-close) + ' +
     '17:00 UTC (evening)',
   );
@@ -351,7 +416,8 @@ export function scheduleNotifications(
   return {
     stop: () => {
       disqualTask.stop();
-      deactivateTask.stop();
+      deactivateWarnTask.stop();
+      deactivateNoticeTask.stop();
       preCloseTask.stop();
       eveningTask.stop();
     },
