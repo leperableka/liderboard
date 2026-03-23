@@ -11,6 +11,44 @@ import type {
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '';
 
+/**
+ * Web token extracted from URL params (?tg_id=...&ts=...&sig=...).
+ * Stored in sessionStorage so the token survives URL cleanup.
+ */
+function getWebToken(): string | null {
+  // Check sessionStorage first (URL may have been cleaned)
+  const stored = sessionStorage.getItem('web_token');
+  if (stored) return stored;
+
+  // Check URL params
+  const params = new URLSearchParams(window.location.search);
+  const tgId = params.get('tg_id');
+  const ts = params.get('ts');
+  const sig = params.get('sig');
+  if (tgId && ts && sig) {
+    const token = `tg_id=${tgId}&ts=${ts}&sig=${sig}`;
+    sessionStorage.setItem('web_token', token);
+    // Clean URL for aesthetics
+    const url = new URL(window.location.href);
+    url.searchParams.delete('tg_id');
+    url.searchParams.delete('ts');
+    url.searchParams.delete('sig');
+    window.history.replaceState({}, '', url.pathname + url.search);
+    return token;
+  }
+
+  return null;
+}
+
+/** telegram_id from web token, or null */
+export function getWebTokenTelegramId(): number | null {
+  const token = getWebToken();
+  if (!token) return null;
+  const params = new URLSearchParams(token);
+  const id = parseInt(params.get('tg_id') ?? '', 10);
+  return isNaN(id) ? null : id;
+}
+
 function getInitData(): string {
   try {
     return window.Telegram?.WebApp?.initData || (import.meta.env.DEV ? 'mock_init_data' : '');
@@ -26,9 +64,14 @@ async function request<T>(
   body?: unknown,
   signal?: AbortSignal,
 ): Promise<T> {
-  const headers: Record<string, string> = {
-    'X-Telegram-InitData': getInitData(),
-  };
+  const headers: Record<string, string> = {};
+  const initData = getInitData();
+  const webToken = getWebToken();
+  if (initData) {
+    headers['X-Telegram-InitData'] = initData;
+  } else if (webToken) {
+    headers['X-Web-Token'] = webToken;
+  }
   if (body !== undefined) {
     headers['Content-Type'] = 'application/json';
   }
@@ -249,7 +292,11 @@ export async function uploadAvatar(telegramId: number, file: File): Promise<stri
   form.append('file', file);
   const response = await fetch(`${BASE_URL}/api/user/${telegramId}/avatar`, {
     method: 'POST',
-    headers: { 'X-Telegram-InitData': getInitData() },
+    headers: getInitData()
+      ? { 'X-Telegram-InitData': getInitData() }
+      : getWebToken()
+        ? { 'X-Web-Token': getWebToken()! }
+        : {},
     body: form,
   });
   if (!response.ok) {

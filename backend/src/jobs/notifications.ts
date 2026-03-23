@@ -4,9 +4,25 @@ import type { FastifyBaseLogger } from 'fastify';
 import pool from '../db/pool.js';
 import { getMoscowDateStr, isWeekdayMoscow } from '../utils/time.js';
 import { CONTEST_START_MOSCOW, CONTEST_END_MOSCOW } from '../config.js';
+import { generateWebUrl } from '../utils/webtoken.js';
 
 function makeKeyboard(url: string) {
   return new InlineKeyboard().webApp('🏆 Открыть приложение', url).primary();
+}
+
+/**
+ * Creates a keyboard with both WebApp button and a fallback "Open as website"
+ * link for users behind MTProto proxy where WebView doesn't load.
+ */
+function makeKeyboardWithFallback(miniAppUrl: string, telegramId: string): InlineKeyboard {
+  const botToken = process.env['BOT_TOKEN'];
+  if (!botToken) {
+    return makeKeyboard(miniAppUrl);
+  }
+  const webUrl = generateWebUrl(telegramId, botToken, miniAppUrl);
+  return new InlineKeyboard()
+    .webApp('🏆 Открыть приложение', miniAppUrl).row()
+    .url('🌐 Открыть как сайт', webUrl);
 }
 
 interface PendingUser {
@@ -25,14 +41,13 @@ async function sendBatch(
   bot: Bot,
   users: PendingUser[],
   getText: (u: PendingUser) => string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  keyboard: any,
+  miniAppUrl: string,
   log: FastifyBaseLogger,
 ): Promise<void> {
   for (const user of users) {
     try {
       await bot.api.sendMessage(user.telegram_id, getText(user), {
-        reply_markup: keyboard,
+        reply_markup: makeKeyboardWithFallback(miniAppUrl, user.telegram_id),
       });
     } catch (err) {
       log.error({ err, telegramId: user.telegram_id }, '[notifications] Failed to send message');
@@ -141,7 +156,7 @@ async function sendPreCloseReminders(bot: Bot, miniAppUrl: string, log: FastifyB
         `Добрый день, ${u.display_name}!\n\n` +
         `Не забудьте обновить данные депозита за сегодня. Это поможет сохранить корректную позицию в турнире.\n` +
         `Регулярное обновление данных — важная часть участия. Желаем удачных сделок! 📈`,
-      makeKeyboard(miniAppUrl),
+      miniAppUrl,
       log,
     );
 
@@ -175,7 +190,7 @@ async function sendEveningReminders(bot: Bot, miniAppUrl: string, log: FastifyBa
         `Вы не заполнили данные торгового турнира Vesperfin&Co.Trading, ` +
         `пожалуйста, зайдите в приложение и внесите информацию.\n\n` +
         `Возможно, вы уже лидируете в турнире 🏆`,
-      makeKeyboard(miniAppUrl),
+      miniAppUrl,
       log,
     );
 
@@ -210,7 +225,7 @@ async function sendDisqualificationWarnings(bot: Bot, miniAppUrl: string, log: F
         `Добрый день!\n\n` +
         `К сожалению, вы не вносите данные торгового турнира Vesperfin&Co.Trading. ` +
         `Мы будем вынуждены дисквалифицировать ваш профиль из турнирной таблицы.`,
-      makeKeyboard(miniAppUrl),
+      miniAppUrl,
       log,
     );
 
@@ -290,7 +305,7 @@ async function sendDeactivationNotices(bot: Bot, miniAppUrl: string, log: Fastif
         `Вы не обновляли данные по депозиту более 7 дней, поэтому мы временно скрыли ваш профиль из турнирной таблицы.\n\n` +
         `Если захотите вернуться — просто внесите актуальные данные по депозиту в приложении, и ваш профиль снова станет активным и появится в таблице.\n\n` +
         `Спасибо! 🙌`,
-      makeKeyboard(miniAppUrl),
+      miniAppUrl,
       log,
     );
 
@@ -327,7 +342,7 @@ async function sendDeactivationWarnings(bot: Bot, miniAppUrl: string, log: Fasti
         `Чтобы продолжить участие в турнире, пожалуйста, внесите актуальный депозит в турнирную таблицу.\n\n` +
         `Если данные не будут обновлены, завтра профиль будет деактивирован, и вы выбываете из турнира.\n\n` +
         `Надеемся увидеть вас снова в таблице участников!`,
-      makeKeyboard(miniAppUrl),
+      miniAppUrl,
       log,
     );
 

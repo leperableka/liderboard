@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import type { TelegramUser } from '../types';
+import { getWebTokenTelegramId } from '../api/client';
 
 const IS_DEV = import.meta.env.DEV;
 
@@ -49,6 +50,8 @@ export function useTelegram(): UseTelegramReturn {
     }
   }, []); // webApp is a stable singleton — intentionally omitted from deps
 
+  const webTokenTelegramId = getWebTokenTelegramId();
+
   const user: TelegramUser | null = (() => {
     if (webApp) {
       try {
@@ -64,8 +67,15 @@ export function useTelegram(): UseTelegramReturn {
           };
         }
       } catch {
-        // fall through to mock
+        // fall through
       }
+    }
+    // Web token fallback: user opened via signed URL
+    if (webTokenTelegramId) {
+      return {
+        id: webTokenTelegramId,
+        first_name: '',
+      };
     }
     if (IS_DEV) return MOCK_USER;
     return null;
@@ -82,10 +92,9 @@ export function useTelegram(): UseTelegramReturn {
     return IS_DEV ? 'mock_init_data' : '';
   })();
 
-  // isReady is true only when actually running inside Telegram (initData is non-empty)
-  // or in dev mode. The WebApp object always exists after script load even in regular browsers,
-  // so checking initData is the reliable way to detect real Telegram context.
-  const isReady = Boolean(webApp?.initData || IS_DEV);
+  // isReady is true when running inside Telegram (initData is non-empty),
+  // in dev mode, or when a valid web token is present.
+  const isReady = Boolean(webApp?.initData || webTokenTelegramId || IS_DEV);
 
   const showBackButton = useCallback(() => {
     const wa = getWebApp();

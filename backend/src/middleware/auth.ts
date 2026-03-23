@@ -1,6 +1,7 @@
 import { createHmac } from 'node:crypto';
 import type { FastifyRequest, FastifyReply } from 'fastify';
 import type { TelegramUser } from '../types.js';
+import { verifyWebToken } from '../utils/webtoken.js';
 
 // Extend FastifyRequest to carry the verified Telegram user
 declare module 'fastify' {
@@ -98,12 +99,6 @@ export async function authPreHandler(
     return;
   }
 
-  const initData = request.headers['x-telegram-initdata'];
-  if (!initData || typeof initData !== 'string') {
-    await reply.code(401).send({ error: 'Missing X-Telegram-InitData header' });
-    return;
-  }
-
   const botToken = process.env['BOT_TOKEN'];
   if (!botToken) {
     request.log.error('BOT_TOKEN environment variable is not set');
@@ -111,11 +106,32 @@ export async function authPreHandler(
     return;
   }
 
-  const telegramUser = verifyTelegramInitData(initData, botToken);
-  if (!telegramUser) {
-    await reply.code(401).send({ error: 'Invalid or expired Telegram initData' });
+  // Primary: Telegram WebApp initData
+  const initData = request.headers['x-telegram-initdata'];
+  if (initData && typeof initData === 'string') {
+    const telegramUser = verifyTelegramInitData(initData, botToken);
+    if (!telegramUser) {
+      await reply.code(401).send({ error: 'Invalid or expired Telegram initData' });
+      return;
+    }
+    request.telegramUser = telegramUser;
     return;
   }
 
-  request.telegramUser = telegramUser;
+  // Fallback: signed web token (for users behind MTProto proxy)
+  const webToken = request.headers['x-web-token'];
+  if (webToken && typeof webToken === 'string') {
+    const telegramId = verifyWebToken(webToken, botToken);
+    if (!telegramId) {
+      await reply.code(401).send({ error: 'Invalid or expired web token' });
+      return;
+    }
+    request.telegramUser = {
+      id: telegramId,
+      first_name: '',
+    };
+    return;
+  }
+
+  await reply.code(401).send({ error: 'Missing authentication' });
 }
