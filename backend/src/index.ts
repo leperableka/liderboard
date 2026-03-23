@@ -13,6 +13,7 @@ import { leaderboardRoutes } from './routes/leaderboard.js';
 import { depositRoutes } from './routes/deposit.js';
 import { avatarRoutes } from './routes/avatar.js';
 import { scheduleNotifications } from './jobs/notifications.js';
+import { generateWebUrl } from './utils/webtoken.js';
 
 // ─── Environment validation ──────────────────────────────────────────────────
 
@@ -104,21 +105,28 @@ async function bootstrap(): Promise<void> {
 
     bot = new Bot(botToken);
 
-    const appKeyboard = new InlineKeyboard().webApp('🏆 Открыть приложение', miniAppUrl).primary();
+    function makeAppKeyboard(telegramId: string): InlineKeyboard {
+      const webUrl = generateWebUrl(telegramId, botToken, miniAppUrl);
+      return new InlineKeyboard()
+        .webApp('🏆 Открыть приложение', miniAppUrl).row()
+        .url('🌐 Открыть как сайт', webUrl);
+    }
 
     // Basic /start handler
     bot.command('start', async (ctx) => {
+      const tgId = String(ctx.from?.id ?? '');
       await ctx.reply(
         'Добро пожаловать в Торговый Турнир! Откройте приложение, чтобы участвовать.',
-        { reply_markup: appKeyboard },
+        { reply_markup: makeAppKeyboard(tgId) },
       );
     });
 
     // Fallback: any unknown command or message
     bot.on('message', async (ctx) => {
+      const tgId = String(ctx.from?.id ?? '');
       await ctx.reply(
         'Используйте кнопку ниже, чтобы открыть Торговый Турнир.',
-        { reply_markup: appKeyboard },
+        { reply_markup: makeAppKeyboard(tgId) },
       );
     });
 
