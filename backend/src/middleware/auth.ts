@@ -111,6 +111,7 @@ export async function authPreHandler(
   if (initData && typeof initData === 'string') {
     const telegramUser = verifyTelegramInitData(initData, botToken);
     if (!telegramUser) {
+      request.log.warn({ initData: initData.substring(0, 80) }, '[auth] Invalid initData');
       await reply.code(401).send({ error: 'Invalid or expired Telegram initData' });
       return;
     }
@@ -123,6 +124,7 @@ export async function authPreHandler(
   if (webToken && typeof webToken === 'string') {
     const telegramId = verifyWebToken(webToken, botToken);
     if (!telegramId) {
+      request.log.warn({ webToken: webToken.substring(0, 80) }, '[auth] Invalid web token');
       await reply.code(401).send({ error: 'Invalid or expired web token' });
       return;
     }
