@@ -6,7 +6,7 @@ import { LeaderboardRow } from '../components/LeaderboardRow';
 import { BottomNav } from '../components/BottomNav';
 import { LeaderboardSkeleton, PodiumSkeleton } from '../components/Skeleton';
 import { UserHistoryModal } from '../components/UserHistoryModal';
-import { moscowDateToUtc } from '../utils/time';
+import { moscowDateToUtc, moscowDateEndToUtc } from '../utils/time';
 
 interface LeaderboardProps {
   userStatus: UserStatus;
@@ -25,7 +25,7 @@ const CATEGORY_OPTIONS: { key: LeaderboardCategory; label: string; subtitle: str
 const CONTEST_START = moscowDateToUtc(
   (import.meta.env.VITE_CONTEST_START as string | undefined) ?? '2026-03-02',
 );
-const CONTEST_END = moscowDateToUtc(
+const CONTEST_END = moscowDateEndToUtc(
   (import.meta.env.VITE_CONTEST_END as string | undefined) ?? '2026-03-29',
 );
 // Human-readable label derived from CONTEST_START (e.g. "6 марта")

@@ -4,7 +4,7 @@ import { MARKET_CURRENCY } from '../types';
 import { updateDeposit } from '../api/client';
 import { Modal } from '../components/Modal';
 import { useTelegram } from '../hooks/useTelegram';
-import { moscowDateToUtc } from '../utils/time';
+import { moscowDateToUtc, moscowDateEndToUtc } from '../utils/time';
 
 interface UpdateDepositProps {
   userStatus: UserStatus;
@@ -52,7 +52,7 @@ function stripFormatting(value: string): string {
 const CONTEST_START = moscowDateToUtc(
   (import.meta.env.VITE_CONTEST_START as string | undefined) ?? '2026-03-02',
 );
-const CONTEST_END = moscowDateToUtc(
+const CONTEST_END = moscowDateEndToUtc(
   (import.meta.env.VITE_CONTEST_END as string | undefined) ?? '2026-03-29',
 );
 const CONTEST_START_LABEL = CONTEST_START.toLocaleDateString('ru-RU', {
